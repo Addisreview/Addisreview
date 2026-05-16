@@ -4,7 +4,7 @@ import Footer from '@/components/layout/Footer';
 import SearchClient from './SearchClient';
 
 interface Props {
-  searchParams: { q?: string; city?: string; category?: string; rating?: string; price?: string; sort?: string; page?: string };
+  searchParams: { q?: string; city?: string; category?: string; rating?: string; sort?: string; page?: string; neighborhood?: string };
 }
 
 export default async function SearchPage({ searchParams }: Props) {
@@ -19,6 +19,7 @@ export default async function SearchPage({ searchParams }: Props) {
     sort_by: searchParams.sort || 'rating',
     page_num: page,
     page_size: 10,
+    neighborhood_filter: searchParams.neighborhood || null,
   });
 
   const { data: categories } = await supabase.from('categories').select('*').order('sort_order') as any;
