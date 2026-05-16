@@ -1,17 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { BusinessWithCount, Category, City } from '@/types/database';
 import { formatRating, priceLabel, getCategoryEmoji } from '@/lib/utils';
+
+const NEIGHBORHOODS = [
+  'Bole', 'Piassa', 'Kazanchis', 'Megenagna', 'CMC', 'Sarbet',
+  'Merkato', 'Lideta', 'Semen Mazoria', 'Gerji', 'Ayat',
+  'Gofa', 'Jemo', 'Kotebe', 'Kolfe', 'Akaki'
+];
 
 interface Props {
   businesses: BusinessWithCount[];
   totalCount: number;
   categories: Category[];
   cities: Pick<City, 'id' | 'name' | 'emoji'>[];
-  currentFilters: { q?: string; city?: string; category?: string; rating?: string; sort?: string };
+  currentFilters: { q?: string; city?: string; category?: string; rating?: string; sort?: string; neighborhood?: string };
   currentPage: number;
 }
 
@@ -23,28 +29,42 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   const [selectedCat, setSelectedCat] = useState(currentFilters.category || '');
   const [selectedRating, setSelectedRating] = useState(currentFilters.rating || '0');
   const [selectedPrices, setSelectedPrices] = useState<number[]>([]);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState(currentFilters.neighborhood || '');
+  const [showAllCats, setShowAllCats] = useState(false);
+  const [showAllNeighborhoods, setShowAllNeighborhoods] = useState(false);
 
   const push = (overrides: Record<string, string>) => {
     const params = new URLSearchParams();
-    const merged = { q, city, category: selectedCat, rating: selectedRating, sort, ...overrides };
-    Object.entries(merged).forEach(([k, v]) => { if (v) params.set(k, v); });
+    const merged = {
+      q, city,
+      category: selectedCat,
+      rating: selectedRating,
+      sort,
+      neighborhood: selectedNeighborhood,
+      ...overrides
+    };
+    Object.entries(merged).forEach(([k, v]) => { if (v && v !== '0') params.set(k, v); });
     router.push(`/search?${params.toString()}`);
   };
 
   const totalPages = Math.ceil(totalCount / 10);
+  const visibleCats = showAllCats ? categories : categories.slice(0, 8);
+  const visibleNeighborhoods = showAllNeighborhoods ? NEIGHBORHOODS : NEIGHBORHOODS.slice(0, 6);
+
+  const filterLabel = {
+    fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase' as const,
+    letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px'
+  };
 
   return (
     <main>
-      {/* ── SEARCH HEADER ── */}
+      {/* SEARCH HEADER */}
       <div style={{ background: 'var(--green)', padding: '32px 5vw' }}>
         <div style={{ display: 'flex', background: '#fff', borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxWidth: '700px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px', flex: 1, borderRight: '1px solid var(--border)' }}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: '#b0a090' }}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
             <input
               type="text"
-              placeholder="Restaurants, hotels…"
+              placeholder="Restaurants, hotels, spas…"
               value={q}
               onChange={e => setQ(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && push({})}
@@ -52,9 +72,6 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px', flex: 1 }}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: '#b0a090' }}>
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-            </svg>
             <input
               type="text"
               placeholder="City or area…"
@@ -73,20 +90,26 @@ export default function SearchClient({ businesses, totalCount, categories, citie
         </div>
       </div>
 
-      {/* ── LAYOUT ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '32px', padding: '40px 5vw', maxWidth: '1300px' }}>
+      {/* LAYOUT */}
+      <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '32px', padding: '40px 5vw', maxWidth: '1300px' }}>
 
-        {/* ── FILTERS ── */}
+        {/* FILTERS PANEL */}
         <div style={{
           background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
           padding: '24px', height: 'fit-content', position: 'sticky', top: '84px',
         }}>
-          <div style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Filters</div>
+          <div style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+            Filters
+          </div>
 
-          {/* Category */}
+          {/* CATEGORY */}
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px' }}>Category</div>
-            {[{ name: '', label: 'All Categories' }, ...categories.map(c => ({ name: c.name, label: c.name }))].map(cat => (
+            <div style={filterLabel}>Category</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+              <input type="radio" name="cat" checked={selectedCat === ''} onChange={() => { setSelectedCat(''); push({ category: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+              All Categories
+            </label>
+            {visibleCats.map(cat => (
               <label key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
                 <input
                   type="radio"
@@ -95,14 +118,43 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                   onChange={() => { setSelectedCat(cat.name); push({ category: cat.name }); }}
                   style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
                 />
-                {cat.label}
+                {cat.emoji || '📍'} {cat.name}
               </label>
             ))}
+            {categories.length > 8 && (
+              <button onClick={() => setShowAllCats(!showAllCats)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
+                {showAllCats ? 'Show less ↑' : `Show all ${categories.length} categories ↓`}
+              </button>
+            )}
           </div>
 
-          {/* Rating */}
+          {/* NEIGHBORHOOD */}
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px' }}>Minimum Rating</div>
+            <div style={filterLabel}>Neighborhood</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+              <input type="radio" name="neighborhood" checked={selectedNeighborhood === ''} onChange={() => { setSelectedNeighborhood(''); push({ neighborhood: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+              All Neighborhoods
+            </label>
+            {visibleNeighborhoods.map(n => (
+              <label key={n} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+                <input
+                  type="radio"
+                  name="neighborhood"
+                  checked={selectedNeighborhood === n}
+                  onChange={() => { setSelectedNeighborhood(n); push({ neighborhood: n }); }}
+                  style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
+                />
+                {n}
+              </label>
+            ))}
+            <button onClick={() => setShowAllNeighborhoods(!showAllNeighborhoods)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
+              {showAllNeighborhoods ? 'Show less ↑' : 'Show all neighborhoods ↓'}
+            </button>
+          </div>
+
+          {/* MINIMUM RATING */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={filterLabel}>Minimum Rating</div>
             {[['0','Any rating'],['4','★★★★☆ 4+ stars'],['3','★★★☆☆ 3+ stars']].map(([val, label]) => (
               <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
                 <input
@@ -117,9 +169,9 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             ))}
           </div>
 
-          {/* Price */}
+          {/* PRICE RANGE */}
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px' }}>Price Range</div>
+            <div style={filterLabel}>Price Range</div>
             {[[1,'$ (Budget)'],[2,'$$ (Moderate)'],[3,'$$$ (Upscale)'],[4,'$$$$ (Luxury)']].map(([val, label]) => (
               <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
                 <input
@@ -133,53 +185,65 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             ))}
           </div>
 
+          {/* SORT */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={filterLabel}>Sort By</div>
+            {[['rating','Highest Rated'],['reviews','Most Reviewed'],['name','A to Z']].map(([val, label]) => (
+              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+                <input
+                  type="radio"
+                  name="sort"
+                  checked={sort === val}
+                  onChange={() => { setSort(val); push({ sort: val }); }}
+                  style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+
           <button className="btn-primary" style={{ width: '100%', borderRadius: '10px' }} onClick={() => push({})}>
             Apply Filters
           </button>
           <button
-            onClick={() => { setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]); setQ(''); setCity(''); push({ q:'', city:'', category:'', rating:'0' }); }}
+            onClick={() => {
+              setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]);
+              setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating');
+              push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating' });
+            }}
             style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
           >
             Clear all filters
           </button>
         </div>
 
-        {/* ── RESULTS ── */}
+        {/* RESULTS */}
         <div>
-          {/* Results header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ fontSize: '1rem', color: 'var(--muted)' }}>
               <strong style={{ color: 'var(--charcoal)' }}>{totalCount.toLocaleString()} result{totalCount !== 1 ? 's' : ''}</strong>
               {currentFilters.q && ` for "${currentFilters.q}"`}
-              {currentFilters.city && ` near ${currentFilters.city}`}
+              {currentFilters.category && ` in ${currentFilters.category}`}
+              {currentFilters.neighborhood && ` · ${currentFilters.neighborhood}`}
             </div>
-            <select
-              value={sort}
-              onChange={e => { setSort(e.target.value); push({ sort: e.target.value }); }}
-              style={{ border: '1.5px solid var(--border)', borderRadius: '8px', padding: '8px 14px', fontSize: '.87rem', outline: 'none', color: 'var(--charcoal)', background: '#fff', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
-            >
-              <option value="rating">Best Match</option>
-              <option value="reviews">Most Reviewed</option>
-            </select>
           </div>
 
-          {/* Results list */}
           {businesses.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 40px', background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
               <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', marginBottom: '8px' }}>No results found</div>
-              <div style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '24px' }}>Try different keywords or a different city</div>
-              <button className="btn-primary" onClick={() => push({ q:'', city:'', category:'', rating:'0' })}>Clear Search</button>
+              <div style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '24px' }}>Try different keywords or filters</div>
+              <button className="btn-primary" onClick={() => push({ q:'', city:'', category:'', rating:'0', neighborhood:'' })}>Clear Search</button>
             </div>
           ) : businesses.map(biz => {
             const emoji = getCategoryEmoji(biz.category_name || '');
-            const rating = Number(biz.rating_avg) || 0;
+            const rating = Number(biz.google_rating) || Number(biz.rating_avg) || 0;
             const fullStars = Math.floor(rating);
             const emptyStars = 5 - fullStars;
 
             return (
               <Link key={biz.id} href={`/business/${biz.slug || biz.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="result-hover" style={{
+                <div className="card-hover" style={{
                   background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
                   display: 'flex', overflow: 'hidden', cursor: 'pointer', marginBottom: '18px',
                 }}>
@@ -200,11 +264,13 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                       </div>
                       {biz.is_featured && <span className="badge badge-featured">⭐ Featured</span>}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                      <span className="stars">{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
-                      <span style={{ fontWeight: 700, fontSize: '.9rem' }}>{formatRating(rating)}</span>
-                      <span style={{ fontSize: '.82rem', color: 'var(--muted)' }}>({biz.review_count} reviews)</span>
-                    </div>
+                    {rating > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                        <span className="stars">{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
+                        <span style={{ fontWeight: 700, fontSize: '.9rem' }}>{rating.toFixed(1)}</span>
+                        <span style={{ fontSize: '.82rem', color: 'var(--muted)' }}>Google rating</span>
+                      </div>
+                    )}
                     {biz.description && (
                       <p style={{ fontSize: '.87rem', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {biz.description}
@@ -221,7 +287,6 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             );
           })}
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', padding: '16px 0 40px' }}>
               {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
