@@ -36,7 +36,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
 
   return (
     <main>
-      {/* HERO */}
       <div style={{
         background: 'linear-gradient(140deg,#0e3d26 0%,var(--green) 50%,#1a7a4a 100%)',
         padding: '80px 5vw 88px', position: 'relative', overflow: 'hidden',
@@ -51,7 +50,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           }}>
             🇪🇹 Made for Ethiopia
           </div>
-
           <h1 style={{
             fontFamily: 'var(--font-serif)',
             fontSize: 'clamp(2.2rem,4.5vw,3.6rem)',
@@ -59,11 +57,9 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           }}>
             Discover the best of <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>your city</em>
           </h1>
-
           <p style={{ color: 'rgba(255,255,255,.68)', fontSize: '1.05rem', marginBottom: '36px', lineHeight: 1.65 }}>
-            Restaurants, hotels, spas & shops — reviewed by real Ethiopians. Find trusted local businesses everywhere.
+            Restaurants, hotels, spas & shops — reviewed by real Ethiopians.
           </p>
-
           <div style={{
             display: 'flex', background: '#fff', borderRadius: '14px',
             overflow: 'hidden', boxShadow: '0 10px 50px rgba(0,0,0,.3)', maxWidth: '660px',
@@ -90,7 +86,11 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             </div>
             <button
               onClick={handleSearch}
-              className="btn-search"
+              style={{
+                background: 'var(--yellow)', border: 'none', padding: '0 28px',
+                fontFamily: 'var(--font-sans)', fontSize: '.95rem', fontWeight: 700,
+                color: 'var(--charcoal)', cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
             >
               Search
             </button>
@@ -98,7 +98,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         </div>
       </div>
 
-      {/* CATEGORY PILLS */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '32px 5vw 0' }}>
         {[{ name: 'All', emoji: '🍽️' }, ...categories.map(c => ({ name: c.name, emoji: c.emoji || '📍' }))].map(cat => (
           <button
@@ -119,7 +118,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         ))}
       </div>
 
-      {/* TOP PICKS */}
       <div style={{ padding: '56px 5vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
@@ -129,7 +127,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             See all →
           </Link>
         </div>
-
         {filteredBusinesses.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '22px' }}>
             {filteredBusinesses.map(biz => (
@@ -144,7 +141,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         )}
       </div>
 
-      {/* CITIES */}
       <div style={{ padding: '56px 5vw', background: 'var(--cream)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, marginBottom: '28px' }}>
           Browse by <span style={{ color: 'var(--green)' }}>City</span>
@@ -157,8 +153,8 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 onMouseLeave={() => setHoveredCity(null)}
                 style={{
                   background: hoveredCity === city.id ? 'var(--green)' : '#fff',
-                  borderRadius: '14px', padding: '20px 14px',
-                  textAlign: 'center', border: `1px solid ${hoveredCity === city.id ? 'var(--green)' : 'var(--border)'}`,
+                  borderRadius: '14px', padding: '20px 14px', textAlign: 'center',
+                  border: `1px solid ${hoveredCity === city.id ? 'var(--green)' : 'var(--border)'}`,
                   cursor: 'pointer', transition: 'all .22s',
                   color: hoveredCity === city.id ? '#fff' : 'var(--charcoal)',
                 }}
@@ -174,7 +170,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         </div>
       </div>
 
-      {/* HOW IT WORKS */}
       <div style={{ padding: '56px 5vw', background: 'var(--green)' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, color: '#fff', marginBottom: '28px' }}>
           How <span style={{ color: 'var(--yellow)' }}>AddisReview</span> works
@@ -202,7 +197,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         </div>
       </div>
 
-      {/* CTA */}
       <div style={{
         background: 'var(--yellow)', padding: '52px 5vw',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap',
