@@ -11,8 +11,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const supabase = createServerClient();
   const page = Number(searchParams.page) || 1;
 
-  // Fetch results using our search function
-  const { data: results, error } = await supabase.rpc('search_businesses', {
+  const { data: results } = await (supabase as any).rpc('search_businesses', {
     search_query: searchParams.q || null,
     city_filter: searchParams.city || null,
     cat_filter: searchParams.category || null,
@@ -22,8 +21,8 @@ export default async function SearchPage({ searchParams }: Props) {
     page_size: 10,
   });
 
-  const { data: categories } = await supabase.from('categories').select('*').order('sort_order');
-  const { data: cities } = await supabase.from('cities').select('id,name,emoji').eq('is_active', true);
+  const { data: categories } = await supabase.from('categories').select('*').order('sort_order') as any;
+  const { data: cities } = await supabase.from('cities').select('id,name,emoji').eq('is_active', true) as any;
 
   const businesses = results || [];
   const total = businesses[0]?.total_count ?? 0;
