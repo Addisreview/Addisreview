@@ -22,8 +22,15 @@ export default async function SearchPage({ searchParams }: Props) {
     neighborhood_filter: searchParams.neighborhood || null,
   });
 
-  const { data: categories } = await supabase.from('categories').select('*').order('sort_order') as any;
-  const { data: cities } = await supabase.from('cities').select('id,name,emoji').eq('is_active', true) as any;
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name, slug, emoji, sort_order')
+    .order('sort_order') as any;
+
+  const { data: cities } = await supabase
+    .from('cities')
+    .select('id, name, emoji')
+    .eq('is_active', true) as any;
 
   const businesses = results || [];
   const total = businesses[0]?.total_count ?? 0;
