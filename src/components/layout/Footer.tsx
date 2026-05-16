@@ -15,21 +15,17 @@ export default function Footer() {
         <div>
           <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>Explore</h4>
           {['Restaurants','Hotels','Coffee Houses','Shopping'].map(item => (
-            <Link key={item} href={`/search?category=${item.toLowerCase()}`}
-              style={{ display: 'block', color: 'rgba(255,255,255,.42)', textDecoration: 'none', fontSize: '.83rem', marginBottom: '8px' }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--yellow)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,.42)')}
-            >{item}</Link>
+            <Link key={item} href={`/search?category=${item.toLowerCase()}`} className="footer-link">
+              {item}
+            </Link>
           ))}
         </div>
         <div>
           <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>Cities</h4>
           {['Addis Ababa','Gondar','Hawassa','Bahir Dar'].map(city => (
-            <Link key={city} href={`/search?city=${city}`}
-              style={{ display: 'block', color: 'rgba(255,255,255,.42)', textDecoration: 'none', fontSize: '.83rem', marginBottom: '8px' }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--yellow)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,.42)')}
-            >{city}</Link>
+            <Link key={city} href={`/search?city=${city}`} className="footer-link">
+              {city}
+            </Link>
           ))}
         </div>
         <div>
