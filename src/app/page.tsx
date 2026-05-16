@@ -1,3 +1,4 @@
+export const revalidate = 0;
 import { createServerClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
