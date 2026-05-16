@@ -51,29 +51,11 @@ export default function Navbar() {
       </Link>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <Link href="/search" style={{
-          color: 'rgba(255,255,255,.78)',
-          textDecoration: 'none',
-          fontSize: '.88rem',
-          fontWeight: 500,
-          transition: 'color .2s',
-        }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--yellow)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,.78)')}
-        >
+        <Link href="/search" className="nav-link">
           Explore
         </Link>
 
-        <Link href="/write-review" style={{
-          color: 'rgba(255,255,255,.78)',
-          textDecoration: 'none',
-          fontSize: '.88rem',
-          fontWeight: 500,
-          transition: 'color .2s',
-        }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--yellow)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,.78)')}
-        >
+        <Link href="/write-review" className="nav-link">
           Write a Review
         </Link>
 
@@ -109,19 +91,7 @@ export default function Navbar() {
               }}>
                 <button
                   onClick={handleSignOut}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '12px 18px',
-                    background: 'none',
-                    border: 'none',
-                    textAlign: 'left',
-                    fontSize: '.88rem',
-                    cursor: 'pointer',
-                    color: 'var(--charcoal)',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                  className="nav-menu-item"
                 >
                   Sign Out
                 </button>
@@ -129,21 +99,7 @@ export default function Navbar() {
             )}
           </div>
         ) : (
-          <Link href="/auth" style={{
-            background: 'var(--yellow)',
-            color: 'var(--charcoal)',
-            padding: '8px 18px',
-            borderRadius: '50px',
-            fontWeight: 700,
-            fontSize: '.85rem',
-            border: 'none',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            transition: 'background .2s',
-          }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--yellow-dark)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'var(--yellow)')}
-          >
+          <Link href="/auth" className="btn-nav">
             Sign Up / Log In
           </Link>
         )}
