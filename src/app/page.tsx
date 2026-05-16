@@ -3,30 +3,28 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import HomeClient from './HomeClient';
 
+export const revalidate = 0; // Always fetch fresh data
+
 export default async function HomePage() {
   const supabase = createServerClient();
 
-  // Fetch featured businesses
   const { data: featured } = await supabase
     .from('businesses')
     .select('*')
     .eq('is_active', true)
-    .order('is_featured', { ascending: false })
     .order('rating_avg', { ascending: false })
-    .limit(6);
+    .limit(12) as any;
 
-  // Fetch cities
   const { data: cities } = await supabase
     .from('cities')
     .select('*')
     .eq('is_active', true)
-    .order('place_count', { ascending: false });
+    .order('place_count', { ascending: false }) as any;
 
-  // Fetch categories
   const { data: categories } = await supabase
     .from('categories')
     .select('*')
-    .order('sort_order');
+    .order('sort_order') as any;
 
   return (
     <>
