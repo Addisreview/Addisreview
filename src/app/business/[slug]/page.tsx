@@ -1,53 +1,43 @@
-import { notFound } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import BusinessProfileClient from './BusinessProfileClient';
+import SearchClient from './SearchClient';
 
 interface Props {
-  params: { slug: string };
+  searchParams: { q?: string; city?: string; category?: string; rating?: string; price?: string; sort?: string; page?: string };
 }
 
-export async function generateMetadata({ params }: Props) {
+export default async function SearchPage({ searchParams }: Props) {
   const supabase = createServerClient();
-  const { data: biz } = await supabase
-    .from('businesses')
-    .select('name, description, city_name')
-    .or(`slug.eq.${params.slug},id.eq.${params.slug}`)
-    .single() as any;
+  const page = Number(searchParams.page) || 1;
 
-  if (!biz) return { title: 'Business Not Found' };
+  const { data: results } = await (supabase as any).rpc('search_businesses', {
+    search_query: searchParams.q || null,
+    city_filter: searchParams.city || null,
+    cat_filter: searchParams.category || null,
+    min_rating: searchParams.rating ? Number(searchParams.rating) : 0,
+    sort_by: searchParams.sort || 'rating',
+    page_num: page,
+    page_size: 10,
+  });
 
-  return {
-    title: `${biz.name} — ${biz.city_name}`,
-    description: biz.description || `Review and details for ${biz.name} in ${biz.city_name}, Ethiopia.`,
-  };
-}
+  const { data: categories } = await supabase.from('categories').select('*').order('sort_order') as any;
+  const { data: cities } = await supabase.from('cities').select('id,name,emoji').eq('is_active', true) as any;
 
-export default async function BusinessPage({ params }: Props) {
-  const supabase = createServerClient();
-
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('*')
-    .or(`slug.eq.${params.slug},id.eq.${params.slug}`)
-    .eq('is_active', true)
-    .single() as any;
-
-  if (!business) notFound();
-
-  const { data: reviews } = await supabase
-    .from('reviews')
-    .select('*, profiles(display_name, avatar_url)')
-    .eq('business_id', business.id)
-    .eq('is_approved', true)
-    .order('created_at', { ascending: false })
-    .limit(20) as any;
+  const businesses = results || [];
+  const total = businesses[0]?.total_count ?? 0;
 
   return (
     <>
       <Navbar />
-      <BusinessProfileClient business={business} reviews={reviews || []} />
+      <SearchClient
+        businesses={businesses}
+        totalCount={Number(total)}
+        categories={categories || []}
+        cities={cities || []}
+        currentFilters={searchParams}
+        currentPage={page}
+      />
       <Footer />
     </>
   );
