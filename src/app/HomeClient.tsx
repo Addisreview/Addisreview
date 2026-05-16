@@ -6,6 +6,20 @@ import Link from 'next/link';
 import BusinessCard from '@/components/business/BusinessCard';
 import type { Business, City, Category } from '@/types/database';
 
+const TOP_CATEGORIES = [
+  { name: 'All',                    emoji: '🍽️' },
+  { name: 'Restaurants',            emoji: '🍛' },
+  { name: 'Coffee & Buna',          emoji: '☕' },
+  { name: 'Juice Bars',             emoji: '🥤' },
+  { name: 'Hotels',                 emoji: '🏨' },
+  { name: 'Rooftop Bars & Lounges', emoji: '🌆' },
+  { name: 'Spas',                   emoji: '💆' },
+  { name: 'Bakeries',               emoji: '🥐' },
+  { name: 'Guesthouses',            emoji: '🏠' },
+  { name: 'Gyms',                   emoji: '💪' },
+  { name: 'Supermarkets',           emoji: '🛒' },
+];
+
 interface Props {
   businesses: Business[];
   cities: City[];
@@ -23,6 +37,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
     const params = new URLSearchParams();
     if (searchQ) params.set('q', searchQ);
     if (searchLoc) params.set('city', searchLoc);
+    if (activeCategory !== 'All') params.set('category', activeCategory);
     router.push(`/search?${params.toString()}`);
   };
 
@@ -36,6 +51,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
 
   return (
     <main>
+      {/* HERO */}
       <div style={{
         background: 'linear-gradient(140deg,#0e3d26 0%,var(--green) 50%,#1a7a4a 100%)',
         padding: '80px 5vw 88px', position: 'relative', overflow: 'hidden',
@@ -58,7 +74,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             Discover the best of <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>your city</em>
           </h1>
           <p style={{ color: 'rgba(255,255,255,.68)', fontSize: '1.05rem', marginBottom: '36px', lineHeight: 1.65 }}>
-            Restaurants, hotels, spas & shops — reviewed by real Ethiopians.
+            Restaurants, hotels, spas & shops — reviewed by real Ethiopians. Find trusted local businesses everywhere.
           </p>
           <div style={{
             display: 'flex', background: '#fff', borderRadius: '14px',
@@ -84,22 +100,14 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 style={{ border: 'none', outline: 'none', fontSize: '.93rem', color: 'var(--charcoal)', width: '100%', padding: '17px 0', background: 'transparent' }}
               />
             </div>
-            <button
-              onClick={handleSearch}
-              style={{
-                background: 'var(--yellow)', border: 'none', padding: '0 28px',
-                fontFamily: 'var(--font-sans)', fontSize: '.95rem', fontWeight: 700,
-                color: 'var(--charcoal)', cursor: 'pointer', whiteSpace: 'nowrap',
-              }}
-            >
-              Search
-            </button>
+            <button onClick={handleSearch} className="btn-search">Search</button>
           </div>
         </div>
       </div>
 
+      {/* CATEGORY PILLS — top 10 most searched */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '32px 5vw 0' }}>
-        {[{ name: 'All', emoji: '🍽️' }, ...categories.map(c => ({ name: c.name, emoji: c.emoji || '📍' }))].map(cat => (
+        {TOP_CATEGORIES.map(cat => (
           <button
             key={cat.name}
             onClick={() => setActiveCategory(cat.name)}
@@ -116,8 +124,20 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             {cat.emoji} {cat.name}
           </button>
         ))}
+        <Link href="/search" style={{ textDecoration: 'none' }}>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: '7px',
+            background: 'transparent', border: '1.5px dashed var(--border)',
+            borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
+            fontWeight: 500, cursor: 'pointer', color: 'var(--muted)',
+            fontFamily: 'var(--font-sans)',
+          }}>
+            More categories →
+          </button>
+        </Link>
       </div>
 
+      {/* TOP PICKS */}
       <div style={{ padding: '56px 5vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
@@ -137,10 +157,16 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
             <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
             <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem' }}>No businesses yet in this category</div>
+            <div style={{ marginTop: '16px' }}>
+              <Link href={`/search?category=${encodeURIComponent(activeCategory)}`}>
+                <button className="btn-primary">Search {activeCategory}</button>
+              </Link>
+            </div>
           </div>
         )}
       </div>
 
+      {/* CITIES */}
       <div style={{ padding: '56px 5vw', background: 'var(--cream)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, marginBottom: '28px' }}>
           Browse by <span style={{ color: 'var(--green)' }}>City</span>
@@ -153,8 +179,8 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 onMouseLeave={() => setHoveredCity(null)}
                 style={{
                   background: hoveredCity === city.id ? 'var(--green)' : '#fff',
-                  borderRadius: '14px', padding: '20px 14px', textAlign: 'center',
-                  border: `1px solid ${hoveredCity === city.id ? 'var(--green)' : 'var(--border)'}`,
+                  borderRadius: '14px', padding: '20px 14px',
+                  textAlign: 'center', border: `1px solid ${hoveredCity === city.id ? 'var(--green)' : 'var(--border)'}`,
                   cursor: 'pointer', transition: 'all .22s',
                   color: hoveredCity === city.id ? '#fff' : 'var(--charcoal)',
                 }}
@@ -170,6 +196,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         </div>
       </div>
 
+      {/* HOW IT WORKS */}
       <div style={{ padding: '56px 5vw', background: 'var(--green)' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, color: '#fff', marginBottom: '28px' }}>
           How <span style={{ color: 'var(--yellow)' }}>AddisReview</span> works
@@ -197,6 +224,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         </div>
       </div>
 
+      {/* CTA */}
       <div style={{
         background: 'var(--yellow)', padding: '52px 5vw',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap',
