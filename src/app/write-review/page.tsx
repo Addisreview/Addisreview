@@ -73,7 +73,10 @@ function WriteReviewForm() {
       if (error) throw error;
 
       toast.success('Review submitted! Thank you 🙏');
-      setTimeout(() => router.push(`/business/${businessSlug}`), 1200);
+      setTimeout(() => {
+  router.push(`/business/${businessSlug}`);
+  router.refresh();
+}, 1200);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to submit review';
       toast.error(message);
