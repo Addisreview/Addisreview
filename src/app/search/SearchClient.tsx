@@ -12,6 +12,17 @@ const NEIGHBORHOODS = [
   'Gofa', 'Jemo', 'Kotebe', 'Kolfe', 'Akaki'
 ];
 
+const CARD_COLORS: Record<string, string> = {
+  'Restaurants':   'linear-gradient(135deg,#6b2e0a,#c45e1e)',
+  'Coffee & Buna': 'linear-gradient(135deg,#1a3d1a,#2e6b2e)',
+  'Hotels':        'linear-gradient(135deg,#0e2a5c,#1e4f9e)',
+  'Spas':          'linear-gradient(135deg,#3d1a6b,#7a3db5)',
+  'Shopping':      'linear-gradient(135deg,#5c1a0e,#a83418)',
+  'Entertainment': 'linear-gradient(135deg,#0a4a3a,#1a8a6a)',
+  'Healthcare':    'linear-gradient(135deg,#1a3d5c,#2e6b9e)',
+  'Services':      'linear-gradient(135deg,#3a3a1a,#6b6b2e)',
+};
+
 interface Props {
   businesses: BusinessWithCount[];
   totalCount: number;
@@ -240,6 +251,8 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             const rating = Number(biz.google_rating) || Number(biz.rating_avg) || 0;
             const fullStars = Math.floor(rating);
             const emptyStars = 5 - fullStars;
+            const photo = (biz as any).cover_photo_url || null;
+            const bg = CARD_COLORS[biz.category_name || ''] || 'linear-gradient(135deg,#f0ebe3,#e8ddd0)';
 
             return (
               <Link key={biz.id} href={`/business/${biz.slug || biz.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -247,13 +260,32 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                   background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
                   display: 'flex', overflow: 'hidden', cursor: 'pointer', marginBottom: '18px',
                 }}>
+                  {/* Photo or emoji thumbnail */}
                   <div style={{
-                    width: '160px', minWidth: '160px', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', fontSize: '4rem',
-                    background: 'linear-gradient(135deg,#f0ebe3,#e8ddd0)',
+                    width: '160px', minWidth: '160px', position: 'relative', overflow: 'hidden',
+                    background: photo ? 'transparent' : bg,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem',
                   }}>
-                    {emoji}
+                    {photo ? (
+                      <img
+                        src={photo}
+                        alt={biz.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        onError={e => {
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.style.background = bg;
+                            parent.innerHTML = `<span style="font-size:4rem">${emoji}</span>`;
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span>{emoji}</span>
+                    )}
                   </div>
+
                   <div style={{ padding: '20px 22px', flex: 1 }}>
                     <div style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '4px' }}>
                       {biz.category_name}
