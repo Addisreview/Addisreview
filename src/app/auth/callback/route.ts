@@ -1,18 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
+ 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-
+  const redirect = requestUrl.searchParams.get('redirect') || '/';
+ 
   if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_DB_HOST!,
-      process.env.NEXT_PUBLIC_DB_ANON!
-    );
+    const supabase = createServerClient();
     await supabase.auth.exchangeCodeForSession(code);
   }
-
-  return NextResponse.redirect(new URL('/', request.url));
+ 
+  return NextResponse.redirect(new URL(redirect, request.url));
 }
