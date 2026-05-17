@@ -186,9 +186,8 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         {subcategories.length > 0 && (
           <div style={{
             display: 'flex', gap: '8px', flexWrap: 'wrap',
-            paddingBottom: '14px', paddingTop: '2px',
+            paddingBottom: '14px', paddingTop: '12px',
             borderTop: '1px solid var(--border)',
-            paddingTop: '12px',
           }}>
             <span style={{ fontSize: '.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px', color: 'var(--muted)', alignSelf: 'center', marginRight: '4px' }}>
               Quick filters:
