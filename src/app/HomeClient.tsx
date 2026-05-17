@@ -7,17 +7,17 @@ import BusinessCard from '@/components/business/BusinessCard';
 import type { Business, City, Category } from '@/types/database';
 
 const TOP_CATEGORIES = [
-  { name: 'All',                    emoji: '🍽️' },
-  { name: 'Restaurants',            emoji: '🍛' },
-  { name: 'Coffee & Buna',          emoji: '☕' },
-  { name: 'Juice Bars',             emoji: '🥤' },
-  { name: 'Hotels',                 emoji: '🏨' },
-  { name: 'Rooftop Bars & Lounges', emoji: '🌆' },
-  { name: 'Spas',                   emoji: '💆' },
-  { name: 'Bakeries',               emoji: '🥐' },
-  { name: 'Guesthouses',            emoji: '🏠' },
-  { name: 'Gyms',                   emoji: '💪' },
-  { name: 'Supermarkets',           emoji: '🛒' },
+  { name: 'All',                    emoji: '🍽️', subcategories: [] },
+  { name: 'Restaurants',            emoji: '🍛', subcategories: ['Delivery', 'Firfir', 'Injera & Wot', 'Grills', 'Seafood', 'Italian', 'Fast Food', 'Vegetarian'] },
+  { name: 'Coffee & Buna',          emoji: '☕', subcategories: ['Traditional Buna', 'Specialty Coffee', 'Pastry & Cake', 'Tea Houses'] },
+  { name: 'Juice Bars',             emoji: '🥤', subcategories: ['Fresh Juice', 'Smoothies', 'Avocado Juice', 'Mixed Fruit'] },
+  { name: 'Hotels',                 emoji: '🏨', subcategories: ['Luxury', 'Boutique', 'Budget', 'Rooftop Pool'] },
+  { name: 'Rooftop Bars & Lounges', emoji: '🌆', subcategories: ['Live Music', 'Cocktail Bars', 'Sports Bars', 'Nightclubs'] },
+  { name: 'Spas',                   emoji: '💆', subcategories: ['Massage', 'Hair Salons', 'Nail Salons', 'Hammam', 'Skin Care'] },
+  { name: 'Bakeries',               emoji: '🥐', subcategories: ['Bread', 'Cakes & Pastries', 'Sandwiches', 'Gluten Free'] },
+  { name: 'Guesthouses',            emoji: '🏠', subcategories: ['Airbnb Style', 'Family Run', 'Budget', 'With Breakfast'] },
+  { name: 'Gyms',                   emoji: '💪', subcategories: ['CrossFit', 'Swimming Pools', 'Yoga', 'Martial Arts', 'Boxing'] },
+  { name: 'Supermarkets',           emoji: '🛒', subcategories: ['Imported Goods', 'Organic', 'Local Markets', 'Butchers'] },
 ];
 
 interface Props {
