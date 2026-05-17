@@ -42,8 +42,8 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
 
   const ratingBuckets = [5,4,3,2,1].map(star => ({
     star,
-    count: reviews.filter(r => r.rating === star).length,
-    pct: reviews.length > 0 ? (reviews.filter(r => r.rating === star).length / reviews.length) * 100 : 0,
+    count: reviews.filter(r => Number(r.rating) === star).length,
+    pct: reviews.length > 0 ? (reviews.filter(r => Number(r.rating) === star).length / reviews.length) * 100 : 0,
   }));
 
   const today = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
