@@ -47,52 +47,36 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
 
   return (
     <main>
-      {/* ── HERO ── */}
-      <div style={{
-        height: '300px',
-        position: 'relative',
-        overflow: 'hidden',
-        background: heroColor,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '8rem',
-      }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .biz-body-layout { grid-template-columns: 1fr !important; padding: 16px !important; }
+          .biz-sidebar { order: -1; }
+          .biz-hero { height: 200px !important; font-size: 5rem !important; }
+          .biz-header-inner { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+          .biz-actions { flex-wrap: wrap; width: 100%; }
+          .biz-actions button { flex: 1; justify-content: center; }
+          .biz-avatar { margin-top: -40px !important; width: 70px !important; height: 70px !important; font-size: 2rem !important; }
+          .photos-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
+
+      {/* HERO */}
+      <div className="biz-hero" style={{ height: '300px', position: 'relative', overflow: 'hidden', background: heroColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem' }}>
         {photo && !imgError ? (
-          <img
-            src={photo}
-            alt={business.name}
-            onError={() => setImgError(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
-          />
-        ) : (
-          emoji
-        )}
+          <img src={photo} alt={business.name} onError={() => setImgError(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+        ) : emoji}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.6))' }} />
       </div>
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '0 5vw' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px', padding: '24px 0', flexWrap: 'wrap' }}>
-          <div style={{
-            width: '90px', height: '90px',
-            background: photo && !imgError ? 'transparent' : heroColor,
-            borderRadius: '16px', border: '4px solid #fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '2.8rem', marginTop: '-50px', position: 'relative', zIndex: 2,
-            boxShadow: 'var(--shadow-md)', flexShrink: 0,
-            overflow: 'hidden',
-          }}>
-            {photo && !imgError ? (
-              <img src={photo} alt={business.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              emoji
-            )}
+        <div className="biz-header-inner" style={{ display: 'flex', alignItems: 'flex-end', gap: '24px', padding: '24px 0', flexWrap: 'wrap' }}>
+          <div className="biz-avatar" style={{ width: '90px', height: '90px', background: photo && !imgError ? 'transparent' : heroColor, borderRadius: '16px', border: '4px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.8rem', marginTop: '-50px', position: 'relative', zIndex: 2, boxShadow: 'var(--shadow-md)', flexShrink: 0, overflow: 'hidden' }}>
+            {photo && !imgError ? <img src={photo} alt={business.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : emoji}
           </div>
-
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 900, lineHeight: 1.1, marginBottom: '6px' }}>
-              {business.name}
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.4rem,3vw,1.9rem)', fontWeight: 900, lineHeight: 1.1, marginBottom: '6px' }}>{business.name}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="stars" style={{ fontSize: '1.1rem' }}>{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
                 <span style={{ fontWeight: 800, fontSize: '1rem' }}>{formatRating(rating)}</span>
@@ -103,70 +87,42 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
               {business.category_name && <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>{business.category_name}{business.price_range ? ` · ${priceLabel(business.price_range)}` : ''}</span>}
             </div>
           </div>
-
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}
-              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 20px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--green)', color: '#fff', border: 'none', fontFamily: 'var(--font-sans)', transition: 'background .2s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--green-light)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'var(--green)')}
-            >
+          <div className="biz-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--green)', color: '#fff', border: 'none', fontFamily: 'var(--font-sans)' }}>
               ✏️ Write a Review
             </button>
-            <button
-              onClick={() => toast.success('Saved to your favorites!')}
-              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 20px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}
-            >
+            <button onClick={() => toast.success('Saved to your favorites!')} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
               ♡ Save
             </button>
-            <button
-              onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Link copied!'); }}
-              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 20px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}
-            >
+            <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Link copied!'); }} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
               ↑ Share
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── BODY LAYOUT ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '40px', padding: '40px 5vw', maxWidth: '1300px' }}>
+      {/* BODY */}
+      <div className="biz-body-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '40px', padding: '40px 5vw', maxWidth: '1300px' }}>
 
-        {/* ── MAIN ── */}
+        {/* MAIN */}
         <div>
-          {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '2px solid var(--border)', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', borderBottom: '2px solid var(--border)', marginBottom: '32px', overflowX: 'auto' }}>
             {(['reviews','about','photos'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '12px 22px', fontWeight: 600, fontSize: '.9rem', cursor: 'pointer',
-                  border: 'none', background: 'none', fontFamily: 'var(--font-sans)',
-                  borderBottom: activeTab === tab ? '2px solid var(--green)' : '2px solid transparent',
-                  marginBottom: '-2px', color: activeTab === tab ? 'var(--green)' : 'var(--muted)',
-                  textTransform: 'capitalize',
-                }}
-              >
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '12px 22px', fontWeight: 600, fontSize: '.9rem', cursor: 'pointer', border: 'none', background: 'none', fontFamily: 'var(--font-sans)', borderBottom: activeTab === tab ? '2px solid var(--green)' : '2px solid transparent', marginBottom: '-2px', color: activeTab === tab ? 'var(--green)' : 'var(--muted)', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
                 {tab}
               </button>
             ))}
           </div>
 
-          {/* Reviews tab */}
           {activeTab === 'reviews' && (
             <>
-              <div style={{
-                display: 'flex', gap: '32px', alignItems: 'center',
-                background: 'var(--cream)', borderRadius: 'var(--radius)',
-                padding: '24px', marginBottom: '28px', border: '1px solid var(--border)',
-              }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '3.5rem', fontWeight: 900, color: 'var(--green)', lineHeight: 1 }}>{formatRating(rating)}</div>
-                  <div className="stars" style={{ fontSize: '1.4rem', margin: '6px 0' }}>{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</div>
+              <div style={{ display: 'flex', gap: '24px', alignItems: 'center', background: 'var(--cream)', borderRadius: 'var(--radius)', padding: '20px', marginBottom: '28px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
+                <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontWeight: 900, color: 'var(--green)', lineHeight: 1 }}>{formatRating(rating)}</div>
+                  <div className="stars" style={{ fontSize: '1.2rem', margin: '6px 0' }}>{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</div>
                   <div style={{ fontSize: '.82rem', color: 'var(--muted)' }}>{business.review_count} reviews</div>
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: '160px' }}>
                   {ratingBuckets.map(({ star, count, pct }) => (
                     <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '7px', fontSize: '.83rem' }}>
                       <span style={{ width: '30px', textAlign: 'right', color: 'var(--muted)' }}>{star}★</span>
@@ -178,29 +134,20 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                   ))}
                 </div>
               </div>
-
               {reviews.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
+                <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📝</div>
                   <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', marginBottom: '8px' }}>No reviews yet</div>
                   <div style={{ fontSize: '.9rem', marginBottom: '24px' }}>Be the first to share your experience!</div>
-                  <button className="btn-primary" onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}>
-                    Write the First Review
-                  </button>
+                  <button className="btn-primary" onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}>Write the First Review</button>
                 </div>
-              ) : (
-                reviews.map(review => <ReviewCard key={review.id} review={review} />)
-              )}
-
+              ) : reviews.map(review => <ReviewCard key={review.id} review={review} />)}
               <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
-                <button className="btn-outline" onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}>
-                  Write Your Own Review
-                </button>
+                <button className="btn-outline" onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}>Write Your Own Review</button>
               </div>
             </>
           )}
 
-          {/* About tab */}
           {activeTab === 'about' && (
             <div>
               {business.description && (
@@ -213,38 +160,32 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 <div>
                   <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', marginBottom: '12px' }}>Features & Highlights</h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {business.features.map(f => (
-                      <span key={f} className="badge badge-green">{f}</span>
-                    ))}
+                    {business.features.map(f => <span key={f} className="badge badge-green">{f}</span>)}
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Photos tab */}
           {activeTab === 'photos' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
-              {photo ? (
-                <img src={photo} alt={business.name} style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
-              ) : null}
+            <div className="photos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
+              {photo ? <img src={photo} alt={business.name} style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} /> : null}
               {business.photos && business.photos.length > 0 ? business.photos.map((url, i) => (
                 <img key={i} src={url} alt="" style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
               )) : !photo ? (
                 <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📷</div>
-                  <div>No photos yet — help by uploading after your visit!</div>
+                  <div>No photos yet</div>
                 </div>
               ) : null}
             </div>
           )}
         </div>
 
-        {/* ── SIDEBAR ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* SIDEBAR */}
+        <div className="biz-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '22px' }}>
             <h3 style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Business Info</h3>
-
             {business.address && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>📍</span>
@@ -254,7 +195,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-
             {business.phone && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>📞</span>
@@ -264,7 +204,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-
             {business.website && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>🌐</span>
@@ -274,20 +213,13 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-
             {hours && Object.keys(hours).length > 0 && (
               <div style={{ display: 'flex', gap: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>🕐</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: '.75rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '8px' }}>Hours</div>
                   {DAYS.map(day => (
-                    <div key={day} style={{
-                      display: 'flex', justifyContent: 'space-between',
-                      fontSize: '.85rem', padding: '5px 0',
-                      borderBottom: '1px solid #f0ebe3',
-                      color: day === today ? 'var(--green)' : 'inherit',
-                      fontWeight: day === today ? 700 : 400,
-                    }}>
+                    <div key={day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.85rem', padding: '5px 0', borderBottom: '1px solid #f0ebe3', color: day === today ? 'var(--green)' : 'inherit', fontWeight: day === today ? 700 : 400 }}>
                       <span style={{ textTransform: 'capitalize' }}>{day}</span>
                       <span>{hours[day] || '—'}</span>
                     </div>
@@ -299,12 +231,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
 
           {business.lat && business.lng && (
             <a href={`https://maps.google.com?q=${business.lat},${business.lng}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-              <div style={{
-                background: 'linear-gradient(135deg,#e8f5ee,#c8e0d0)',
-                borderRadius: '12px', height: '160px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                fontSize: '2rem', color: 'var(--green)', border: '1px solid var(--border)', cursor: 'pointer',
-              }}>
+              <div style={{ background: 'linear-gradient(135deg,#e8f5ee,#c8e0d0)', borderRadius: '12px', height: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: 'var(--green)', border: '1px solid var(--border)', cursor: 'pointer' }}>
                 🗺️
                 <span style={{ fontSize: '.8rem', marginTop: '8px', fontWeight: 600, color: 'var(--green)' }}>View on Google Maps</span>
               </div>
@@ -315,9 +242,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '22px' }}>
               <h3 style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Highlights</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {business.features.map(f => (
-                  <span key={f} className="badge badge-green">{f}</span>
-                ))}
+                {business.features.map(f => <span key={f} className="badge badge-green">{f}</span>)}
               </div>
             </div>
           )}
