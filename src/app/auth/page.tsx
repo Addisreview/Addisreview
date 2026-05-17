@@ -29,13 +29,13 @@ function AuthForm() {
   }, []);
 
   const handleGoogleAuth = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}` },
-    });
-    if (error) { toast.error(error.message); setLoading(false); }
-  };
+  setLoading(true);
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}/auth/callback` },
+  });
+  if (error) { toast.error(error.message); setLoading(false); }
+};
 
   const handleSignUp = async () => {
     if (!fullName.trim()) { toast.error('Please enter your name'); return; }
