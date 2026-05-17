@@ -29,6 +29,9 @@ export const metadata: Metadata = {
   authors: [{ name: 'AddisReview' }],
   creator: 'AddisReview',
   publisher: 'AddisReview',
+  verification: {
+    google: 'GqvwzE1l4VdaEcM_HBYdaGv2W0WEsE_Tj0m-pnOXvBU',
+  },
   robots: {
     index: true,
     follow: true,
