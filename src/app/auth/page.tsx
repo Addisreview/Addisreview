@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { createBrowserClient } from '@/lib/supabase';
@@ -8,7 +8,7 @@ import Navbar from '@/components/layout/Navbar';
 
 type Tab = 'signup' | 'login' | 'forgot';
 
-export default function AuthPage() {
+function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createBrowserClient();
@@ -49,7 +49,7 @@ export default function AuthPage() {
         emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
       },
     });
-    if (error) { toast.error(error.message); } 
+    if (error) { toast.error(error.message); }
     else { toast.success('Account created! Check your email to confirm. 🇪🇹'); }
     setLoading(false);
   };
@@ -76,7 +76,6 @@ export default function AuthPage() {
 
   return (
     <>
-      <Navbar />
       <style>{`
         @media (max-width: 768px) {
           .auth-layout { grid-template-columns: 1fr !important; }
@@ -124,7 +123,6 @@ export default function AuthPage() {
         <div className="auth-right" style={{ padding: '60px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--warm-white)' }}>
           <div style={{ maxWidth: '380px', width: '100%', margin: '0 auto' }}>
 
-            {/* Tab toggle — hide on forgot password */}
             {tab !== 'forgot' && (
               <div style={{ display: 'flex', background: '#fff', borderRadius: '10px', border: '1.5px solid var(--border)', padding: '4px', marginBottom: '32px' }}>
                 {(['signup', 'login'] as Tab[]).map(t => (
@@ -140,7 +138,6 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* Google button */}
             {tab !== 'forgot' && (
               <>
                 <button onClick={handleGoogleAuth} disabled={loading} style={{
@@ -148,7 +145,7 @@ export default function AuthPage() {
                   gap: '10px', padding: '13px', borderRadius: '10px',
                   border: '1.5px solid var(--border)', background: '#fff',
                   fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.9rem',
-                  cursor: 'pointer', transition: 'all .2s', marginBottom: '14px',
+                  cursor: 'pointer', marginBottom: '14px',
                 }}>
                   🌐 Continue with Google
                 </button>
@@ -161,7 +158,6 @@ export default function AuthPage() {
               </>
             )}
 
-            {/* SIGN UP */}
             {tab === 'signup' && (
               <>
                 <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 700, marginBottom: '6px' }}>Create your account</h2>
@@ -194,7 +190,6 @@ export default function AuthPage() {
               </>
             )}
 
-            {/* LOG IN */}
             {tab === 'login' && (
               <>
                 <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 700, marginBottom: '6px' }}>Welcome back</h2>
@@ -216,7 +211,6 @@ export default function AuthPage() {
               </>
             )}
 
-            {/* FORGOT PASSWORD */}
             {tab === 'forgot' && (
               <>
                 <button onClick={() => setTab('login')} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '.88rem', marginBottom: '24px', padding: 0, fontFamily: 'var(--font-sans)' }}>
@@ -236,6 +230,17 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <>
+      <Navbar />
+      <Suspense fallback={<div style={{ padding: '80px', textAlign: 'center' }}>Loading…</div>}>
+        <AuthForm />
+      </Suspense>
     </>
   );
 }
