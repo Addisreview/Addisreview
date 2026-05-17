@@ -24,17 +24,26 @@ function WriteReviewForm() {
   const businessName = searchParams.get('name') || 'Unknown Business';
 
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [authorName, setAuthorName] = useState('');
-  const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
-      if (data.user?.email) setEmail(data.user.email);
+      if (data.user?.user_metadata?.full_name) {
+        setAuthorName(data.user.user_metadata.full_name);
+      }
+      setLoading(false);
+
+      // Redirect to login if not authenticated
+      if (!data.user) {
+        const returnUrl = `/write-review?business=${businessId}&name=${encodeURIComponent(businessName)}`;
+        router.push(`/auth?redirect=${encodeURIComponent(returnUrl)}`);
+      }
     });
   }, []);
 
@@ -58,6 +67,7 @@ function WriteReviewForm() {
         body: body.trim(),
         tags: selectedTags,
         photo_urls: [],
+        is_approved: true,
       });
 
       if (error) throw error;
@@ -72,6 +82,14 @@ function WriteReviewForm() {
     }
   };
 
+  if (loading) {
+    return <div style={{ padding: '80px', textAlign: 'center', color: 'var(--muted)' }}>Loading…</div>;
+  }
+
+  if (!user) {
+    return <div style={{ padding: '80px', textAlign: 'center', color: 'var(--muted)' }}>Redirecting to login…</div>;
+  }
+
   return (
     <main>
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '48px 5vw' }}>
@@ -85,12 +103,6 @@ function WriteReviewForm() {
             {businessId && <div style={{ fontSize: '.82rem', color: 'var(--muted)', marginTop: '2px' }}>📍 Addis Ababa</div>}
           </div>
         </div>
-
-        {!user && (
-          <div style={{ background: '#fff9e6', border: '1px solid var(--yellow)', borderRadius: '12px', padding: '14px 18px', marginBottom: '28px', fontSize: '.88rem' }}>
-            💡 <strong>Tip:</strong> <a href="/auth" style={{ color: 'var(--green)', fontWeight: 600 }}>Sign in</a> to attribute your review to your profile.
-          </div>
-        )}
 
         <div style={{ marginBottom: '28px' }}>
           <label style={{ fontWeight: 700, fontSize: '.9rem', marginBottom: '10px', display: 'block' }}>
@@ -123,18 +135,14 @@ function WriteReviewForm() {
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '9px' }}>
             {TAGS.map(tag => (
-              <button
-                key={tag}
-                onClick={() => toggleTag(tag)}
-                style={{
-                  background: selectedTags.includes(tag) ? 'var(--green)' : '#fff',
-                  border: selectedTags.includes(tag) ? '1.5px solid var(--green)' : '1.5px solid var(--border)',
-                  borderRadius: '50px', padding: '8px 16px', fontSize: '.85rem',
-                  cursor: 'pointer', transition: 'all .2s',
-                  color: selectedTags.includes(tag) ? '#fff' : 'var(--charcoal)',
-                  fontFamily: 'var(--font-sans)',
-                }}
-              >
+              <button key={tag} onClick={() => toggleTag(tag)} style={{
+                background: selectedTags.includes(tag) ? 'var(--green)' : '#fff',
+                border: selectedTags.includes(tag) ? '1.5px solid var(--green)' : '1.5px solid var(--border)',
+                borderRadius: '50px', padding: '8px 16px', fontSize: '.85rem',
+                cursor: 'pointer', transition: 'all .2s',
+                color: selectedTags.includes(tag) ? '#fff' : 'var(--charcoal)',
+                fontFamily: 'var(--font-sans)',
+              }}>
                 {tag}
               </button>
             ))}
@@ -145,10 +153,7 @@ function WriteReviewForm() {
           <label style={{ fontWeight: 700, fontSize: '.9rem', marginBottom: '10px', display: 'block' }}>
             Add Photos <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '.82rem' }}>(optional)</span>
           </label>
-          <div
-            onClick={() => toast('Photo upload coming soon!')}
-            style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '32px', textAlign: 'center', cursor: 'pointer' }}
-          >
+          <div onClick={() => toast('Photo upload coming soon!')} style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '32px', textAlign: 'center', cursor: 'pointer' }}>
             <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📷</div>
             <p style={{ fontSize: '.88rem', color: 'var(--muted)' }}>Click to add photos</p>
           </div>
@@ -160,35 +165,11 @@ function WriteReviewForm() {
           <label style={{ fontWeight: 700, fontSize: '.9rem', marginBottom: '7px', display: 'block' }}>
             Your Name <span style={{ color: 'var(--red)' }}>*</span>
           </label>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="How you'll appear on AddisReview"
-            value={authorName}
-            onChange={e => setAuthorName(e.target.value)}
-          />
+          <input type="text" className="form-input" placeholder="How you'll appear on AddisReview" value={authorName} onChange={e => setAuthorName(e.target.value)} />
         </div>
 
-        {!user && (
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ fontWeight: 700, fontSize: '.9rem', marginBottom: '7px', display: 'block' }}>
-              Email Address <span style={{ color: 'var(--red)' }}>*</span>
-            </label>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="We'll never share your email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-          <button
-            onClick={() => router.back()}
-            style={{ background: '#fff', border: '1.5px solid var(--border)', color: 'var(--muted)', padding: '13px 28px', borderRadius: '50px', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.93rem', cursor: 'pointer' }}
-          >
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px', flexWrap: 'wrap' }}>
+          <button onClick={() => router.back()} style={{ background: '#fff', border: '1.5px solid var(--border)', color: 'var(--muted)', padding: '13px 28px', borderRadius: '50px', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.93rem', cursor: 'pointer' }}>
             Cancel
           </button>
           <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
