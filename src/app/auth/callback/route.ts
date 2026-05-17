@@ -1,16 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  
   if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_DB_HOST!,
-      process.env.NEXT_PUBLIC_DB_ANON!
-    );
-    await supabase.auth.exchangeCodeForSession(code);
+    // PKCE flow - redirect to client to handle
+    return NextResponse.redirect(new URL(`/?code=${code}`, request.url));
   }
+  
+  // Implicit flow - just go home, Supabase JS will handle the hash token
   return NextResponse.redirect(new URL('/', request.url));
 }
