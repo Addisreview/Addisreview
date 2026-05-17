@@ -63,7 +63,7 @@ export default async function BusinessPage({ params }: Props) {
 
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*, profiles(display_name, avatar_url)')
+    .select('*')
     .eq('business_id', business.id)
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
