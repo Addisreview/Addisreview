@@ -20,9 +20,10 @@ interface Props {
 export default function BusinessCard({ business }: Props) {
   const emoji = getCategoryEmoji(business.category_name || '');
   const bg = CARD_COLORS[business.category_name || ''] || 'linear-gradient(135deg,#333,#555)';
-  const rating = Number(business.rating_avg) || 0;
+  const rating = Number(business.google_rating) || Number(business.rating_avg) || 0;
   const fullStars = Math.floor(rating);
   const emptyStars = 5 - fullStars;
+  const photo = business.cover_photo_url || null;
 
   return (
     <Link
@@ -40,16 +41,48 @@ export default function BusinessCard({ business }: Props) {
         {/* Thumbnail */}
         <div style={{
           height: '180px',
-          background: bg,
+          background: photo ? 'transparent' : bg,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '4.5rem',
           position: 'relative',
+          overflow: 'hidden',
         }}>
-          {emoji}
-          <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between' }}>
-            <span className={`badge ${business.is_featured ? 'badge-featured' : ''}`} style={{ visibility: business.is_featured ? 'visible' : 'hidden' }}>
+          {photo ? (
+            <img
+              src={photo}
+              alt={business.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+              onError={e => {
+                // If image fails to load, hide it and show emoji fallback
+                const target = e.currentTarget;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.style.background = bg;
+                  const span = document.createElement('span');
+                  span.innerText = emoji;
+                  parent.appendChild(span);
+                }
+              }}
+            />
+          ) : (
+            emoji
+          )}
+          <div style={{
+            position: 'absolute', top: '12px', left: '12px', right: '12px',
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            <span
+              className={`badge ${business.is_featured ? 'badge-featured' : ''}`}
+              style={{ visibility: business.is_featured ? 'visible' : 'hidden' }}
+            >
               ⭐ Featured
             </span>
           </div>
