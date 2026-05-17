@@ -14,10 +14,23 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
+    // Handle implicit OAuth flow — token arrives in URL hash
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user) {
+          setUser(data.session.user);
+          window.history.replaceState(null, '', window.location.pathname);
+          router.refresh();
+        }
+      });
+    }
+
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
     });
+
     return () => listener.subscription.unsubscribe();
   }, []);
 
