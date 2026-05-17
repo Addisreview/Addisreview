@@ -105,7 +105,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         </div>
       </div>
 
-      {/* CATEGORY PILLS — top 10 most searched */}
+      {/* CATEGORY PILLS */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '32px 5vw 0' }}>
         {TOP_CATEGORIES.map(cat => (
           <button
