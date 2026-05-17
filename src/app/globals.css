@@ -207,3 +207,19 @@ body {
 @media (max-width: 600px) {
   .search-bar-wrap { flex-direction: column; }
 }
+@media (max-width: 600px) {
+  .search-bar-wrap { flex-direction: column; }
+}
+
+/* ── RATING BARS ── */
+.bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 50px;
+  transition: width .3s ease;
+}
+
+.badge-green {
+  background: var(--green-pale);
+  color: var(--green);
+}
