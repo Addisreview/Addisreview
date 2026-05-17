@@ -1,10 +1,10 @@
-import { createServerSupabaseClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase'
 import HomeClient from './HomeClient'
 
 export const revalidate = 3600
 
 export default async function HomePage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createServerClient()
 
   const [
     { data: topPicks },
