@@ -26,6 +26,7 @@ function WriteReviewForm() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [existingReviewId, setExistingReviewId] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -33,17 +34,36 @@ function WriteReviewForm() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
       if (data.user?.user_metadata?.full_name) {
         setAuthorName(data.user.user_metadata.full_name);
       }
-      setLoading(false);
 
       if (!data.user) {
         const returnUrl = `/write-review?business=${businessId}&slug=${businessSlug}&name=${encodeURIComponent(businessName)}`;
         router.push(`/auth?redirect=${encodeURIComponent(returnUrl)}`);
+        return;
       }
+
+      // Check if user already has a review for this business
+      if (businessId && data.user) {
+        const { data: existing } = await (supabase.from('reviews') as any)
+          .select('id, rating, body, tags, author_name')
+          .eq('business_id', businessId)
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (existing) {
+          setExistingReviewId(existing.id);
+          setRating(existing.rating);
+          setBody(existing.body);
+          setSelectedTags(existing.tags || []);
+          setAuthorName(existing.author_name);
+        }
+      }
+
+      setLoading(false);
     });
   }, []);
 
@@ -59,24 +79,38 @@ function WriteReviewForm() {
 
     setSubmitting(true);
     try {
-      const { error } = await (supabase.from('reviews') as any).insert({
-        business_id: businessId,
-        user_id: user?.id || null,
-        author_name: authorName.trim(),
-        rating,
-        body: body.trim(),
-        tags: selectedTags,
-        photo_urls: [],
-        is_approved: true,
-      });
+      if (existingReviewId) {
+        // Update existing review
+        const { error } = await (supabase.from('reviews') as any)
+          .update({
+            author_name: authorName.trim(),
+            rating,
+            body: body.trim(),
+            tags: selectedTags,
+          })
+          .eq('id', existingReviewId);
+        if (error) throw error;
+        toast.success('Review updated! Thank you 🙏');
+      } else {
+        // Insert new review
+        const { error } = await (supabase.from('reviews') as any).insert({
+          business_id: businessId,
+          user_id: user?.id || null,
+          author_name: authorName.trim(),
+          rating,
+          body: body.trim(),
+          tags: selectedTags,
+          photo_urls: [],
+          is_approved: true,
+        });
+        if (error) throw error;
+        toast.success('Review submitted! Thank you 🙏');
+      }
 
-      if (error) throw error;
-
-      toast.success('Review submitted! Thank you 🙏');
       setTimeout(() => {
-  router.push(`/business/${businessSlug}`);
-  router.refresh();
-}, 1200);
+        router.push(`/business/${businessSlug}?t=${Date.now()}`);
+        router.refresh();
+      }, 1200);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to submit review';
       toast.error(message);
@@ -96,8 +130,18 @@ function WriteReviewForm() {
   return (
     <main>
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '48px 5vw' }}>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 900, marginBottom: '6px' }}>Write a Review</h1>
-        <p style={{ color: 'var(--muted)', marginBottom: '40px', fontSize: '.95rem' }}>Share your experience with the community.</p>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 900, marginBottom: '6px' }}>
+          {existingReviewId ? 'Edit Your Review' : 'Write a Review'}
+        </h1>
+        <p style={{ color: 'var(--muted)', marginBottom: '40px', fontSize: '.95rem' }}>
+          {existingReviewId ? 'Update your experience with the community.' : 'Share your experience with the community.'}
+        </p>
+
+        {existingReviewId && (
+          <div style={{ background: '#fff9e6', border: '1px solid var(--yellow)', borderRadius: '12px', padding: '14px 18px', marginBottom: '28px', fontSize: '.88rem' }}>
+            ✏️ You already reviewed this business. You can update your review below.
+          </div>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--cream)', borderRadius: '14px', padding: '18px 20px', marginBottom: '36px', border: '1px solid var(--border)' }}>
           <div style={{ fontSize: '2.2rem' }}>🍛</div>
@@ -176,7 +220,7 @@ function WriteReviewForm() {
             Cancel
           </button>
           <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Submitting…' : 'Submit Review →'}
+            {submitting ? 'Submitting…' : existingReviewId ? 'Update Review →' : 'Submit Review →'}
           </button>
         </div>
       </div>
