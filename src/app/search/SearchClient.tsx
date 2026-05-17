@@ -43,17 +43,11 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(currentFilters.neighborhood || '');
   const [showAllCats, setShowAllCats] = useState(false);
   const [showAllNeighborhoods, setShowAllNeighborhoods] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const push = (overrides: Record<string, string>) => {
     const params = new URLSearchParams();
-    const merged = {
-      q, city,
-      category: selectedCat,
-      rating: selectedRating,
-      sort,
-      neighborhood: selectedNeighborhood,
-      ...overrides
-    };
+    const merged = { q, city, category: selectedCat, rating: selectedRating, sort, neighborhood: selectedNeighborhood, ...overrides };
     Object.entries(merged).forEach(([k, v]) => { if (v && v !== '0') params.set(k, v); });
     router.push(`/search?${params.toString()}`);
   };
@@ -61,174 +55,126 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   const totalPages = Math.ceil(totalCount / 10);
   const visibleCats = showAllCats ? categories : categories.slice(0, 8);
   const visibleNeighborhoods = showAllNeighborhoods ? NEIGHBORHOODS : NEIGHBORHOODS.slice(0, 6);
+  const filterLabel = { fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px' };
 
-  const filterLabel = {
-    fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase' as const,
-    letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px'
-  };
+  const FiltersPanel = () => (
+    <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '24px' }}>
+      <div style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Filters</div>
+      <div style={{ marginBottom: '24px' }}>
+        <div style={filterLabel}>Category</div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+          <input type="radio" name="cat" checked={selectedCat === ''} onChange={() => { setSelectedCat(''); push({ category: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+          All Categories
+        </label>
+        {visibleCats.map(cat => (
+          <label key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+            <input type="radio" name="cat" checked={selectedCat === cat.name} onChange={() => { setSelectedCat(cat.name); push({ category: cat.name }); setShowFilters(false); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+            {cat.emoji || '📍'} {cat.name}
+          </label>
+        ))}
+        {categories.length > 8 && (
+          <button onClick={() => setShowAllCats(!showAllCats)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
+            {showAllCats ? 'Show less ↑' : `Show all ${categories.length} categories ↓`}
+          </button>
+        )}
+      </div>
+      <div style={{ marginBottom: '24px' }}>
+        <div style={filterLabel}>Neighborhood</div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+          <input type="radio" name="neighborhood" checked={selectedNeighborhood === ''} onChange={() => { setSelectedNeighborhood(''); push({ neighborhood: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+          All Neighborhoods
+        </label>
+        {visibleNeighborhoods.map(n => (
+          <label key={n} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+            <input type="radio" name="neighborhood" checked={selectedNeighborhood === n} onChange={() => { setSelectedNeighborhood(n); push({ neighborhood: n }); setShowFilters(false); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+            {n}
+          </label>
+        ))}
+        <button onClick={() => setShowAllNeighborhoods(!showAllNeighborhoods)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
+          {showAllNeighborhoods ? 'Show less ↑' : 'Show all neighborhoods ↓'}
+        </button>
+      </div>
+      <div style={{ marginBottom: '24px' }}>
+        <div style={filterLabel}>Minimum Rating</div>
+        {[['0','Any rating'],['4','★★★★☆ 4+ stars'],['3','★★★☆☆ 3+ stars']].map(([val, label]) => (
+          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+            <input type="radio" name="rating" checked={selectedRating === val} onChange={() => { setSelectedRating(val); push({ rating: val }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+            {label}
+          </label>
+        ))}
+      </div>
+      <div style={{ marginBottom: '24px' }}>
+        <div style={filterLabel}>Price Range</div>
+        {[[1,'$ (Budget)'],[2,'$$ (Moderate)'],[3,'$$$ (Upscale)'],[4,'$$$$ (Luxury)']].map(([val, label]) => (
+          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+            <input type="checkbox" checked={selectedPrices.includes(Number(val))} onChange={e => setSelectedPrices(prev => e.target.checked ? [...prev, Number(val)] : prev.filter(p => p !== Number(val)))} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+            {label}
+          </label>
+        ))}
+      </div>
+      <div style={{ marginBottom: '24px' }}>
+        <div style={filterLabel}>Sort By</div>
+        {[['rating','Highest Rated'],['reviews','Most Reviewed'],['name','A to Z']].map(([val, label]) => (
+          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
+            <input type="radio" name="sort" checked={sort === val} onChange={() => { setSort(val); push({ sort: val }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+            {label}
+          </label>
+        ))}
+      </div>
+      <button className="btn-primary" style={{ width: '100%', borderRadius: '10px' }} onClick={() => { push({}); setShowFilters(false); }}>Apply Filters</button>
+      <button onClick={() => { setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]); setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating'); push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating' }); setShowFilters(false); }} style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+        Clear all filters
+      </button>
+    </div>
+  );
 
   return (
     <main>
-      {/* SEARCH HEADER */}
-      <div style={{ background: 'var(--green)', padding: '32px 5vw' }}>
-        <div style={{ display: 'flex', background: '#fff', borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxWidth: '700px' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .search-layout { grid-template-columns: 1fr !important; padding: 16px !important; }
+          .filters-desktop { display: none !important; }
+          .mobile-filter-btn { display: flex !important; }
+          .biz-card { flex-direction: column !important; }
+          .biz-card-img { width: 100% !important; min-width: unset !important; height: 200px !important; }
+          .search-bar-inner { flex-direction: column; }
+          .search-bar-city { border-left: none !important; border-top: 1px solid var(--border) !important; }
+        }
+      `}</style>
+
+      <div style={{ background: 'var(--green)', padding: '24px 5vw' }}>
+        <div style={{ display: 'flex', background: '#fff', borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxWidth: '700px' }} className="search-bar-inner">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px', flex: 1, borderRight: '1px solid var(--border)' }}>
-            <input
-              type="text"
-              placeholder="Restaurants, hotels, spas…"
-              value={q}
-              onChange={e => setQ(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && push({})}
-              style={{ border: 'none', outline: 'none', fontSize: '.93rem', width: '100%', padding: '14px 0', background: 'transparent' }}
-            />
+            <input type="text" placeholder="Restaurants, hotels, spas…" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && push({})} style={{ border: 'none', outline: 'none', fontSize: '.93rem', width: '100%', padding: '14px 0', background: 'transparent' }} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px', flex: 1 }}>
-            <input
-              type="text"
-              placeholder="City or area…"
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && push({})}
-              style={{ border: 'none', outline: 'none', fontSize: '.93rem', width: '100%', padding: '14px 0', background: 'transparent' }}
-            />
+          <div className="search-bar-city" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px', flex: 1 }}>
+            <input type="text" placeholder="City or area…" value={city} onChange={e => setCity(e.target.value)} onKeyDown={e => e.key === 'Enter' && push({})} style={{ border: 'none', outline: 'none', fontSize: '.93rem', width: '100%', padding: '14px 0', background: 'transparent' }} />
           </div>
-          <button
-            onClick={() => push({})}
-            style={{ background: 'var(--yellow)', border: 'none', padding: '0 24px', fontFamily: 'var(--font-sans)', fontSize: '.95rem', fontWeight: 700, color: 'var(--charcoal)', cursor: 'pointer' }}
-          >
-            Search
-          </button>
+          <button onClick={() => push({})} style={{ background: 'var(--yellow)', border: 'none', padding: '0 24px', fontFamily: 'var(--font-sans)', fontSize: '.95rem', fontWeight: 700, color: 'var(--charcoal)', cursor: 'pointer' }}>Search</button>
         </div>
       </div>
 
-      {/* LAYOUT */}
-      <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '32px', padding: '40px 5vw', maxWidth: '1300px' }}>
+      {/* Mobile filter button */}
+      <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid var(--border)' }}>
+        <button className="mobile-filter-btn" onClick={() => setShowFilters(true)} style={{ display: 'none', alignItems: 'center', gap: '8px', background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '10px 20px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+          ☰ Filters {(selectedCat || selectedRating !== '0') ? '•' : ''}
+        </button>
+      </div>
 
-        {/* FILTERS PANEL */}
-        <div style={{
-          background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-          padding: '24px', height: 'fit-content', position: 'sticky', top: '84px',
-        }}>
-          <div style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
-            Filters
+      {/* Mobile filters overlay */}
+      {showFilters && (
+        <div onClick={e => { if (e.target === e.currentTarget) setShowFilters(false); }} style={{ position: 'fixed', inset: 0, zIndex: 150, background: 'rgba(0,0,0,0.5)', overflowY: 'auto', padding: '80px 16px 16px' }}>
+          <div style={{ maxWidth: '420px', margin: '0 auto' }}>
+            <FiltersPanel />
           </div>
+        </div>
+      )}
 
-          {/* CATEGORY */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={filterLabel}>Category</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-              <input type="radio" name="cat" checked={selectedCat === ''} onChange={() => { setSelectedCat(''); push({ category: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-              All Categories
-            </label>
-            {visibleCats.map(cat => (
-              <label key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-                <input
-                  type="radio"
-                  name="cat"
-                  checked={selectedCat === cat.name}
-                  onChange={() => { setSelectedCat(cat.name); push({ category: cat.name }); }}
-                  style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
-                />
-                {cat.emoji || '📍'} {cat.name}
-              </label>
-            ))}
-            {categories.length > 8 && (
-              <button onClick={() => setShowAllCats(!showAllCats)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
-                {showAllCats ? 'Show less ↑' : `Show all ${categories.length} categories ↓`}
-              </button>
-            )}
-          </div>
-
-          {/* NEIGHBORHOOD */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={filterLabel}>Neighborhood</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-              <input type="radio" name="neighborhood" checked={selectedNeighborhood === ''} onChange={() => { setSelectedNeighborhood(''); push({ neighborhood: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-              All Neighborhoods
-            </label>
-            {visibleNeighborhoods.map(n => (
-              <label key={n} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-                <input
-                  type="radio"
-                  name="neighborhood"
-                  checked={selectedNeighborhood === n}
-                  onChange={() => { setSelectedNeighborhood(n); push({ neighborhood: n }); }}
-                  style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
-                />
-                {n}
-              </label>
-            ))}
-            <button onClick={() => setShowAllNeighborhoods(!showAllNeighborhoods)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
-              {showAllNeighborhoods ? 'Show less ↑' : 'Show all neighborhoods ↓'}
-            </button>
-          </div>
-
-          {/* MINIMUM RATING */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={filterLabel}>Minimum Rating</div>
-            {[['0','Any rating'],['4','★★★★☆ 4+ stars'],['3','★★★☆☆ 3+ stars']].map(([val, label]) => (
-              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-                <input
-                  type="radio"
-                  name="rating"
-                  checked={selectedRating === val}
-                  onChange={() => { setSelectedRating(val); push({ rating: val }); }}
-                  style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-
-          {/* PRICE RANGE */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={filterLabel}>Price Range</div>
-            {[[1,'$ (Budget)'],[2,'$$ (Moderate)'],[3,'$$$ (Upscale)'],[4,'$$$$ (Luxury)']].map(([val, label]) => (
-              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-                <input
-                  type="checkbox"
-                  checked={selectedPrices.includes(Number(val))}
-                  onChange={e => setSelectedPrices(prev => e.target.checked ? [...prev, Number(val)] : prev.filter(p => p !== Number(val)))}
-                  style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-
-          {/* SORT */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={filterLabel}>Sort By</div>
-            {[['rating','Highest Rated'],['reviews','Most Reviewed'],['name','A to Z']].map(([val, label]) => (
-              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-                <input
-                  type="radio"
-                  name="sort"
-                  checked={sort === val}
-                  onChange={() => { setSort(val); push({ sort: val }); }}
-                  style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-
-          <button className="btn-primary" style={{ width: '100%', borderRadius: '10px' }} onClick={() => push({})}>
-            Apply Filters
-          </button>
-          <button
-            onClick={() => {
-              setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]);
-              setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating');
-              push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating' });
-            }}
-            style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
-          >
-            Clear all filters
-          </button>
+      <div className="search-layout" style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '32px', padding: '40px 5vw', maxWidth: '1300px' }}>
+        <div className="filters-desktop" style={{ position: 'sticky', top: '84px', height: 'fit-content' }}>
+          <FiltersPanel />
         </div>
 
-        {/* RESULTS */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ fontSize: '1rem', color: 'var(--muted)' }}>
@@ -240,7 +186,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           </div>
 
           {businesses.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 40px', background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
               <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', marginBottom: '8px' }}>No results found</div>
               <div style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '24px' }}>Try different keywords or filters</div>
@@ -253,62 +199,31 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             const emptyStars = 5 - fullStars;
             const photo = (biz as any).cover_photo_url || null;
             const bg = CARD_COLORS[biz.category_name || ''] || 'linear-gradient(135deg,#f0ebe3,#e8ddd0)';
-
             return (
               <Link key={biz.id} href={`/business/${biz.slug || biz.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="card-hover" style={{
-                  background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-                  display: 'flex', overflow: 'hidden', cursor: 'pointer', marginBottom: '18px',
-                }}>
-                  {/* Photo or emoji thumbnail */}
-                  <div style={{
-                    width: '160px', minWidth: '160px', position: 'relative', overflow: 'hidden',
-                    background: photo ? 'transparent' : bg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem',
-                  }}>
+                <div className="card-hover biz-card" style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', display: 'flex', overflow: 'hidden', cursor: 'pointer', marginBottom: '18px' }}>
+                  <div className="biz-card-img" style={{ width: '160px', minWidth: '160px', position: 'relative', overflow: 'hidden', background: photo ? 'transparent' : bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem' }}>
                     {photo ? (
-                      <img
-                        src={photo}
-                        alt={biz.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                        onError={e => {
-                          const target = e.currentTarget;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.style.background = bg;
-                            parent.innerHTML = `<span style="font-size:4rem">${emoji}</span>`;
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span>{emoji}</span>
-                    )}
+                      <img src={photo} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { const t = e.currentTarget; t.style.display = 'none'; const p = t.parentElement; if (p) { p.style.background = bg; p.innerHTML = `<span style="font-size:4rem">${emoji}</span>`; } }} />
+                    ) : <span>{emoji}</span>}
                   </div>
-
-                  <div style={{ padding: '20px 22px', flex: 1 }}>
-                    <div style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '4px' }}>
-                      {biz.category_name}
-                    </div>
+                  <div style={{ padding: '16px 18px', flex: 1 }}>
+                    <div style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '4px' }}>{biz.category_name}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '6px' }}>
-                      <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 700, lineHeight: 1.2 }}>
-                        {biz.name}
-                      </div>
+                      <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2 }}>{biz.name}</div>
                       {biz.is_featured && <span className="badge badge-featured">⭐ Featured</span>}
                     </div>
                     {rating > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                         <span className="stars">{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
                         <span style={{ fontWeight: 700, fontSize: '.9rem' }}>{rating.toFixed(1)}</span>
                         <span style={{ fontSize: '.82rem', color: 'var(--muted)' }}>Google rating</span>
                       </div>
                     )}
                     {biz.description && (
-                      <p style={{ fontSize: '.87rem', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {biz.description}
-                      </p>
+                      <p style={{ fontSize: '.87rem', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{biz.description}</p>
                     )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '18px', fontSize: '.82rem', color: 'var(--muted)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '.82rem', color: 'var(--muted)', flexWrap: 'wrap' }}>
                       {biz.neighborhood && <span>📍 {biz.neighborhood}{biz.city_name ? `, ${biz.city_name}` : ''}</span>}
                       {biz.price_range && <span>💰 {priceLabel(biz.price_range)}</span>}
                       {biz.is_verified && <span style={{ color: 'var(--green)', fontWeight: 600 }}>✓ Verified</span>}
@@ -320,22 +235,9 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           })}
 
           {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', padding: '16px 0 40px' }}>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', padding: '16px 0 40px', flexWrap: 'wrap' }}>
               {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
-                <button
-                  key={p}
-                  onClick={() => push({ page: String(p) })}
-                  style={{
-                    width: '38px', height: '38px', borderRadius: '8px',
-                    border: '1.5px solid var(--border)',
-                    background: currentPage === p ? 'var(--green)' : '#fff',
-                    color: currentPage === p ? '#fff' : 'var(--charcoal)',
-                    fontWeight: 600, fontSize: '.88rem', cursor: 'pointer',
-                    fontFamily: 'var(--font-sans)',
-                  }}
-                >
-                  {p}
-                </button>
+                <button key={p} onClick={() => push({ page: String(p) })} style={{ width: '38px', height: '38px', borderRadius: '8px', border: '1.5px solid var(--border)', background: currentPage === p ? 'var(--green)' : '#fff', color: currentPage === p ? '#fff' : 'var(--charcoal)', fontWeight: 600, fontSize: '.88rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>{p}</button>
               ))}
             </div>
           )}
