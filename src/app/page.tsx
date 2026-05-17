@@ -7,13 +7,14 @@ import HomeClient from './HomeClient';
 export default async function HomePage() {
   const supabase = createServerClient();
 
-  const { data: featured } = await supabase
+  // Show top-rated active businesses (all 2,460+), not just featured
+  const { data: topRated } = await supabase
     .from('businesses')
     .select('*')
     .eq('is_active', true)
-    .eq('is_featured', true)
+    .not('google_rating', 'is', null)
     .order('google_rating', { ascending: false })
-    .limit(12) as any;
+    .limit(24) as any;
 
   const { data: cities } = await supabase
     .from('cities')
@@ -30,7 +31,7 @@ export default async function HomePage() {
     <>
       <Navbar />
       <HomeClient
-        businesses={featured || []}
+        businesses={topRated || []}
         cities={cities || []}
         categories={categories || []}
       />
