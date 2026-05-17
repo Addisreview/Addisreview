@@ -7,17 +7,56 @@ import BusinessCard from '@/components/business/BusinessCard';
 import type { Business, City, Category } from '@/types/database';
 
 const TOP_CATEGORIES = [
-  { name: 'All',                    emoji: '🍽️', subcategories: [] },
-  { name: 'Restaurants',            emoji: '🍛', subcategories: ['Delivery', 'Firfir', 'Injera & Wot', 'Grills', 'Seafood', 'Italian', 'Fast Food', 'Vegetarian'] },
-  { name: 'Coffee & Buna',          emoji: '☕', subcategories: ['Traditional Buna', 'Specialty Coffee', 'Pastry & Cake', 'Tea Houses'] },
-  { name: 'Juice Bars',             emoji: '🥤', subcategories: ['Fresh Juice', 'Smoothies', 'Avocado Juice', 'Mixed Fruit'] },
-  { name: 'Hotels',                 emoji: '🏨', subcategories: ['Luxury', 'Boutique', 'Budget', 'Rooftop Pool'] },
-  { name: 'Rooftop Bars & Lounges', emoji: '🌆', subcategories: ['Live Music', 'Cocktail Bars', 'Sports Bars', 'Nightclubs'] },
-  { name: 'Spas',                   emoji: '💆', subcategories: ['Massage', 'Hair Salons', 'Nail Salons', 'Hammam', 'Skin Care'] },
-  { name: 'Bakeries',               emoji: '🥐', subcategories: ['Bread', 'Cakes & Pastries', 'Sandwiches', 'Gluten Free'] },
-  { name: 'Guesthouses',            emoji: '🏠', subcategories: ['Airbnb Style', 'Family Run', 'Budget', 'With Breakfast'] },
-  { name: 'Gyms',                   emoji: '💪', subcategories: ['CrossFit', 'Swimming Pools', 'Yoga', 'Martial Arts', 'Boxing'] },
-  { name: 'Supermarkets',           emoji: '🛒', subcategories: ['Imported Goods', 'Organic', 'Local Markets', 'Butchers'] },
+  {
+    name: 'All',
+    emoji: '🍽️',
+    subcategories: [],
+  },
+  {
+    name: 'Restaurants',
+    emoji: '🍛',
+    subcategories: ['Delivery', 'Firfir', 'Injera & Wot', 'Grills', 'Seafood', 'Italian', 'Fast Food', 'Vegetarian'],
+  },
+  {
+    name: 'Coffee & Buna',
+    emoji: '☕',
+    subcategories: ['Traditional Buna', 'Specialty Coffee', 'Juice Bars', 'Pastry & Cake', 'Tea Houses'],
+  },
+  {
+    name: 'Hotels',
+    emoji: '🏨',
+    subcategories: ['Luxury', 'Boutique', 'Guesthouses', 'Budget', 'Rooftop Pool'],
+  },
+  {
+    name: 'Rooftop Bars & Lounges',
+    emoji: '🌆',
+    subcategories: ['Live Music', 'Cocktail Bars', 'Sports Bars', 'Nightclubs', 'Wine Bars'],
+  },
+  {
+    name: 'Spas',
+    emoji: '💆',
+    subcategories: ['Massage', 'Hair Salons', 'Nail Salons', 'Hammam', 'Skin Care'],
+  },
+  {
+    name: 'Shopping',
+    emoji: '🛒',
+    subcategories: ['Supermarkets', 'Traditional Markets', 'Fashion', 'Electronics', 'Bookstores'],
+  },
+  {
+    name: 'Healthcare',
+    emoji: '🏥',
+    subcategories: ['Hospitals', 'Clinics', 'Pharmacies', 'Dental', 'Opticians'],
+  },
+  {
+    name: 'Services',
+    emoji: '🔧',
+    subcategories: ['Electricians', 'Plumbers', 'Painters', 'Car Repair', 'Laundry', 'IT Support'],
+  },
+  {
+    name: 'Gyms',
+    emoji: '💪',
+    subcategories: ['CrossFit', 'Swimming Pools', 'Yoga', 'Martial Arts', 'Boxing'],
+  },
 ];
 
 interface Props {
@@ -33,17 +72,21 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
 
-  const handleSearch = () => {
+  const handleSearch = (q?: string, cat?: string) => {
     const params = new URLSearchParams();
-    if (searchQ) params.set('q', searchQ);
+    if (q ?? searchQ) params.set('q', q ?? searchQ);
     if (searchLoc) params.set('city', searchLoc);
-    if (activeCategory !== 'All') params.set('category', activeCategory);
+    const categoryToUse = cat ?? (activeCategory !== 'All' ? activeCategory : '');
+    if (categoryToUse) params.set('category', categoryToUse);
     router.push(`/search?${params.toString()}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSearch();
   };
+
+  const activeCatData = TOP_CATEGORIES.find(c => c.name === activeCategory);
+  const subcategories = activeCatData?.subcategories ?? [];
 
   const filteredBusinesses = activeCategory === 'All'
     ? businesses
@@ -100,41 +143,89 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 style={{ border: 'none', outline: 'none', fontSize: '.93rem', color: 'var(--charcoal)', width: '100%', padding: '17px 0', background: 'transparent' }}
               />
             </div>
-            <button onClick={handleSearch} className="btn-search">Search</button>
+            <button onClick={() => handleSearch()} className="btn-search">Search</button>
           </div>
         </div>
       </div>
 
-      {/* CATEGORY PILLS */}
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '32px 5vw 0' }}>
-        {TOP_CATEGORIES.map(cat => (
-          <button
-            key={cat.name}
-            onClick={() => setActiveCategory(cat.name)}
-            style={{
+      {/* CATEGORY PILLS + SUBCATEGORY ROW */}
+      <div style={{ padding: '28px 5vw 0', borderBottom: '1px solid var(--border)', background: '#fff' }}>
+        {/* Main category pills */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', paddingBottom: '16px' }}>
+          {TOP_CATEGORIES.map(cat => (
+            <button
+              key={cat.name}
+              onClick={() => setActiveCategory(cat.name)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '7px',
+                background: activeCategory === cat.name ? 'var(--green)' : '#fff',
+                border: activeCategory === cat.name ? '1.5px solid var(--green)' : '1.5px solid var(--border)',
+                borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
+                fontWeight: 500, cursor: 'pointer', transition: 'all .2s',
+                color: activeCategory === cat.name ? '#fff' : 'var(--charcoal)',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {cat.emoji} {cat.name}
+            </button>
+          ))}
+          <Link href="/search" style={{ textDecoration: 'none' }}>
+            <button style={{
               display: 'flex', alignItems: 'center', gap: '7px',
-              background: activeCategory === cat.name ? 'var(--green)' : '#fff',
-              border: activeCategory === cat.name ? '1.5px solid var(--green)' : '1.5px solid var(--border)',
+              background: 'transparent', border: '1.5px dashed var(--border)',
               borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
-              fontWeight: 500, cursor: 'pointer', transition: 'all .2s',
-              color: activeCategory === cat.name ? '#fff' : 'var(--charcoal)',
+              fontWeight: 500, cursor: 'pointer', color: 'var(--muted)',
               fontFamily: 'var(--font-sans)',
-            }}
-          >
-            {cat.emoji} {cat.name}
-          </button>
-        ))}
-        <Link href="/search" style={{ textDecoration: 'none' }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: '7px',
-            background: 'transparent', border: '1.5px dashed var(--border)',
-            borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
-            fontWeight: 500, cursor: 'pointer', color: 'var(--muted)',
-            fontFamily: 'var(--font-sans)',
+            }}>
+              More categories →
+            </button>
+          </Link>
+        </div>
+
+        {/* Subcategory chips — only shown when there are subcategories */}
+        {subcategories.length > 0 && (
+          <div style={{
+            display: 'flex', gap: '8px', flexWrap: 'wrap',
+            paddingBottom: '14px', paddingTop: '2px',
+            borderTop: '1px solid var(--border)',
+            paddingTop: '12px',
           }}>
-            More categories →
-          </button>
-        </Link>
+            <span style={{ fontSize: '.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px', color: 'var(--muted)', alignSelf: 'center', marginRight: '4px' }}>
+              Quick filters:
+            </span>
+            {subcategories.map(sub => (
+              <button
+                key={sub}
+                onClick={() => handleSearch(sub, activeCategory)}
+                style={{
+                  background: 'var(--cream)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '50px',
+                  padding: '5px 14px',
+                  fontSize: '.82rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  color: 'var(--charcoal)',
+                  fontFamily: 'var(--font-sans)',
+                  transition: 'all .15s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => {
+                  (e.target as HTMLButtonElement).style.background = 'var(--green)';
+                  (e.target as HTMLButtonElement).style.color = '#fff';
+                  (e.target as HTMLButtonElement).style.borderColor = 'var(--green)';
+                }}
+                onMouseLeave={e => {
+                  (e.target as HTMLButtonElement).style.background = 'var(--cream)';
+                  (e.target as HTMLButtonElement).style.color = 'var(--charcoal)';
+                  (e.target as HTMLButtonElement).style.borderColor = 'var(--border)';
+                }}
+              >
+                {sub}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* TOP PICKS */}
