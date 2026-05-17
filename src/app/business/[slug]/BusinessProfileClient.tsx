@@ -36,6 +36,9 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   const heroColor = HERO_COLORS[business.category_name || ''] || 'linear-gradient(135deg,#333,#555)';
   const hours = business.hours as Record<string, string> | null;
   const photo = (business as any).cover_photo_url || null;
+  const slug = business.slug || business.id;
+
+  const writeReviewUrl = `/write-review?business=${business.id}&slug=${slug}&name=${encodeURIComponent(business.name)}`;
 
   const ratingBuckets = [5,4,3,2,1].map(star => ({
     star,
@@ -88,7 +91,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             </div>
           </div>
           <div className="biz-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--green)', color: '#fff', border: 'none', fontFamily: 'var(--font-sans)' }}>
+            <button onClick={() => router.push(writeReviewUrl)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--green)', color: '#fff', border: 'none', fontFamily: 'var(--font-sans)' }}>
               ✏️ Write a Review
             </button>
             <button onClick={() => toast.success('Saved to your favorites!')} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
@@ -139,11 +142,11 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                   <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📝</div>
                   <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', marginBottom: '8px' }}>No reviews yet</div>
                   <div style={{ fontSize: '.9rem', marginBottom: '24px' }}>Be the first to share your experience!</div>
-                  <button className="btn-primary" onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}>Write the First Review</button>
+                  <button className="btn-primary" onClick={() => router.push(writeReviewUrl)}>Write the First Review</button>
                 </div>
               ) : reviews.map(review => <ReviewCard key={review.id} review={review} />)}
               <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
-                <button className="btn-outline" onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}>Write Your Own Review</button>
+                <button className="btn-outline" onClick={() => router.push(writeReviewUrl)}>Write Your Own Review</button>
               </div>
             </>
           )}
