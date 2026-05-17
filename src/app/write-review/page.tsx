@@ -21,6 +21,7 @@ function WriteReviewForm() {
   const supabase = createBrowserClient();
 
   const businessId = searchParams.get('business');
+  const businessSlug = searchParams.get('slug') || businessId;
   const businessName = searchParams.get('name') || 'Unknown Business';
 
   const [user, setUser] = useState<User | null>(null);
@@ -39,9 +40,8 @@ function WriteReviewForm() {
       }
       setLoading(false);
 
-      // Redirect to login if not authenticated
       if (!data.user) {
-        const returnUrl = `/write-review?business=${businessId}&name=${encodeURIComponent(businessName)}`;
+        const returnUrl = `/write-review?business=${businessId}&slug=${businessSlug}&name=${encodeURIComponent(businessName)}`;
         router.push(`/auth?redirect=${encodeURIComponent(returnUrl)}`);
       }
     });
@@ -73,7 +73,7 @@ function WriteReviewForm() {
       if (error) throw error;
 
       toast.success('Review submitted! Thank you 🙏');
-      setTimeout(() => router.push(`/business/${businessId}`), 1200);
+      setTimeout(() => router.push(`/business/${businessSlug}`), 1200);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to submit review';
       toast.error(message);
