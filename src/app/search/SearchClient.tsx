@@ -154,14 +154,12 @@ export default function SearchClient({ businesses, totalCount, categories, citie
         </div>
       </div>
 
-      {/* Mobile filter button */}
       <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         <button className="mobile-filter-btn" onClick={() => setShowFilters(true)} style={{ display: 'none', alignItems: 'center', gap: '8px', background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '10px 20px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
           ☰ Filters {(selectedCat || selectedRating !== '0') ? '•' : ''}
         </button>
       </div>
 
-      {/* Mobile filters overlay */}
       {showFilters && (
         <div onClick={e => { if (e.target === e.currentTarget) setShowFilters(false); }} style={{ position: 'fixed', inset: 0, zIndex: 150, background: 'rgba(0,0,0,0.5)', overflowY: 'auto', padding: '80px 16px 16px' }}>
           <div style={{ maxWidth: '420px', margin: '0 auto' }}>
@@ -194,11 +192,11 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             </div>
           ) : businesses.map(biz => {
             const emoji = getCategoryEmoji(biz.category_name || '');
-            const rating = Number(biz.google_rating) || Number(biz.rating_avg) || 0;
-            const fullStars = Math.floor(rating);
-            const emptyStars = 5 - fullStars;
             const photo = (biz as any).cover_photo_url || null;
             const bg = CARD_COLORS[biz.category_name || ''] || 'linear-gradient(135deg,#f0ebe3,#e8ddd0)';
+            const addisRating = Number(biz.rating_avg) || 0;
+            const googleRating = Number(biz.google_rating) || 0;
+
             return (
               <Link key={biz.id} href={`/business/${biz.slug || biz.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="card-hover biz-card" style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', display: 'flex', overflow: 'hidden', cursor: 'pointer', marginBottom: '18px' }}>
@@ -213,13 +211,26 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                       <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2 }}>{biz.name}</div>
                       {biz.is_featured && <span className="badge badge-featured">⭐ Featured</span>}
                     </div>
-                    {rating > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                        <span className="stars">{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
-                        <span style={{ fontWeight: 700, fontSize: '.9rem' }}>{rating.toFixed(1)}</span>
-                        <span style={{ fontSize: '.82rem', color: 'var(--muted)' }}>Google rating</span>
-                      </div>
-                    )}
+
+                    {/* Ratings — show both AddisReview and Google */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '8px' }}>
+                      {addisRating > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span className="stars" style={{ fontSize: '.85rem' }}>{'★'.repeat(Math.floor(addisRating))}{'☆'.repeat(5 - Math.floor(addisRating))}</span>
+                          <span style={{ fontWeight: 700, fontSize: '.85rem' }}>{addisRating.toFixed(1)}</span>
+                          <span style={{ fontSize: '.75rem', color: 'var(--green)', fontWeight: 600 }}>AddisReview</span>
+                          <span style={{ fontSize: '.75rem', color: 'var(--muted)' }}>({biz.review_count})</span>
+                        </div>
+                      )}
+                      {googleRating > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span className="stars" style={{ fontSize: '.85rem' }}>{'★'.repeat(Math.floor(googleRating))}{'☆'.repeat(5 - Math.floor(googleRating))}</span>
+                          <span style={{ fontWeight: 700, fontSize: '.85rem' }}>{googleRating.toFixed(1)}</span>
+                          <span style={{ fontSize: '.75rem', color: 'var(--muted)' }}>Google</span>
+                        </div>
+                      )}
+                    </div>
+
                     {biz.description && (
                       <p style={{ fontSize: '.87rem', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{biz.description}</p>
                     )}
