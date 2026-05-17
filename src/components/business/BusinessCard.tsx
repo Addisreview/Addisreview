@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Business } from '@/types/database';
-import { formatRating, priceLabel, getCategoryEmoji } from '@/lib/utils';
+import { priceLabel, getCategoryEmoji } from '@/lib/utils';
 
 const CARD_COLORS: Record<string, string> = {
   'Restaurants':   'linear-gradient(135deg,#6b2e0a,#c45e1e)',
@@ -20,47 +20,25 @@ interface Props {
 export default function BusinessCard({ business }: Props) {
   const emoji = getCategoryEmoji(business.category_name || '');
   const bg = CARD_COLORS[business.category_name || ''] || 'linear-gradient(135deg,#333,#555)';
-  const rating = Number(business.google_rating) || Number(business.rating_avg) || 0;
-  const fullStars = Math.floor(rating);
-  const emptyStars = 5 - fullStars;
   const photo = business.cover_photo_url || null;
+  const addisRating = Number(business.rating_avg) || 0;
+  const googleRating = Number(business.google_rating) || 0;
 
   return (
-    <Link
-      href={`/business/${business.slug || business.id}`}
-      style={{ textDecoration: 'none', color: 'inherit' }}
-    >
+    <Link href={`/business/${business.slug || business.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <div className="card-hover" style={{
-        background: '#fff',
-        borderRadius: 'var(--radius)',
-        overflow: 'hidden',
-        border: '1px solid var(--border)',
-        cursor: 'pointer',
-        height: '100%',
+        background: '#fff', borderRadius: 'var(--radius)', overflow: 'hidden',
+        border: '1px solid var(--border)', cursor: 'pointer', height: '100%',
       }}>
         {/* Thumbnail */}
         <div style={{
-          height: '180px',
-          background: photo ? 'transparent' : bg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '4.5rem',
-          position: 'relative',
-          overflow: 'hidden',
+          height: '180px', background: photo ? 'transparent' : bg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '4.5rem', position: 'relative', overflow: 'hidden',
         }}>
           {photo ? (
-            <img
-              src={photo}
-              alt={business.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-              }}
+            <img src={photo} alt={business.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               onError={e => {
-                // If image fails to load, hide it and show emoji fallback
                 const target = e.currentTarget;
                 target.style.display = 'none';
                 const parent = target.parentElement;
@@ -72,17 +50,9 @@ export default function BusinessCard({ business }: Props) {
                 }
               }}
             />
-          ) : (
-            emoji
-          )}
-          <div style={{
-            position: 'absolute', top: '12px', left: '12px', right: '12px',
-            display: 'flex', justifyContent: 'space-between',
-          }}>
-            <span
-              className={`badge ${business.is_featured ? 'badge-featured' : ''}`}
-              style={{ visibility: business.is_featured ? 'visible' : 'hidden' }}
-            >
+          ) : emoji}
+          <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between' }}>
+            <span className={`badge ${business.is_featured ? 'badge-featured' : ''}`} style={{ visibility: business.is_featured ? 'visible' : 'hidden' }}>
               ⭐ Featured
             </span>
           </div>
@@ -96,13 +66,26 @@ export default function BusinessCard({ business }: Props) {
           <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.18rem', fontWeight: 700, marginBottom: '8px', lineHeight: 1.2 }}>
             {business.name}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-            <span className="stars" style={{ fontSize: '1rem' }}>
-              {'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}
-            </span>
-            <span style={{ fontWeight: 700, fontSize: '.88rem' }}>{formatRating(rating)}</span>
-            <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>({business.review_count} reviews)</span>
+
+          {/* Ratings */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '8px' }}>
+            {addisRating > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span className="stars" style={{ fontSize: '.85rem' }}>{'★'.repeat(Math.floor(addisRating))}{'☆'.repeat(5 - Math.floor(addisRating))}</span>
+                <span style={{ fontWeight: 700, fontSize: '.85rem' }}>{addisRating.toFixed(1)}</span>
+                <span style={{ fontSize: '.72rem', color: 'var(--green)', fontWeight: 600 }}>AddisReview</span>
+                <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>({business.review_count})</span>
+              </div>
+            )}
+            {googleRating > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span className="stars" style={{ fontSize: '.85rem' }}>{'★'.repeat(Math.floor(googleRating))}{'☆'.repeat(5 - Math.floor(googleRating))}</span>
+                <span style={{ fontWeight: 700, fontSize: '.85rem' }}>{googleRating.toFixed(1)}</span>
+                <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>Google</span>
+              </div>
+            )}
           </div>
+
           <div style={{ fontSize: '.81rem', color: 'var(--muted)', display: 'flex', gap: '14px' }}>
             {business.neighborhood && <span>📍 {business.neighborhood}</span>}
             {business.price_range && <span>💰 {priceLabel(business.price_range)}</span>}
