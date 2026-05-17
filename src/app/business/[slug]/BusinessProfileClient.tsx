@@ -27,14 +27,16 @@ const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sun
 export default function BusinessProfileClient({ business, reviews }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'reviews'|'about'|'photos'>('reviews');
+  const [imgError, setImgError] = useState(false);
+
   const rating = Number(business.rating_avg) || 0;
   const fullStars = Math.floor(rating);
   const emptyStars = 5 - fullStars;
   const emoji = getCategoryEmoji(business.category_name || '');
   const heroColor = HERO_COLORS[business.category_name || ''] || 'linear-gradient(135deg,#333,#555)';
   const hours = business.hours as Record<string, string> | null;
+  const photo = (business as any).cover_photo_url || null;
 
-  // Rating bar widths
   const ratingBuckets = [5,4,3,2,1].map(star => ({
     star,
     count: reviews.filter(r => r.rating === star).length,
@@ -46,8 +48,24 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   return (
     <main>
       {/* ── HERO ── */}
-      <div style={{ background: heroColor, height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem', position: 'relative' }}>
-        {emoji}
+      <div style={{
+        height: '300px',
+        position: 'relative',
+        overflow: 'hidden',
+        background: heroColor,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '8rem',
+      }}>
+        {photo && !imgError ? (
+          <img
+            src={photo}
+            alt={business.name}
+            onError={() => setImgError(true)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+          />
+        ) : (
+          emoji
+        )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.6))' }} />
       </div>
 
@@ -56,12 +74,18 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px', padding: '24px 0', flexWrap: 'wrap' }}>
           <div style={{
             width: '90px', height: '90px',
-            background: heroColor, borderRadius: '16px', border: '4px solid #fff',
+            background: photo && !imgError ? 'transparent' : heroColor,
+            borderRadius: '16px', border: '4px solid #fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '2.8rem', marginTop: '-50px', position: 'relative', zIndex: 2,
             boxShadow: 'var(--shadow-md)', flexShrink: 0,
+            overflow: 'hidden',
           }}>
-            {emoji}
+            {photo && !imgError ? (
+              <img src={photo} alt={business.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              emoji
+            )}
           </div>
 
           <div style={{ flex: 1 }}>
@@ -132,7 +156,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           {/* Reviews tab */}
           {activeTab === 'reviews' && (
             <>
-              {/* Rating summary */}
               <div style={{
                 display: 'flex', gap: '32px', alignItems: 'center',
                 background: 'var(--cream)', borderRadius: 'var(--radius)',
@@ -156,7 +179,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
 
-              {/* Review list */}
               {reviews.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📝</div>
@@ -171,10 +193,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
               )}
 
               <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
-                <button
-                  className="btn-outline"
-                  onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}
-                >
+                <button className="btn-outline" onClick={() => router.push(`/write-review?business=${business.id}&name=${encodeURIComponent(business.name)}`)}>
                   Write Your Own Review
                 </button>
               </div>
@@ -206,22 +225,23 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           {/* Photos tab */}
           {activeTab === 'photos' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
+              {photo ? (
+                <img src={photo} alt={business.name} style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
+              ) : null}
               {business.photos && business.photos.length > 0 ? business.photos.map((url, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img key={i} src={url} alt="" style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
-              )) : (
+              )) : !photo ? (
                 <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📷</div>
                   <div>No photos yet — help by uploading after your visit!</div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>
 
         {/* ── SIDEBAR ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Business Info */}
           <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '22px' }}>
             <h3 style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Business Info</h3>
 
@@ -255,7 +275,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
               </div>
             )}
 
-            {/* Hours */}
             {hours && Object.keys(hours).length > 0 && (
               <div style={{ display: 'flex', gap: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>🕐</span>
@@ -278,14 +297,8 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             )}
           </div>
 
-          {/* Map */}
           {business.lat && business.lng && (
-            <a
-              href={`https://maps.google.com?q=${business.lat},${business.lng}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ textDecoration: 'none' }}
-            >
+            <a href={`https://maps.google.com?q=${business.lat},${business.lng}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
               <div style={{
                 background: 'linear-gradient(135deg,#e8f5ee,#c8e0d0)',
                 borderRadius: '12px', height: '160px',
@@ -298,7 +311,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             </a>
           )}
 
-          {/* Features */}
           {business.features && business.features.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '22px' }}>
               <h3 style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Highlights</h3>
