@@ -194,7 +194,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
             const emoji = getCategoryEmoji(biz.category_name || '');
             const photo = (biz as any).cover_photo_url || null;
             const bg = CARD_COLORS[biz.category_name || ''] || 'linear-gradient(135deg,#f0ebe3,#e8ddd0)';
-            const addisRating = Number(biz.rating_avg) || 0;
+            const addisRating = Number((biz as any).rating_avg) || 0;
             const googleRating = Number(biz.google_rating) || 0;
 
             return (
