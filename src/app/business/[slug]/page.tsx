@@ -1,3 +1,4 @@
+export const revalidate = 0;
 import { notFound } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
@@ -13,11 +14,10 @@ export async function generateMetadata({ params }: Props) {
   const { data: biz } = await supabase
     .from('businesses')
     .select('name, description, city_name')
-    .or(`slug.eq.${params.slug},id.eq.${params.slug}`)
+    .eq('slug', params.slug)
     .single() as any;
 
   if (!biz) return { title: 'Business Not Found' };
-
   return {
     title: `${biz.name} — ${biz.city_name}`,
     description: biz.description || `Review and details for ${biz.name} in ${biz.city_name}, Ethiopia.`,
@@ -30,7 +30,7 @@ export default async function BusinessPage({ params }: Props) {
   const { data: business } = await supabase
     .from('businesses')
     .select('*')
-    .or(`slug.eq.${params.slug},id.eq.${params.slug}`)
+    .eq('slug', params.slug)
     .eq('is_active', true)
     .single() as any;
 
