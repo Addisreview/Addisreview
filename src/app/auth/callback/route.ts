@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
  
@@ -8,11 +7,10 @@ export async function GET(request: NextRequest) {
   const redirect = requestUrl.searchParams.get('redirect') || '/';
  
   if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_DB_HOST!,
-      process.env.NEXT_PUBLIC_DB_ANON!
+    // Pass code to client-side page to exchange for session
+    return NextResponse.redirect(
+      new URL(`/auth/confirm?code=${code}&redirect=${encodeURIComponent(redirect)}`, request.url)
     );
-    await supabase.auth.exchangeCodeForSession(code);
   }
  
   return NextResponse.redirect(new URL(redirect, request.url));
