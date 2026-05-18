@@ -14,7 +14,6 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    // Handle implicit OAuth flow — token arrives in URL hash
     if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
       supabase.auth.getSession().then(({ data }) => {
         if (data.session?.user) {
@@ -88,6 +87,9 @@ export default function Navbar() {
                   boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
                   minWidth: '160px', overflow: 'hidden', zIndex: 300,
                 }}>
+                  <Link href="/profile" style={{ textDecoration: 'none' }}>
+                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>👤 My Profile</button>
+                  </Link>
                   <button onClick={handleSignOut} className="nav-menu-item">Sign Out</button>
                 </div>
               )}
@@ -130,16 +132,22 @@ export default function Navbar() {
             Write a Review
           </Link>
           {user ? (
-            <button
-              onClick={() => { handleSignOut(); setMobileOpen(false); }}
-              style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,.8)',
-                padding: '12px 0', fontSize: '1rem', cursor: 'pointer',
-                textAlign: 'left', fontFamily: 'var(--font-sans)',
-              }}
-            >
-              Sign Out ({user.email?.split('@')[0]})
-            </button>
+            <>
+              <Link href="/profile" className="nav-link" onClick={() => setMobileOpen(false)}
+                style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+                👤 My Profile
+              </Link>
+              <button
+                onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                style={{
+                  background: 'none', border: 'none', color: 'rgba(255,255,255,.8)',
+                  padding: '12px 0', fontSize: '1rem', cursor: 'pointer',
+                  textAlign: 'left', fontFamily: 'var(--font-sans)',
+                }}
+              >
+                Sign Out ({user.email?.split('@')[0]})
+              </button>
+            </>
           ) : (
             <Link href="/auth" onClick={() => setMobileOpen(false)}
               style={{ display: 'block', marginTop: '8px' }}>
