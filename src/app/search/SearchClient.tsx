@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { BusinessWithCount, Category, City } from '@/types/database';
-import { formatRating, priceLabel, getCategoryEmoji } from '@/lib/utils';
+import { priceLabel, getCategoryEmoji } from '@/lib/utils';
 
 const NEIGHBORHOODS = [
   'Bole', 'Piassa', 'Kazanchis', 'Megenagna', 'CMC', 'Sarbet',
@@ -28,7 +28,7 @@ interface Props {
   totalCount: number;
   categories: Category[];
   cities: Pick<City, 'id' | 'name' | 'emoji'>[];
-  currentFilters: { q?: string; city?: string; category?: string; rating?: string; sort?: string; neighborhood?: string };
+  currentFilters: { q?: string; city?: string; category?: string; rating?: string; sort?: string; neighborhood?: string; open_now?: string };
   currentPage: number;
 }
 
@@ -41,13 +41,14 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   const [selectedRating, setSelectedRating] = useState(currentFilters.rating || '0');
   const [selectedPrices, setSelectedPrices] = useState<number[]>([]);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(currentFilters.neighborhood || '');
+  const [openNow, setOpenNow] = useState(currentFilters.open_now === 'true');
   const [showAllCats, setShowAllCats] = useState(false);
   const [showAllNeighborhoods, setShowAllNeighborhoods] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   const push = (overrides: Record<string, string>) => {
     const params = new URLSearchParams();
-    const merged = { q, city, category: selectedCat, rating: selectedRating, sort, neighborhood: selectedNeighborhood, ...overrides };
+    const merged = { q, city, category: selectedCat, rating: selectedRating, sort, neighborhood: selectedNeighborhood, open_now: openNow ? 'true' : '', ...overrides };
     Object.entries(merged).forEach(([k, v]) => { if (v && v !== '0') params.set(k, v); });
     router.push(`/search?${params.toString()}`);
   };
@@ -60,6 +61,20 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   const FiltersPanel = () => (
     <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '24px' }}>
       <div style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Filters</div>
+
+      {/* OPEN NOW */}
+      <div style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border)' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '.92rem', fontWeight: 600 }}>
+          <input
+            type="checkbox"
+            checked={openNow}
+            onChange={e => { setOpenNow(e.target.checked); push({ open_now: e.target.checked ? 'true' : '' }); }}
+            style={{ accentColor: 'var(--green)', width: '18px', height: '18px' }}
+          />
+          🟢 Open Now
+        </label>
+      </div>
+
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Category</div>
         <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
@@ -78,6 +93,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           </button>
         )}
       </div>
+
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Neighborhood</div>
         <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
@@ -94,6 +110,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           {showAllNeighborhoods ? 'Show less ↑' : 'Show all neighborhoods ↓'}
         </button>
       </div>
+
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Minimum Rating</div>
         {[['0','Any rating'],['4','★★★★☆ 4+ stars'],['3','★★★☆☆ 3+ stars']].map(([val, label]) => (
@@ -103,6 +120,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           </label>
         ))}
       </div>
+
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Price Range</div>
         {[[1,'$ (Budget)'],[2,'$$ (Moderate)'],[3,'$$$ (Upscale)'],[4,'$$$$ (Luxury)']].map(([val, label]) => (
@@ -112,6 +130,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           </label>
         ))}
       </div>
+
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Sort By</div>
         {[['rating','Highest Rated'],['reviews','Most Reviewed'],['name','A to Z']].map(([val, label]) => (
@@ -121,8 +140,14 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           </label>
         ))}
       </div>
+
       <button className="btn-primary" style={{ width: '100%', borderRadius: '10px' }} onClick={() => { push({}); setShowFilters(false); }}>Apply Filters</button>
-      <button onClick={() => { setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]); setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating'); push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating' }); setShowFilters(false); }} style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+      <button onClick={() => {
+        setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]);
+        setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating'); setOpenNow(false);
+        push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating', open_now:'' });
+        setShowFilters(false);
+      }} style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
         Clear all filters
       </button>
     </div>
@@ -156,7 +181,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
 
       <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         <button className="mobile-filter-btn" onClick={() => setShowFilters(true)} style={{ display: 'none', alignItems: 'center', gap: '8px', background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '10px 20px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-          ☰ Filters {(selectedCat || selectedRating !== '0') ? '•' : ''}
+          ☰ Filters {(selectedCat || selectedRating !== '0' || openNow) ? '•' : ''}
         </button>
       </div>
 
@@ -180,6 +205,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
               {currentFilters.q && ` for "${currentFilters.q}"`}
               {currentFilters.category && ` in ${currentFilters.category}`}
               {currentFilters.neighborhood && ` · ${currentFilters.neighborhood}`}
+              {currentFilters.open_now === 'true' && ` · Open Now`}
             </div>
           </div>
 
@@ -188,7 +214,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
               <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', marginBottom: '8px' }}>No results found</div>
               <div style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '24px' }}>Try different keywords or filters</div>
-              <button className="btn-primary" onClick={() => push({ q:'', city:'', category:'', rating:'0', neighborhood:'' })}>Clear Search</button>
+              <button className="btn-primary" onClick={() => push({ q:'', city:'', category:'', rating:'0', neighborhood:'', open_now:'' })}>Clear Search</button>
             </div>
           ) : businesses.map(biz => {
             const emoji = getCategoryEmoji(biz.category_name || '');
@@ -211,8 +237,6 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                       <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2 }}>{biz.name}</div>
                       {biz.is_featured && <span className="badge badge-featured">⭐ Featured</span>}
                     </div>
-
-                    {/* Ratings — show both AddisReview and Google */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '8px' }}>
                       {addisRating > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -230,7 +254,6 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                         </div>
                       )}
                     </div>
-
                     {biz.description && (
                       <p style={{ fontSize: '.87rem', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{biz.description}</p>
                     )}
