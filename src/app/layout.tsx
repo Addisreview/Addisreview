@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Playfair_Display, DM_Sans } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import './globals.css';
+import AskAddis from '@/components/AskAddis';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -93,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             error: { style: { background: '#c0392b' } },
           }}
         />
+        <AskAddis />
       </body>
     </html>
   );
