@@ -5,7 +5,7 @@ import Footer from '@/components/layout/Footer';
 import SearchClient from './SearchClient';
 
 interface Props {
-  searchParams: { q?: string; city?: string; category?: string; rating?: string; sort?: string; page?: string; neighborhood?: string };
+  searchParams: { q?: string; city?: string; category?: string; rating?: string; sort?: string; page?: string; neighborhood?: string; open_now?: string };
 }
 
 export default async function SearchPage({ searchParams }: Props) {
@@ -21,6 +21,7 @@ export default async function SearchPage({ searchParams }: Props) {
     page_num: page,
     page_size: 10,
     neighborhood_filter: searchParams.neighborhood || null,
+    open_now: searchParams.open_now === 'true',
   });
 
   const { data: categories } = await supabase
