@@ -172,18 +172,24 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           )}
 
           {activeTab === 'photos' && (
-            <div className="photos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
-              {photo ? <img src={photo} alt={business.name} style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} /> : null}
-              {business.photos && business.photos.length > 0 ? business.photos.map((url, i) => (
-                <img key={i} src={url} alt="" style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
-              )) : !photo ? (
-                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📷</div>
-                  <div>No photos yet</div>
-                </div>
-              ) : null}
-            </div>
-          )}
+  <div className="photos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
+    {(() => {
+      const allPhotos = [
+        ...(photo ? [photo] : []),
+        ...(business.photos || []),
+        ...reviews.flatMap(r => (r as any).photo_urls || []),
+      ];
+      return allPhotos.length > 0 ? allPhotos.map((url, i) => (
+        <img key={i} src={url} alt="" style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
+      )) : (
+        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📷</div>
+          <div>No photos yet</div>
+        </div>
+      );
+    })()}
+  </div>
+)}
         </div>
 
         {/* SIDEBAR */}
