@@ -300,7 +300,7 @@ export default function OwnerDashboard() {
                     background: activeTab === tab.id ? 'var(--green)' : '#fff',
                     color: activeTab === tab.id ? '#fff' : 'var(--charcoal)',
                     fontFamily: 'var(--font-sans)', fontSize: '.82rem', fontWeight: 600,
-                    cursor: 'pointer', border: activeTab === tab.id ? 'none' : '1px solid var(--border)',
+                    cursor: 'pointer',
                   }}
                 >
                   {tab.emoji} {tab.label}
