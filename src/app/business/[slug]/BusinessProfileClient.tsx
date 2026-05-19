@@ -158,7 +158,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Link copied!'); }} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
               ↑ Share
             </button>
-            {!business.is_claimed && (
+            {!(business as any).is_claimed && (
               <button onClick={() => router.push(`/claim/${business.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--yellow)', color: 'var(--charcoal)', border: 'none', fontFamily: 'var(--font-sans)' }}>
                 🏢 Claim this Business
               </button>
