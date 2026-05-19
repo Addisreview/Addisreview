@@ -12,29 +12,57 @@ export default function Footer() {
             Ethiopia's trusted guide to local businesses — restaurants, hotels, shops & more.
           </div>
         </div>
+
         <div>
           <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>Explore</h4>
-          {['Restaurants','Hotels','Coffee Houses','Shopping'].map(item => (
-            <Link key={item} href={`/search?category=${item.toLowerCase()}`} className="footer-link">
-              {item}
-            </Link>
+          {[
+            { label: 'Restaurants', href: '/search?category=Restaurants' },
+            { label: 'Hotels', href: '/search?category=Hotels' },
+            { label: 'Coffee & Buna', href: '/search?category=Coffee+%26+Buna' },
+            { label: 'Spas', href: '/search?category=Spas' },
+            { label: 'Rooftop Bars', href: '/search?category=Rooftop+Bars+%26+Lounges' },
+          ].map(item => (
+            <Link key={item.label} href={item.href} className="footer-link">{item.label}</Link>
           ))}
         </div>
+
         <div>
           <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>Cities</h4>
-          {['Addis Ababa','Gondar','Hawassa','Bahir Dar'].map(city => (
-            <Link key={city} href={`/search?city=${city}`} className="footer-link">
-              {city}
-            </Link>
+          {[
+            { label: 'Addis Ababa', href: '/search?city=Addis+Ababa' },
+            { label: 'Gondar', href: '/search?city=Gondar' },
+            { label: 'Hawassa', href: '/search?city=Hawassa' },
+            { label: 'Bahir Dar', href: '/search?city=Bahir+Dar' },
+            { label: 'Dire Dawa', href: '/search?city=Dire+Dawa' },
+          ].map(item => (
+            <Link key={item.label} href={item.href} className="footer-link">{item.label}</Link>
           ))}
         </div>
+
+        <div>
+          <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>For Businesses</h4>
+          {[
+            { label: 'Claim Your Business', href: '/search' },
+            { label: 'Owner Dashboard', href: '/dashboard' },
+            { label: 'Add Your Business', href: '/auth' },
+          ].map(item => (
+            <Link key={item.label} href={item.href} className="footer-link">{item.label}</Link>
+          ))}
+        </div>
+
         <div>
           <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>Company</h4>
-          {['About Us','Careers','Press','Contact'].map(item => (
-            <span key={item} style={{ display: 'block', color: 'rgba(255,255,255,.42)', fontSize: '.83rem', marginBottom: '8px', cursor: 'pointer' }}>{item}</span>
+          {[
+            { label: 'About Us', href: '/about' },
+            { label: 'Contact Us', href: 'mailto:hello@addisreview.co' },
+            { label: 'Advertise with Us', href: 'mailto:hello@addisreview.co' },
+            { label: 'Privacy Policy', href: '/privacy' },
+          ].map(item => (
+            <Link key={item.label} href={item.href} className="footer-link">{item.label}</Link>
           ))}
         </div>
       </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.8rem', flexWrap: 'wrap', gap: '10px' }}>
         <span>© {new Date().getFullYear()} AddisReview. All rights reserved.</span>
         <span>🇪🇹 Built with pride in Ethiopia</span>
