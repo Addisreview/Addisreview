@@ -90,6 +90,9 @@ export default function Navbar() {
                   <Link href="/profile" style={{ textDecoration: 'none' }}>
                     <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>👤 My Profile</button>
                   </Link>
+                  <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>🏢 My Business</button>
+                  </Link>
                   <button onClick={handleSignOut} className="nav-menu-item">Sign Out</button>
                 </div>
               )}
@@ -136,6 +139,10 @@ export default function Navbar() {
               <Link href="/profile" className="nav-link" onClick={() => setMobileOpen(false)}
                 style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
                 👤 My Profile
+              </Link>
+              <Link href="/dashboard" className="nav-link" onClick={() => setMobileOpen(false)}
+                style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+                🏢 My Business
               </Link>
               <button
                 onClick={() => { handleSignOut(); setMobileOpen(false); }}
