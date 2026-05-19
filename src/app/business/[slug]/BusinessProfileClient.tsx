@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import ReviewCard from '@/components/reviews/ReviewCard';
+import PhotoLightbox from '@/components/PhotoLightbox';
 import type { Business, Review } from '@/types/database';
 import { formatRating, priceLabel, getCategoryEmoji } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'reviews'|'about'|'photos'>('reviews');
   const [imgError, setImgError] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const rating = Number(business.rating_avg) || 0;
   const fullStars = Math.floor(rating);
@@ -49,6 +51,18 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
 
   const today = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
 
+  // Build full photo list for lightbox
+  const allPhotos = [
+    ...(photo ? [photo] : []),
+    ...(business.photos || []),
+    ...reviews.flatMap(r => (r as any).photo_urls || []),
+  ];
+
+  const openLightbox = (index: number) => setLightboxIndex(index);
+  const closeLightbox = () => setLightboxIndex(null);
+  const nextPhoto = () => setLightboxIndex(i => i === null ? 0 : (i + 1) % allPhotos.length);
+  const prevPhoto = () => setLightboxIndex(i => i === null ? 0 : (i - 1 + allPhotos.length) % allPhotos.length);
+
   return (
     <main>
       <style>{`
@@ -62,14 +76,57 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           .biz-avatar { margin-top: -40px !important; width: 70px !important; height: 70px !important; font-size: 2rem !important; }
           .photos-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
+        .photo-thumb {
+          cursor: pointer;
+          transition: transform .2s, opacity .2s;
+        }
+        .photo-thumb:hover {
+          transform: scale(1.03);
+          opacity: .9;
+        }
       `}</style>
+
+      {/* LIGHTBOX */}
+      {lightboxIndex !== null && (
+        <PhotoLightbox
+          photos={allPhotos}
+          initialIndex={lightboxIndex}
+          currentIndex={lightboxIndex}
+          onClose={closeLightbox}
+          onNext={nextPhoto}
+          onPrev={prevPhoto}
+        />
+      )}
 
       {/* HERO */}
       <div className="biz-hero" style={{ height: '300px', position: 'relative', overflow: 'hidden', background: heroColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem' }}>
         {photo && !imgError ? (
-          <img src={photo} alt={business.name} onError={() => setImgError(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+          <img
+            src={photo}
+            alt={business.name}
+            onError={() => setImgError(true)}
+            onClick={() => openLightbox(0)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, cursor: 'pointer' }}
+          />
         ) : emoji}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.6))' }} />
+        {allPhotos.length > 1 && (
+          <button
+            onClick={() => openLightbox(0)}
+            style={{
+              position: 'absolute', bottom: '16px', right: '16px',
+              background: 'rgba(0,0,0,.6)', color: '#fff',
+              border: '1px solid rgba(255,255,255,.3)',
+              borderRadius: '50px', padding: '7px 16px',
+              fontSize: '.8rem', fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'DM Sans, system-ui, sans-serif',
+              backdropFilter: 'blur(4px)',
+              zIndex: 2,
+            }}
+          >
+            📷 {allPhotos.length} photos
+          </button>
+        )}
       </div>
 
       {/* HEADER */}
@@ -172,24 +229,24 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           )}
 
           {activeTab === 'photos' && (
-  <div className="photos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
-    {(() => {
-      const allPhotos = [
-        ...(photo ? [photo] : []),
-        ...(business.photos || []),
-        ...reviews.flatMap(r => (r as any).photo_urls || []),
-      ];
-      return allPhotos.length > 0 ? allPhotos.map((url, i) => (
-        <img key={i} src={url} alt="" style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
-      )) : (
-        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📷</div>
-          <div>No photos yet</div>
-        </div>
-      );
-    })()}
-  </div>
-)}
+            <div className="photos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
+              {allPhotos.length > 0 ? allPhotos.map((url, i) => (
+                <img
+                  key={i}
+                  className="photo-thumb"
+                  src={url}
+                  alt=""
+                  onClick={() => openLightbox(i)}
+                  style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }}
+                />
+              )) : (
+                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📷</div>
+                  <div>No photos yet</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* SIDEBAR */}
