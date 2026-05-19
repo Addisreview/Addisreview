@@ -47,7 +47,7 @@ export default function AdminClaimsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_DB_SERVICE_KEY || ''}`,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_DB_ANON || ''}`,
         },
         body: JSON.stringify({ claimId, action }),
       });
