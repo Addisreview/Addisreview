@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   creator: 'AddisReview',
   publisher: 'AddisReview',
   verification: {
-    google: 'GqvwzE1l4VdaEcM_HBYdaGv2W0WEsE_Tj0m-pnOXvBU',
-  },
+  google: ['GqvwzE1l4VdaEcM_HBYdaGv2W0WEsE_Tj0m-pnOXvBU', '9Bp76MDXBkyz5spQoUirth7NIme9fcXBd0hgx614v38'],
+},
   robots: {
     index: true,
     follow: true,
