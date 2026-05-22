@@ -32,6 +32,7 @@ export default function OwnerDashboard() {
   const [selected, setSelected] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [uploading, setUploading] = useState(false);
 
@@ -57,7 +58,6 @@ export default function OwnerDashboard() {
       }
       setUser(data.user);
 
-      // Fetch businesses claimed by this user
       const { data: bizData } = await (supabase
         .from('businesses')
         .select('*')
@@ -84,6 +84,7 @@ export default function OwnerDashboard() {
     setFeatures(biz.features || []);
     setPhotos(biz.photos || []);
     setCoverPhoto(biz.cover_photo_url || '');
+    setEditing(false);
   };
 
   const handleSave = async () => {
@@ -114,11 +115,17 @@ export default function OwnerDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       toast.success('Changes saved!');
+      setEditing(false);
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    if (selected) selectBusiness(selected);
+    setEditing(false);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,6 +198,13 @@ export default function OwnerDashboard() {
     { id: 'features', label: 'Features', emoji: '✨' },
   ];
 
+  const inputStyle = (base?: React.CSSProperties): React.CSSProperties => ({
+    ...base,
+    opacity: editing ? 1 : 0.75,
+    pointerEvents: editing ? 'auto' : 'none',
+    background: editing ? '#fff' : '#f9f9f9',
+  });
+
   return (
     <>
       <Navbar />
@@ -225,13 +239,30 @@ export default function OwnerDashboard() {
                   View Public Page ↗
                 </button>
               </Link>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                style={{ background: 'var(--yellow)', color: 'var(--charcoal)', border: 'none', borderRadius: '50px', padding: '9px 22px', fontSize: '.88rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)', opacity: saving ? 0.7 : 1 }}
-              >
-                {saving ? 'Saving…' : '💾 Save Changes'}
-              </button>
+              {editing ? (
+                <>
+                  <button
+                    onClick={handleCancel}
+                    style={{ background: 'rgba(255,255,255,.15)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50px', padding: '9px 18px', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    style={{ background: 'var(--yellow)', color: 'var(--charcoal)', border: 'none', borderRadius: '50px', padding: '9px 22px', fontSize: '.88rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)', opacity: saving ? 0.7 : 1 }}
+                  >
+                    {saving ? 'Saving…' : '💾 Save Changes'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setEditing(true)}
+                  style={{ background: 'var(--yellow)', color: 'var(--charcoal)', border: 'none', borderRadius: '50px', padding: '9px 22px', fontSize: '.88rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+                >
+                  ✏️ Edit Business
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -240,7 +271,6 @@ export default function OwnerDashboard() {
 
           {/* SIDEBAR */}
           <div className="dash-sidebar">
-            {/* Business switcher */}
             {businesses.length > 1 && (
               <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--border)', padding: '16px', marginBottom: '16px' }}>
                 <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '10px' }}>Your Businesses</div>
@@ -263,7 +293,6 @@ export default function OwnerDashboard() {
               </div>
             )}
 
-            {/* Tabs */}
             <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--border)', padding: '8px' }}>
               {tabs.map(tab => (
                 <button
@@ -289,24 +318,30 @@ export default function OwnerDashboard() {
 
           {/* MAIN CONTENT */}
           <div>
-            {/* Mobile tabs */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto' }}>
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
-                    padding: '8px 16px', borderRadius: '50px', border: 'none', whiteSpace: 'nowrap',
+                    padding: '8px 16px', borderRadius: '50px', whiteSpace: 'nowrap',
                     background: activeTab === tab.id ? 'var(--green)' : '#fff',
                     color: activeTab === tab.id ? '#fff' : 'var(--charcoal)',
                     fontFamily: 'var(--font-sans)', fontSize: '.82rem', fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: 'pointer', border: activeTab === tab.id ? 'none' : '1px solid var(--border)',
                   }}
                 >
                   {tab.emoji} {tab.label}
                 </button>
               ))}
             </div>
+
+            {!editing && (
+              <div style={{ background: '#fff9e6', border: '1px solid var(--yellow)', borderRadius: '12px', padding: '12px 18px', marginBottom: '16px', fontSize: '.85rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>💡</span>
+                <span>You are in view mode. Click <strong>✏️ Edit Business</strong> in the header to make changes.</span>
+              </div>
+            )}
 
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid var(--border)', padding: '28px' }}>
 
@@ -323,7 +358,8 @@ export default function OwnerDashboard() {
                       onChange={e => setDescription(e.target.value)}
                       placeholder="Tell customers what makes your business special…"
                       maxLength={500}
-                      style={{ minHeight: '120px' }}
+                      disabled={!editing}
+                      style={inputStyle({ minHeight: '120px' })}
                     />
                     <div style={{ fontSize: '.75rem', color: 'var(--muted)', textAlign: 'right', marginTop: '4px' }}>{description.length}/500</div>
                   </div>
@@ -331,32 +367,32 @@ export default function OwnerDashboard() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                     <div>
                       <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '7px', display: 'block' }}>Phone Number</label>
-                      <input type="tel" className="form-input" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+251911234567" />
+                      <input type="tel" className="form-input" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+251911234567" disabled={!editing} style={inputStyle()} />
                     </div>
                     <div>
                       <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '7px', display: 'block' }}>Email</label>
-                      <input type="email" className="form-input" value={email} onChange={e => setEmail(e.target.value)} placeholder="info@yourbusiness.com" />
+                      <input type="email" className="form-input" value={email} onChange={e => setEmail(e.target.value)} placeholder="info@yourbusiness.com" disabled={!editing} style={inputStyle()} />
                     </div>
                   </div>
 
                   <div style={{ marginBottom: '20px' }}>
                     <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '7px', display: 'block' }}>Website</label>
-                    <input type="url" className="form-input" value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://yourbusiness.com" />
+                    <input type="url" className="form-input" value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://yourbusiness.com" disabled={!editing} style={inputStyle()} />
                   </div>
 
                   <div style={{ marginBottom: '20px' }}>
                     <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '7px', display: 'block' }}>Address</label>
-                    <input type="text" className="form-input" value={address} onChange={e => setAddress(e.target.value)} placeholder="Full address" />
+                    <input type="text" className="form-input" value={address} onChange={e => setAddress(e.target.value)} placeholder="Full address" disabled={!editing} style={inputStyle()} />
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                     <div>
                       <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '7px', display: 'block' }}>Neighborhood</label>
-                      <input type="text" className="form-input" value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="e.g. Bole, Kazanchis" />
+                      <input type="text" className="form-input" value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="e.g. Bole, Kazanchis" disabled={!editing} style={inputStyle()} />
                     </div>
                     <div>
                       <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '7px', display: 'block' }}>Price Range</label>
-                      <select className="form-input" value={priceRange} onChange={e => setPriceRange(Number(e.target.value))} style={{ cursor: 'pointer' }}>
+                      <select className="form-input" value={priceRange} onChange={e => setPriceRange(Number(e.target.value))} disabled={!editing} style={inputStyle({ cursor: editing ? 'pointer' : 'default' })}>
                         <option value={0}>Not specified</option>
                         {PRICE_LABELS.slice(1).map((label, i) => (
                           <option key={i + 1} value={i + 1}>{label}</option>
@@ -381,20 +417,25 @@ export default function OwnerDashboard() {
                           value={hours[day] || ''}
                           onChange={e => setHours(prev => ({ ...prev, [day]: e.target.value }))}
                           placeholder="e.g. 8:00 AM - 10:00 PM or Closed"
-                          style={{ flex: 1 }}
+                          disabled={!editing}
+                          style={inputStyle({ flex: 1 })}
                         />
-                        <button
-                          onClick={() => setHours(prev => ({ ...prev, [day]: 'Closed' }))}
-                          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '50px', padding: '6px 14px', fontSize: '.78rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--muted)', flexShrink: 0 }}
-                        >
-                          Closed
-                        </button>
+                        {editing && (
+                          <button
+                            onClick={() => setHours(prev => ({ ...prev, [day]: 'Closed' }))}
+                            style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '50px', padding: '6px 14px', fontSize: '.78rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--muted)', flexShrink: 0 }}
+                          >
+                            Closed
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <div style={{ marginTop: '16px', padding: '12px 16px', background: 'var(--cream)', borderRadius: '10px', fontSize: '.8rem', color: 'var(--muted)' }}>
-                    💡 Format: "8:00 AM - 10:00 PM" or type "Closed" for days you're not open.
-                  </div>
+                  {editing && (
+                    <div style={{ marginTop: '16px', padding: '12px 16px', background: 'var(--cream)', borderRadius: '10px', fontSize: '.8rem', color: 'var(--muted)' }}>
+                      💡 Format: "8:00 AM - 10:00 PM" or type "Closed" for days you're not open.
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -402,25 +443,27 @@ export default function OwnerDashboard() {
               {activeTab === 'photos' && (
                 <div>
                   <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px' }}>Photos</h2>
-                  <p style={{ color: 'var(--muted)', fontSize: '.85rem', marginBottom: '24px' }}>Upload photos of your business. The cover photo appears at the top of your listing.</p>
+                  <p style={{ color: 'var(--muted)', fontSize: '.85rem', marginBottom: '24px' }}>Photos of your business. The cover photo appears at the top of your listing.</p>
 
-                  {/* Upload button */}
-                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple style={{ display: 'none' }} onChange={handlePhotoUpload} />
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '28px', textAlign: 'center', cursor: 'pointer', marginBottom: '24px', transition: 'border-color .2s' }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--green)')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-                  >
-                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
-                    <div style={{ fontWeight: 600, fontSize: '.9rem', marginBottom: '4px' }}>
-                      {uploading ? 'Uploading…' : 'Click to upload photos'}
-                    </div>
-                    <div style={{ fontSize: '.78rem', color: 'var(--muted)' }}>JPG, PNG or WEBP · Max 5MB each</div>
-                  </div>
+                  {editing && (
+                    <>
+                      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple style={{ display: 'none' }} onChange={handlePhotoUpload} />
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '28px', textAlign: 'center', cursor: 'pointer', marginBottom: '24px', transition: 'border-color .2s' }}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--green)')}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                      >
+                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
+                        <div style={{ fontWeight: 600, fontSize: '.9rem', marginBottom: '4px' }}>
+                          {uploading ? 'Uploading…' : 'Click to upload photos'}
+                        </div>
+                        <div style={{ fontSize: '.78rem', color: 'var(--muted)' }}>JPG, PNG or WEBP · Max 5MB each</div>
+                      </div>
+                    </>
+                  )}
 
-                  {/* Photo grid */}
-                  {photos.length > 0 && (
+                  {photos.length > 0 ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
                       {photos.map((url, i) => (
                         <div key={i} className="photo-card" style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '1' }}>
@@ -430,24 +473,25 @@ export default function OwnerDashboard() {
                               Cover
                             </div>
                           )}
-                          <div className="photo-actions" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: 0, transition: 'opacity .2s' }}>
-                            {coverPhoto !== url && (
-                              <button
-                                onClick={() => setCoverPhoto(url)}
-                                style={{ background: '#fff', color: 'var(--charcoal)', border: 'none', borderRadius: '50px', padding: '6px 14px', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
-                              >
-                                Set as Cover
+                          {editing && (
+                            <div className="photo-actions" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: 0, transition: 'opacity .2s' }}>
+                              {coverPhoto !== url && (
+                                <button onClick={() => setCoverPhoto(url)} style={{ background: '#fff', color: 'var(--charcoal)', border: 'none', borderRadius: '50px', padding: '6px 14px', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                                  Set as Cover
+                                </button>
+                              )}
+                              <button onClick={() => removePhoto(url)} style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50px', padding: '6px 14px', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                                Remove
                               </button>
-                            )}
-                            <button
-                              onClick={() => removePhoto(url)}
-                              style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50px', padding: '6px 14px', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
-                            >
-                              Remove
-                            </button>
-                          </div>
+                            </div>
+                          )}
                         </div>
                       ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)' }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📷</div>
+                      <div>No photos yet{editing ? ' — upload some above' : ''}</div>
                     </div>
                   )}
                 </div>
@@ -457,21 +501,23 @@ export default function OwnerDashboard() {
               {activeTab === 'features' && (
                 <div>
                   <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px' }}>Features & Highlights</h2>
-                  <p style={{ color: 'var(--muted)', fontSize: '.85rem', marginBottom: '24px' }}>Select features that describe your business. These appear on your listing.</p>
+                  <p style={{ color: 'var(--muted)', fontSize: '.85rem', marginBottom: '24px' }}>Features that describe your business. These appear on your listing.</p>
 
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '24px' }}>
                     {FEATURE_SUGGESTIONS.map(f => (
                       <button
                         key={f}
                         className="feature-chip"
-                        onClick={() => toggleFeature(f)}
+                        onClick={() => editing && toggleFeature(f)}
                         style={{
                           padding: '8px 16px', borderRadius: '50px',
                           border: features.includes(f) ? '2px solid var(--green)' : '1.5px solid var(--border)',
                           background: features.includes(f) ? 'var(--green-pale)' : '#fff',
                           color: features.includes(f) ? 'var(--green)' : 'var(--charcoal)',
                           fontFamily: 'var(--font-sans)', fontSize: '.85rem', fontWeight: 600,
-                          cursor: 'pointer', transition: 'all .15s',
+                          cursor: editing ? 'pointer' : 'default',
+                          transition: 'all .15s',
+                          opacity: editing ? 1 : 0.8,
                         }}
                       >
                         {features.includes(f) ? '✓ ' : ''}{f}
@@ -479,51 +525,55 @@ export default function OwnerDashboard() {
                     ))}
                   </div>
 
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-                    <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '10px', display: 'block' }}>Add custom feature</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={customFeature}
-                        onChange={e => setCustomFeature(e.target.value)}
-                        placeholder="e.g. Rooftop View, Valet Parking…"
-                        onKeyDown={e => e.key === 'Enter' && addCustomFeature()}
-                        style={{ flex: 1 }}
-                      />
-                      <button onClick={addCustomFeature} className="btn-primary" style={{ borderRadius: '10px', padding: '0 20px', flexShrink: 0 }}>
-                        Add
-                      </button>
-                    </div>
-
-                    {features.filter(f => !FEATURE_SUGGESTIONS.includes(f)).length > 0 && (
-                      <div style={{ marginTop: '16px' }}>
-                        <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '10px' }}>Custom Features</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                          {features.filter(f => !FEATURE_SUGGESTIONS.includes(f)).map(f => (
-                            <span key={f} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--green-pale)', color: 'var(--green)', padding: '6px 14px', borderRadius: '50px', fontSize: '.82rem', fontWeight: 600 }}>
-                              {f}
-                              <button onClick={() => setFeatures(prev => prev.filter(x => x !== f))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--green)', fontSize: '1rem', lineHeight: 1, padding: 0 }}>×</button>
-                            </span>
-                          ))}
-                        </div>
+                  {editing && (
+                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+                      <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '10px', display: 'block' }}>Add custom feature</label>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={customFeature}
+                          onChange={e => setCustomFeature(e.target.value)}
+                          placeholder="e.g. Rooftop View, Valet Parking…"
+                          onKeyDown={e => e.key === 'Enter' && addCustomFeature()}
+                          style={{ flex: 1 }}
+                        />
+                        <button onClick={addCustomFeature} className="btn-primary" style={{ borderRadius: '10px', padding: '0 20px', flexShrink: 0 }}>
+                          Add
+                        </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {features.filter(f => !FEATURE_SUGGESTIONS.includes(f)).length > 0 && (
+                    <div style={{ marginTop: '16px' }}>
+                      <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '10px' }}>Custom Features</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {features.filter(f => !FEATURE_SUGGESTIONS.includes(f)).map(f => (
+                          <span key={f} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--green-pale)', color: 'var(--green)', padding: '6px 14px', borderRadius: '50px', fontSize: '.82rem', fontWeight: 600 }}>
+                            {f}
+                            {editing && (
+                              <button onClick={() => setFeatures(prev => prev.filter(x => x !== f))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--green)', fontSize: '1rem', lineHeight: 1, padding: 0 }}>×</button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* SAVE BUTTON */}
-              <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="btn-primary"
-                  style={{ padding: '13px 32px', fontSize: '.95rem' }}
-                >
-                  {saving ? 'Saving…' : '💾 Save Changes'}
-                </button>
-              </div>
+              {/* SAVE BUTTON - only in edit mode */}
+              {editing && (
+                <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button onClick={handleCancel} style={{ background: '#fff', border: '1.5px solid var(--border)', color: 'var(--muted)', padding: '12px 24px', borderRadius: '50px', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.9rem', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ padding: '13px 32px', fontSize: '.95rem' }}>
+                    {saving ? 'Saving…' : '💾 Save Changes'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
