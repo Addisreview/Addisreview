@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase';
 
 export default async function sitemap() {
   const supabase = createServerClient();
-  const baseUrl = 'https://addisreview.co';
+  const baseUrl = 'https://www.addisreviews.com';
 
   // Static pages
   const staticPages = [
