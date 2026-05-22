@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: biz.cover_photo_url ? [biz.cover_photo_url] : [],
     },
     alternates: {
-      canonical: `https://addisreview.co/business/${params.slug}`,
+      canonical: `https://www.addisreviews.com/business/${params.slug}`,
     },
   };
 }
