@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: '%s | AddisReview',
   },
   description: 'Find and review the best restaurants, hotels, cafes, spas and businesses across Ethiopia. Trusted reviews from real Ethiopians.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://addisreview.co'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.addisreviews.com'),
   keywords: ['Ethiopia businesses', 'Addis Ababa restaurants', 'Ethiopia hotels', 'Addis Ababa reviews', 'best restaurants Ethiopia', 'AddisReview'],
   authors: [{ name: 'AddisReview' }],
   creator: 'AddisReview',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     description: 'Find and review the best restaurants, hotels, cafes, spas and businesses across Ethiopia. Trusted reviews from real Ethiopians.',
     type: 'website',
     locale: 'en_US',
-    url: 'https://addisreview.co',
+    url: 'https://www.addisreviews.com',
     siteName: 'AddisReview',
     images: [
       {
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://addisreview.co',
+    canonical: 'https://www.addisreviews.com',
   },
 };
 
