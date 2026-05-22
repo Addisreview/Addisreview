@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/auth/'],
     },
-    sitemap: 'https://addisreview.co/sitemap.xml',
+    sitemap: 'https://www.addisreviews.com/sitemap.xml',
   };
 }
