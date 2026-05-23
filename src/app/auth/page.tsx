@@ -51,15 +51,23 @@ function AuthForm() {
     if (!email.trim()) { toast.error('Please enter your email'); return; }
     if (password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         data: { full_name: fullName, is_business_owner: isOwner },
         emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
       },
     });
-    if (error) { toast.error(error.message); }
-    else { toast.success('Account created! Check your email to confirm. 🇪🇹'); }
+    if (error) {
+      toast.error(error.message);
+    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+      // Supabase returns a fake user with no identities when email already exists
+      // This is their way of not revealing if an email is registered
+      toast.error('An account with this email already exists. Please log in instead.');
+      setTab('login');
+    } else {
+      toast.success('Account created! Check your email to confirm. 🇪🇹');
+    }
     setLoading(false);
   };
 
