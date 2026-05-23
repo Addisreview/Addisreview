@@ -55,7 +55,7 @@ export default function Footer() {
           {[
             { label: 'About Us', href: '/about' },
             { label: 'Contact Us', href: '/contact' },
-            { label: 'Advertise with Us', href: '/contact' },
+            { label: 'Advertise with Us', href: '/advertise' },
             { label: 'Privacy Policy', href: '/privacy' },
           ].map(item => (
             <Link key={item.label} href={item.href} className="footer-link">{item.label}</Link>
