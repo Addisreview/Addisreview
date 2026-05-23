@@ -103,7 +103,7 @@ function AuthForm() {
     if (!email.trim()) { toast.error('Please enter your email address first'); return; }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery&redirect=/`,
     });
     if (error) { toast.error(error.message); }
     else { toast.success('Password reset email sent! Check your inbox.'); setTab('login'); }
