@@ -29,7 +29,6 @@ interface Props {
 export default function HomeClient({ businesses, cities, categories }: Props) {
   const router = useRouter();
   const [searchQ, setSearchQ] = useState('');
-  const [searchLoc, setSearchLoc] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
@@ -37,7 +36,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchQ) params.set('q', searchQ);
-    if (searchLoc) params.set('city', searchLoc);
+    params.set('city', 'Addis Ababa');
     if (activeCategory !== 'All') params.set('category', activeCategory);
     router.push(`/search?${params.toString()}`);
   };
@@ -92,14 +91,9 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
               />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 18px', flex: 1 }}>
-              <input
-                type="text"
-                placeholder="Addis Ababa, Gondar…"
-                value={searchLoc}
-                onChange={e => setSearchLoc(e.target.value)}
-                onKeyDown={handleKeyDown}
-                style={{ border: 'none', outline: 'none', fontSize: '.93rem', color: 'var(--charcoal)', width: '100%', padding: '17px 0', background: 'transparent' }}
-              />
+              <span style={{ fontSize: '.93rem', color: 'var(--charcoal)', padding: '17px 0', userSelect: 'none' }}>
+                📍 Addis Ababa
+              </span>
             </div>
             <button onClick={handleSearch} className="btn-search">Search</button>
           </div>
