@@ -34,7 +34,6 @@ export default function Navbar() {
       setUser(session?.user ?? null);
     });
 
-    // Close dropdowns on outside click
     const handleClick = (e: MouseEvent) => {
       if (bizRef.current && !bizRef.current.contains(e.target as Node)) setBizMenuOpen(false);
       if (userRef.current && !userRef.current.contains(e.target as Node)) setMenuOpen(false);
@@ -53,27 +52,26 @@ export default function Navbar() {
     router.refresh();
   };
 
+  const menuItemStyle: React.CSSProperties = {
+    display: 'block', width: '100%', textAlign: 'left',
+    padding: '11px 16px', background: 'none', border: 'none',
+    fontSize: '.88rem', fontWeight: 500, cursor: 'pointer',
+    fontFamily: 'var(--font-sans)', color: 'var(--charcoal)',
+    whiteSpace: 'nowrap',
+    transition: 'background .12s',
+  };
+
   return (
     <>
       <nav style={{
-        background: 'var(--green)',
-        padding: '0 5vw',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: '64px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 200,
+        background: 'var(--green)', padding: '0 5vw',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        height: '64px', position: 'sticky', top: 0, zIndex: 200,
         boxShadow: '0 2px 20px rgba(0,0,0,.25)',
       }}>
         <Link href="/" style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: '1.8rem',
-          fontWeight: 900,
-          color: 'var(--yellow)',
-          textDecoration: 'none',
-          letterSpacing: '-0.5px',
+          fontFamily: 'var(--font-serif)', fontSize: '1.8rem', fontWeight: 900,
+          color: 'var(--yellow)', textDecoration: 'none', letterSpacing: '-0.5px',
         }}>
           AddisReview<span style={{ color: '#fff', fontStyle: 'italic' }}>.</span>
         </Link>
@@ -101,21 +99,27 @@ export default function Navbar() {
                 position: 'absolute', right: 0, top: '110%',
                 background: '#fff', borderRadius: '12px',
                 boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
-                minWidth: '210px', overflow: 'hidden', zIndex: 300,
+                overflow: 'hidden', zIndex: 300, minWidth: '220px',
               }}>
                 <Link href="/auth" style={{ textDecoration: 'none' }}>
-                  <button className="nav-menu-item" onClick={() => setBizMenuOpen(false)}>
-                    ➕ Add a Business
+                  <button style={menuItemStyle} onClick={() => setBizMenuOpen(false)}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                    Add a Business
                   </button>
                 </Link>
                 <Link href="/search" style={{ textDecoration: 'none' }}>
-                  <button className="nav-menu-item" onClick={() => setBizMenuOpen(false)}>
-                    🏢 Claim Your Business for Free
+                  <button style={menuItemStyle} onClick={() => setBizMenuOpen(false)}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                    Claim Your Business for Free
                   </button>
                 </Link>
                 <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-                  <button className="nav-menu-item" onClick={() => setBizMenuOpen(false)}>
-                    🔑 Log into Business Account
+                  <button style={menuItemStyle} onClick={() => setBizMenuOpen(false)}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                    Log into Business Account
                   </button>
                 </Link>
               </div>
@@ -190,7 +194,6 @@ export default function Navbar() {
             Write a Review
           </Link>
 
-          {/* Mobile Business Owner section */}
           <div style={{ borderBottom: '1px solid rgba(255,255,255,.1)' }}>
             <button
               onClick={() => setMobileBizOpen(!mobileBizOpen)}
@@ -207,15 +210,15 @@ export default function Navbar() {
               <div style={{ paddingBottom: '8px', paddingLeft: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <Link href="/auth" onClick={() => setMobileOpen(false)}
                   style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
-                  ➕ Add a Business
+                  Add a Business
                 </Link>
                 <Link href="/search" onClick={() => setMobileOpen(false)}
                   style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
-                  🏢 Claim Your Business for Free
+                  Claim Your Business for Free
                 </Link>
                 <Link href="/dashboard" onClick={() => setMobileOpen(false)}
                   style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
-                  🔑 Log into Business Account
+                  Log into Business Account
                 </Link>
               </div>
             )}
@@ -243,8 +246,7 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <Link href="/auth" onClick={() => setMobileOpen(false)}
-              style={{ display: 'block', marginTop: '8px' }}>
+            <Link href="/auth" onClick={() => setMobileOpen(false)} style={{ display: 'block', marginTop: '8px' }}>
               <button style={{
                 background: 'var(--yellow)', color: 'var(--charcoal)',
                 border: 'none', borderRadius: '50px', padding: '12px 24px',
