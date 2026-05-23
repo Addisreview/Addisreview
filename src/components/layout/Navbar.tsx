@@ -52,13 +52,21 @@ export default function Navbar() {
     router.refresh();
   };
 
+  // If not logged in, redirect to auth with context
+  const handleWriteReview = () => {
+    if (user) {
+      router.push('/write-review');
+    } else {
+      router.push('/auth?redirect=/write-review&reason=review');
+    }
+  };
+
   const menuItemStyle: React.CSSProperties = {
     display: 'block', width: '100%', textAlign: 'left',
     padding: '11px 16px', background: 'none', border: 'none',
     fontSize: '.88rem', fontWeight: 500, cursor: 'pointer',
     fontFamily: 'var(--font-sans)', color: 'var(--charcoal)',
-    whiteSpace: 'nowrap',
-    transition: 'background .12s',
+    whiteSpace: 'nowrap', transition: 'background .12s',
   };
 
   return (
@@ -79,7 +87,18 @@ export default function Navbar() {
         {/* Desktop nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }} className="desktop-nav">
           <Link href="/search" className="nav-link">Explore</Link>
-          <Link href="/write-review" className="nav-link">Write a Review</Link>
+
+          {/* Write a Review — requires login */}
+          <button
+            onClick={handleWriteReview}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,.85)', fontSize: '.9rem', fontWeight: 500,
+              fontFamily: 'var(--font-sans)', padding: '6px 2px',
+            }}
+          >
+            Write a Review
+          </button>
 
           {/* Business Owner dropdown */}
           <div ref={bizRef} style={{ position: 'relative' }}>
@@ -101,21 +120,21 @@ export default function Navbar() {
                 boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
                 overflow: 'hidden', zIndex: 300, minWidth: '220px',
               }}>
-                <Link href="/auth" style={{ textDecoration: 'none' }}>
+                <Link href="/auth?redirect=/auth&reason=add" style={{ textDecoration: 'none' }}>
                   <button style={menuItemStyle} onClick={() => setBizMenuOpen(false)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
                     Add a Business
                   </button>
                 </Link>
-                <Link href="/search" style={{ textDecoration: 'none' }}>
+                <Link href={user ? '/search' : '/auth?redirect=/search&reason=claim'} style={{ textDecoration: 'none' }}>
                   <button style={menuItemStyle} onClick={() => setBizMenuOpen(false)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
                     Claim Your Business for Free
                   </button>
                 </Link>
-                <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                <Link href={user ? '/dashboard' : '/auth?redirect=/dashboard&reason=dashboard'} style={{ textDecoration: 'none' }}>
                   <button style={menuItemStyle} onClick={() => setBizMenuOpen(false)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
@@ -189,11 +208,19 @@ export default function Navbar() {
             style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
             Explore
           </Link>
-          <Link href="/write-review" className="nav-link" onClick={() => setMobileOpen(false)}
-            style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+          <button
+            onClick={() => { setMobileOpen(false); handleWriteReview(); }}
+            style={{
+              background: 'none', border: 'none', color: 'rgba(255,255,255,.85)',
+              padding: '12px 0', fontSize: '1rem', cursor: 'pointer',
+              textAlign: 'left', fontFamily: 'var(--font-sans)', fontWeight: 400,
+              borderBottom: '1px solid rgba(255,255,255,.1)',
+            }}
+          >
             Write a Review
-          </Link>
+          </button>
 
+          {/* Mobile Business Owner */}
           <div style={{ borderBottom: '1px solid rgba(255,255,255,.1)' }}>
             <button
               onClick={() => setMobileBizOpen(!mobileBizOpen)}
@@ -208,15 +235,15 @@ export default function Navbar() {
             </button>
             {mobileBizOpen && (
               <div style={{ paddingBottom: '8px', paddingLeft: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <Link href="/auth" onClick={() => setMobileOpen(false)}
+                <Link href={user ? '/auth' : '/auth?reason=add'} onClick={() => setMobileOpen(false)}
                   style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
                   Add a Business
                 </Link>
-                <Link href="/search" onClick={() => setMobileOpen(false)}
+                <Link href={user ? '/search' : '/auth?redirect=/search&reason=claim'} onClick={() => setMobileOpen(false)}
                   style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
                   Claim Your Business for Free
                 </Link>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+                <Link href={user ? '/dashboard' : '/auth?redirect=/dashboard&reason=dashboard'} onClick={() => setMobileOpen(false)}
                   style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
                   Log into Business Account
                 </Link>
