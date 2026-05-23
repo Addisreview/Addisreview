@@ -1,5 +1,5 @@
 // src/app/claim/[businessId]/page.tsx
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -25,7 +25,13 @@ export default async function ClaimPage({ params }: Props) {
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
 
-  // If already claimed, show a message instead of the form
+  // ── REQUIRE LOGIN ──────────────────────────────────────
+  // If not logged in, redirect to auth with return URL
+  if (!user) {
+    redirect(`/auth?redirect=/claim/${params.businessId}&reason=claim`);
+  }
+
+  // If already claimed, show message
   if (business.is_claimed) {
     return (
       <>
