@@ -4,45 +4,30 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
-  description: 'Get in touch with the AddisReview team. We\'re here to help.',
+  description: "Get in touch with the AddisReview team. We're here to help.",
   alternates: { canonical: 'https://www.addisreviews.com/contact' },
 };
-
-const contacts = [
-  {
-    emoji: '📧',
-    label: 'Email',
-    value: 'hello@addisreview.co',
-    href: 'mailto:hello@addisreview.co',
-    description: 'Best for general inquiries, business claims, and partnerships.',
-  },
-  {
-    emoji: '📞',
-    label: 'Phone (US)',
-    value: '+1 (571) 275-5081',
-    href: 'tel:+15712755081',
-    description: 'Available Monday – Friday, 9am – 6pm EST.',
-  },
-  {
-    emoji: '📱',
-    label: 'Phone (Ethiopia)',
-    value: '+251 988 588 584',
-    href: 'tel:+251988588584',
-    description: 'Available Monday – Friday, 9am – 6pm EAT.',
-  },
-  {
-    emoji: '📍',
-    label: 'Office Address',
-    value: '10050 American Pharaoh Ln\nLaurel, MD 20723',
-    href: 'https://maps.google.com?q=10050+American+Pharaoh+Ln+Laurel+MD+20723',
-    description: 'United States headquarters.',
-  },
-];
 
 export default function ContactPage() {
   return (
     <>
       <Navbar />
+      <style>{`
+        .contact-card {
+          background: #fff;
+          border-radius: var(--radius);
+          border: 1px solid var(--border);
+          padding: 32px 28px;
+          box-shadow: var(--shadow-sm);
+          text-decoration: none;
+          display: block;
+          transition: box-shadow .2s, transform .2s;
+        }
+        .contact-card:hover {
+          box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
+        }
+      `}</style>
       <main>
         {/* Hero */}
         <section style={{
@@ -82,72 +67,44 @@ export default function ContactPage() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '24px',
           }}>
-            {contacts.map(c => (
-              <a
-                key={c.label}
-                href={c.href}
-                target={c.href.startsWith('http') ? '_blank' : undefined}
-                rel={c.href.startsWith('http') ? 'noreferrer' : undefined}
-                style={{ textDecoration: 'none' }}
-              >
-                <div style={{
-                  background: '#fff',
-                  borderRadius: 'var(--radius)',
-                  border: '1px solid var(--border)',
-                  padding: '32px 28px',
-                  boxShadow: 'var(--shadow-sm)',
-                  height: '100%',
-                  transition: 'box-shadow .2s, transform .2s',
-                  cursor: 'pointer',
-                }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)';
-                    (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-sm)';
-                    (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div style={{ fontSize: '2rem', marginBottom: '16px' }}>{c.emoji}</div>
-                  <div style={{
-                    fontSize: '.72rem', fontWeight: 700, letterSpacing: '1.5px',
-                    textTransform: 'uppercase', color: 'var(--green)', marginBottom: '8px',
-                  }}>
-                    {c.label}
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    color: 'var(--charcoal)',
-                    marginBottom: '10px',
-                    whiteSpace: 'pre-line',
-                  }}>
-                    {c.value}
-                  </div>
-                  <div style={{
-                    fontSize: '.85rem',
-                    color: 'var(--muted)',
-                    lineHeight: 1.6,
-                  }}>
-                    {c.description}
-                  </div>
-                </div>
-              </a>
-            ))}
+
+            <a href="mailto:hello@addisreview.co" className="contact-card">
+              <div style={{ fontSize: '2rem', marginBottom: '16px' }}>📧</div>
+              <div style={{ fontSize: '.72rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--green)', marginBottom: '8px' }}>Email</div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--charcoal)', marginBottom: '10px' }}>hello@addisreview.co</div>
+              <div style={{ fontSize: '.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>Best for general inquiries, business claims, and partnerships.</div>
+            </a>
+
+            <a href="tel:+15712755081" className="contact-card">
+              <div style={{ fontSize: '2rem', marginBottom: '16px' }}>📞</div>
+              <div style={{ fontSize: '.72rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--green)', marginBottom: '8px' }}>Phone (US)</div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--charcoal)', marginBottom: '10px' }}>+1 (571) 275-5081</div>
+              <div style={{ fontSize: '.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>Available Monday – Friday, 9am – 6pm EST.</div>
+            </a>
+
+            <a href="tel:+251988588584" className="contact-card">
+              <div style={{ fontSize: '2rem', marginBottom: '16px' }}>📱</div>
+              <div style={{ fontSize: '.72rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--green)', marginBottom: '8px' }}>Phone (Ethiopia)</div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--charcoal)', marginBottom: '10px' }}>+251 988 588 584</div>
+              <div style={{ fontSize: '.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>Available Monday – Friday, 9am – 6pm EAT.</div>
+            </a>
+
+            <a href="https://maps.google.com?q=10050+American+Pharaoh+Ln+Laurel+MD+20723" target="_blank" rel="noreferrer" className="contact-card">
+              <div style={{ fontSize: '2rem', marginBottom: '16px' }}>📍</div>
+              <div style={{ fontSize: '.72rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--green)', marginBottom: '8px' }}>Office Address</div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--charcoal)', marginBottom: '10px' }}>
+                10050 American Pharaoh Ln<br />Laurel, MD 20723
+              </div>
+              <div style={{ fontSize: '.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>United States headquarters. Click to open in Google Maps.</div>
+            </a>
+
           </div>
 
           {/* Response time note */}
           <div style={{
-            maxWidth: '860px',
-            margin: '32px auto 0',
-            background: 'var(--green-pale)',
-            borderRadius: 'var(--radius)',
-            padding: '20px 28px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
+            maxWidth: '860px', margin: '32px auto 0',
+            background: 'var(--green-pale)', borderRadius: 'var(--radius)',
+            padding: '20px 28px', display: 'flex', alignItems: 'center', gap: '14px',
             border: '1px solid rgba(26,92,58,.15)',
           }}>
             <span style={{ fontSize: '1.4rem' }}>⏱️</span>
@@ -159,42 +116,24 @@ export default function ContactPage() {
         </section>
 
         {/* Business owners CTA */}
-        <section style={{
-          padding: '64px 5vw',
-          background: 'var(--green)',
-          textAlign: 'center',
-        }}>
+        <section style={{ padding: '64px 5vw', background: 'var(--green)', textAlign: 'center' }}>
           <div style={{ maxWidth: '540px', margin: '0 auto' }}>
             <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🏢</div>
             <h2 style={{
               fontFamily: 'var(--font-serif)',
               fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)',
-              fontWeight: 900,
-              color: '#fff',
-              marginBottom: '14px',
+              fontWeight: 900, color: '#fff', marginBottom: '14px',
             }}>
               Own a business in Ethiopia?
             </h2>
-            <p style={{
-              fontSize: '.95rem',
-              color: 'rgba(255,255,255,.75)',
-              lineHeight: 1.7,
-              marginBottom: '28px',
-            }}>
-              Claim your free listing, manage your profile, and connect with thousands
-              of customers on AddisReview.
+            <p style={{ fontSize: '.95rem', color: 'rgba(255,255,255,.75)', lineHeight: 1.7, marginBottom: '28px' }}>
+              Claim your free listing, manage your profile, and connect with thousands of customers on AddisReview.
             </p>
             <a href="/search" style={{ textDecoration: 'none' }}>
               <button style={{
-                background: 'var(--yellow)',
-                color: 'var(--charcoal)',
-                border: 'none',
-                borderRadius: '50px',
-                padding: '14px 32px',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 700,
-                fontSize: '1rem',
-                cursor: 'pointer',
+                background: 'var(--yellow)', color: 'var(--charcoal)', border: 'none',
+                borderRadius: '50px', padding: '14px 32px',
+                fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer',
               }}>
                 Find & Claim Your Business →
               </button>
