@@ -1,32 +1,44 @@
 'use client';
 
 // src/app/claim/[businessId]/ClaimAuthGuard.tsx
-// Handles auth check on the client side to avoid server-side session cookie issues
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
+import type { User } from '@supabase/supabase-js';
+
+interface Business {
+  id: string;
+  name: string;
+  slug: string;
+  phone: string | null;
+  address: string | null;
+  category_name: string | null;
+}
 
 interface Props {
   businessId: string;
-  children: React.ReactNode;
+  business: Business;
 }
 
-export default function ClaimAuthGuard({ businessId, children }: Props) {
+// Dynamically import ClaimBusinessClient to pass user down
+import dynamic from 'next/dynamic';
+const ClaimBusinessClient = dynamic(() => import('./ClaimBusinessClient'), { ssr: false });
+
+export default function ClaimAuthGuard({ businessId, business }: Props) {
   const router = useRouter();
   const supabase = createBrowserClient();
+  const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
-        // Not logged in — redirect to auth with return URL
         router.replace(`/auth?redirect=/claim/${businessId}&reason=claim`);
-      } else {
-        setAuthorized(true);
-        setChecking(false);
+        return;
       }
+      setUser(data.user);
+      setChecking(false);
     });
   }, []);
 
@@ -39,7 +51,7 @@ export default function ClaimAuthGuard({ businessId, children }: Props) {
     );
   }
 
-  if (!authorized) return null;
+  if (!user) return null;
 
-  return <>{children}</>;
+  return <ClaimBusinessClient business={business} user={user} />;
 }
