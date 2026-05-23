@@ -3,8 +3,9 @@ import Link from 'next/link';
 export default function Footer() {
   return (
     <footer style={{ background: '#111', color: 'rgba(255,255,255,.45)', padding: '48px 5vw 28px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '36px', flexWrap: 'wrap', marginBottom: '36px', paddingBottom: '36px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
-        <div>
+      <div className="footer-grid" style={{ display: 'flex', justifyContent: 'space-between', gap: '36px', flexWrap: 'wrap', marginBottom: '36px', paddingBottom: '36px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+        
+        <div className="footer-brand">
           <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', fontWeight: 900, color: 'var(--yellow)' }}>
             AddisReview<span style={{ color: 'rgba(255,255,255,.5)', fontStyle: 'italic' }}>.</span>
           </div>
@@ -63,7 +64,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.8rem', flexWrap: 'wrap', gap: '10px' }}>
+      <div className="footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.8rem', flexWrap: 'wrap', gap: '10px' }}>
         <span>© {new Date().getFullYear()} AddisReview. All rights reserved.</span>
         <span>🇪🇹 Built with pride in Ethiopia</span>
       </div>
