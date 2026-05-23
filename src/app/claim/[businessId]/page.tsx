@@ -1,9 +1,10 @@
 // src/app/claim/[businessId]/page.tsx
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ClaimBusinessClient from './ClaimBusinessClient';
+import ClaimAuthGuard from './ClaimAuthGuard';
 import Link from 'next/link';
 
 interface Props {
@@ -21,15 +22,6 @@ export default async function ClaimPage({ params }: Props) {
     .single() as any;
 
   if (!business) notFound();
-
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // ── REQUIRE LOGIN ──────────────────────────────────────
-  // If not logged in, redirect to auth with return URL
-  if (!user) {
-    redirect(`/auth?redirect=/claim/${params.businessId}&reason=claim`);
-  }
 
   // If already claimed, show message
   if (business.is_claimed) {
@@ -59,10 +51,14 @@ export default async function ClaimPage({ params }: Props) {
     );
   }
 
+  // Auth guard handles login check on the client side
+  // This avoids the server-side session cookie issue
   return (
     <>
       <Navbar />
-      <ClaimBusinessClient business={business} user={user} />
+      <ClaimAuthGuard businessId={params.businessId}>
+        <ClaimBusinessClient business={business} user={null} />
+      </ClaimAuthGuard>
       <Footer />
     </>
   );
