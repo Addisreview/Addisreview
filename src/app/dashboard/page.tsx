@@ -305,11 +305,52 @@ export default function OwnerDashboard() {
           {/* SIDEBAR */}
           <div className="dash-sidebar">
             {businesses.length > 1 && (
-              <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--border)', padding: '16px', marginBottom: '16px' }}>
-                <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '10px' }}>Your Businesses</div>
-                {businesses.map(biz => (
-                  <button key={biz.id} onClick={() => selectBusiness(biz)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', borderRadius: '8px', border: 'none', background: selected?.id === biz.id ? 'var(--green-pale)' : 'transparent', color: selected?.id === biz.id ? 'var(--green)' : 'var(--charcoal)', fontWeight: selected?.id === biz.id ? 700 : 400, fontSize: '.88rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', marginBottom: '4px', transition: 'all .15s' }}>
-                    {biz.name}
+              <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--border)', padding: '12px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '10px', paddingLeft: '4px' }}>Your Businesses</div>
+                {businesses.map((biz, index) => (
+                  <button
+                    key={biz.id}
+                    onClick={() => selectBusiness(biz)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      width: '100%', textAlign: 'left', padding: '8px',
+                      borderRadius: '10px', border: selected?.id === biz.id ? '2px solid var(--green)' : '2px solid transparent',
+                      background: selected?.id === biz.id ? 'var(--green-pale)' : '#f9f9f9',
+                      cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                      marginBottom: '8px', transition: 'all .15s',
+                    }}
+                  >
+                    {/* Photo or fallback */}
+                    <div style={{
+                      width: '44px', height: '44px', borderRadius: '8px',
+                      overflow: 'hidden', flexShrink: 0,
+                      background: 'linear-gradient(135deg, #1a5c3a, #2d8657)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '1.2rem',
+                    }}>
+                      {biz.cover_photo_url ? (
+                        <img src={biz.cover_photo_url} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span>🏢</span>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontWeight: selected?.id === biz.id ? 700 : 500,
+                        fontSize: '.82rem',
+                        color: selected?.id === biz.id ? 'var(--green)' : 'var(--charcoal)',
+                        lineHeight: 1.3,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {biz.name}
+                      </div>
+                      <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginTop: '2px' }}>
+                        {biz.category_name || 'Business'}
+                      </div>
+                    </div>
+                    {selected?.id === biz.id && (
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
+                    )}
                   </button>
                 ))}
               </div>
