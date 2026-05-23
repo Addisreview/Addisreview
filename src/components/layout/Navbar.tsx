@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
@@ -11,7 +11,11 @@ export default function Navbar() {
   const supabase = createBrowserClient();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bizMenuOpen, setBizMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileBizOpen, setMobileBizOpen] = useState(false);
+  const bizRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
@@ -30,7 +34,17 @@ export default function Navbar() {
       setUser(session?.user ?? null);
     });
 
-    return () => listener.subscription.unsubscribe();
+    // Close dropdowns on outside click
+    const handleClick = (e: MouseEvent) => {
+      if (bizRef.current && !bizRef.current.contains(e.target as Node)) setBizMenuOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+
+    return () => {
+      listener.subscription.unsubscribe();
+      document.removeEventListener('mousedown', handleClick);
+    };
   }, []);
 
   const handleSignOut = async () => {
@@ -68,8 +82,49 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }} className="desktop-nav">
           <Link href="/search" className="nav-link">Explore</Link>
           <Link href="/write-review" className="nav-link">Write a Review</Link>
+
+          {/* Business Owner dropdown */}
+          <div ref={bizRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setBizMenuOpen(!bizMenuOpen)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'rgba(255,255,255,.85)', fontSize: '.9rem', fontWeight: 600,
+                fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '6px 2px',
+              }}
+            >
+              Business Owner {bizMenuOpen ? '▴' : '▾'}
+            </button>
+            {bizMenuOpen && (
+              <div style={{
+                position: 'absolute', right: 0, top: '110%',
+                background: '#fff', borderRadius: '12px',
+                boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
+                minWidth: '210px', overflow: 'hidden', zIndex: 300,
+              }}>
+                <Link href="/auth" style={{ textDecoration: 'none' }}>
+                  <button className="nav-menu-item" onClick={() => setBizMenuOpen(false)}>
+                    ➕ Add a Business
+                  </button>
+                </Link>
+                <Link href="/search" style={{ textDecoration: 'none' }}>
+                  <button className="nav-menu-item" onClick={() => setBizMenuOpen(false)}>
+                    🏢 Claim Your Business for Free
+                  </button>
+                </Link>
+                <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                  <button className="nav-menu-item" onClick={() => setBizMenuOpen(false)}>
+                    🔑 Log into Business Account
+                  </button>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* User account */}
           {user ? (
-            <div style={{ position: 'relative' }}>
+            <div ref={userRef} style={{ position: 'relative' }}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 style={{
@@ -118,7 +173,7 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile menu dropdown */}
+      {/* Mobile menu */}
       {mobileOpen && (
         <div style={{
           position: 'fixed', top: '64px', left: 0, right: 0, zIndex: 199,
@@ -134,6 +189,38 @@ export default function Navbar() {
             style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
             Write a Review
           </Link>
+
+          {/* Mobile Business Owner section */}
+          <div style={{ borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+            <button
+              onClick={() => setMobileBizOpen(!mobileBizOpen)}
+              style={{
+                background: 'none', border: 'none', color: 'rgba(255,255,255,.85)',
+                padding: '12px 0', fontSize: '1rem', cursor: 'pointer',
+                textAlign: 'left', fontFamily: 'var(--font-sans)', fontWeight: 600,
+                width: '100%', display: 'flex', justifyContent: 'space-between',
+              }}
+            >
+              Business Owner {mobileBizOpen ? '▴' : '▾'}
+            </button>
+            {mobileBizOpen && (
+              <div style={{ paddingBottom: '8px', paddingLeft: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <Link href="/auth" onClick={() => setMobileOpen(false)}
+                  style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
+                  ➕ Add a Business
+                </Link>
+                <Link href="/search" onClick={() => setMobileOpen(false)}
+                  style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
+                  🏢 Claim Your Business for Free
+                </Link>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+                  style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
+                  🔑 Log into Business Account
+                </Link>
+              </div>
+            )}
+          </div>
+
           {user ? (
             <>
               <Link href="/profile" className="nav-link" onClick={() => setMobileOpen(false)}
