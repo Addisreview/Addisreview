@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BusinessCard from '@/components/business/BusinessCard';
+import { createBrowserClient } from '@/lib/supabase';
 import type { Business, City, Category } from '@/types/database';
 
 // ── 5 visible filters only ────────────────────────────────
@@ -15,7 +16,6 @@ const VISIBLE_CATEGORIES = [
   { name: 'Spas',                   emoji: '💆', subcategories: ['Massage', 'Hair Salons', 'Nail Salons', 'Hammam', 'Skin Care'] },
 ];
 
-// ── All categories for the "More" popup ──────────────────
 const MORE_CATEGORIES = [
   { name: 'Juice Bars',    emoji: '🥤' },
   { name: 'Bakeries',      emoji: '🥐' },
@@ -27,6 +27,21 @@ const MORE_CATEGORIES = [
   { name: 'Services',      emoji: '🔧' },
 ];
 
+interface NearbyBusiness {
+  id: string;
+  name: string;
+  slug: string;
+  category_name: string;
+  city_name: string;
+  address: string;
+  cover_photo_url: string | null;
+  google_rating: number;
+  review_count: number;
+  lat: number;
+  lng: number;
+  distance_km: number;
+}
+
 interface Props {
   businesses: Business[];
   cities: City[];
@@ -35,12 +50,17 @@ interface Props {
 
 export default function HomeClient({ businesses, cities, categories }: Props) {
   const router = useRouter();
+  const supabase = createBrowserClient();
   const [searchQ, setSearchQ] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+
+  // Near You state
+  const [nearbyBusinesses, setNearbyBusinesses] = useState<NearbyBusiness[]>([]);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'denied' | 'error'>('idle');
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -70,6 +90,49 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         b.category_name === activeCategory ||
         (activeCategory === 'Hotels & Guesthouses' && (b.category_name === 'Hotels' || b.category_name === 'Guesthouses'))
       );
+
+  const handleFindNearby = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('error');
+      return;
+    }
+
+    setLocationStatus('loading');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        const { data, error } = await (supabase as any).rpc('nearby_businesses', {
+          user_lat: latitude,
+          user_lng: longitude,
+          radius_km: 5,
+          limit_count: 12,
+        });
+
+        if (error) {
+          setLocationStatus('error');
+          return;
+        }
+
+        setNearbyBusinesses(data || []);
+        setLocationStatus('success');
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationStatus('denied');
+        } else {
+          setLocationStatus('error');
+        }
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  const formatDistance = (km: number) => {
+    if (km < 1) return `${Math.round(km * 1000)}m away`;
+    return `${km.toFixed(1)}km away`;
+  };
 
   return (
     <main>
@@ -125,8 +188,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
       {/* CATEGORY FILTERS */}
       <div style={{ padding: '20px 5vw 16px', borderBottom: '1px solid var(--border)', background: '#fff' }}>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-
-          {/* All pill */}
           <button
             onClick={() => setActiveCategory('All')}
             style={{
@@ -142,7 +203,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             🍽️ All
           </button>
 
-          {/* 5 main categories */}
           {VISIBLE_CATEGORIES.map(cat => (
             <div
               key={cat.name}
@@ -163,7 +223,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 }}
               >
                 {cat.emoji} {cat.name}
-                <span style={{ fontSize: '.85rem', opacity: 0.8, marginLeft: '2px' }}>▾</span>
+                <span style={{ fontSize: '.85rem', opacity: 0.8, marginLeft: '1px' }}>▾</span>
               </button>
 
               {hoveredCategory === cat.name && (
@@ -203,7 +263,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             </div>
           ))}
 
-          {/* More categories popup */}
           <div ref={moreRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setMoreOpen(!moreOpen)}
@@ -265,6 +324,180 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* NEAR YOU SECTION */}
+      <div style={{ padding: '48px 5vw', background: 'var(--cream)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
+              📍 <span style={{ color: 'var(--green)' }}>Near You</span>
+            </div>
+            <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginTop: '4px' }}>
+              Businesses within 5km of your location
+            </div>
+          </div>
+          {locationStatus === 'success' && nearbyBusinesses.length > 0 && (
+            <button
+              onClick={handleFindNearby}
+              style={{
+                background: 'none', border: '1.5px solid var(--border)',
+                borderRadius: '50px', padding: '8px 18px',
+                fontSize: '.82rem', fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'var(--font-sans)', color: 'var(--muted)',
+              }}
+            >
+              🔄 Refresh
+            </button>
+          )}
+        </div>
+
+        {/* Idle state — prompt to share location */}
+        {locationStatus === 'idle' && (
+          <div style={{
+            background: '#fff', borderRadius: 'var(--radius)',
+            border: '1px solid var(--border)',
+            padding: '40px', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🗺️</div>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '10px' }}>
+              Find businesses near you
+            </h3>
+            <p style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '24px', lineHeight: 1.6, maxWidth: '360px', margin: '0 auto 24px' }}>
+              Allow location access to see restaurants, cafes, and shops closest to where you are right now.
+            </p>
+            <button
+              onClick={handleFindNearby}
+              style={{
+                background: 'var(--green)', color: '#fff', border: 'none',
+                borderRadius: '50px', padding: '13px 28px',
+                fontFamily: 'var(--font-sans)', fontWeight: 700,
+                fontSize: '.95rem', cursor: 'pointer',
+              }}
+            >
+              📍 Find Businesses Near Me
+            </button>
+          </div>
+        )}
+
+        {/* Loading */}
+        {locationStatus === 'loading' && (
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '14px' }}>📡</div>
+            <div style={{ fontWeight: 600, marginBottom: '6px' }}>Getting your location…</div>
+            <div style={{ fontSize: '.85rem' }}>This only takes a second</div>
+          </div>
+        )}
+
+        {/* Denied */}
+        {locationStatus === 'denied' && (
+          <div style={{
+            background: '#fff', borderRadius: 'var(--radius)',
+            border: '1px solid var(--border)', padding: '32px', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🔒</div>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, marginBottom: '8px' }}>
+              Location access denied
+            </h3>
+            <p style={{ color: 'var(--muted)', fontSize: '.88rem', lineHeight: 1.6, marginBottom: '20px' }}>
+              To see nearby businesses, enable location access in your browser settings and try again.
+            </p>
+            <button
+              onClick={handleFindNearby}
+              style={{
+                background: 'var(--green)', color: '#fff', border: 'none',
+                borderRadius: '50px', padding: '11px 24px',
+                fontFamily: 'var(--font-sans)', fontWeight: 700,
+                fontSize: '.88rem', cursor: 'pointer',
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Error */}
+        {locationStatus === 'error' && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>⚠️</div>
+            <div style={{ fontWeight: 600, marginBottom: '8px' }}>Couldn't get your location</div>
+            <button onClick={handleFindNearby} style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '8px 20px', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', marginTop: '8px' }}>
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Success — no results */}
+        {locationStatus === 'success' && nearbyBusinesses.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted)' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', marginBottom: '8px' }}>No businesses found within 5km</div>
+            <div style={{ fontSize: '.88rem' }}>Try searching for a specific area instead</div>
+          </div>
+        )}
+
+        {/* Success — show results */}
+        {locationStatus === 'success' && nearbyBusinesses.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '22px' }}>
+            {nearbyBusinesses.map(biz => (
+              <Link key={biz.id} href={`/business/${biz.slug}`} style={{ textDecoration: 'none' }}>
+                <div style={{
+                  background: '#fff', borderRadius: 'var(--radius)',
+                  border: '1px solid var(--border)', overflow: 'hidden',
+                  boxShadow: 'var(--shadow-sm)', transition: 'box-shadow .2s, transform .2s',
+                  cursor: 'pointer',
+                }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)';
+                    (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-sm)';
+                    (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+                  }}
+                >
+                  {/* Photo */}
+                  <div style={{
+                    height: '160px', overflow: 'hidden', position: 'relative',
+                    background: 'linear-gradient(135deg, #1a5c3a, #2d8657)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '3rem',
+                  }}>
+                    {biz.cover_photo_url ? (
+                      <img src={biz.cover_photo_url} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : '🏢'}
+                    {/* Distance badge */}
+                    <div style={{
+                      position: 'absolute', top: '10px', right: '10px',
+                      background: 'rgba(0,0,0,.65)', color: '#fff',
+                      borderRadius: '50px', padding: '4px 10px',
+                      fontSize: '.72rem', fontWeight: 700,
+                      backdropFilter: 'blur(4px)',
+                    }}>
+                      📍 {formatDistance(biz.distance_km)}
+                    </div>
+                  </div>
+                  {/* Info */}
+                  <div style={{ padding: '16px' }}>
+                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', fontWeight: 700, marginBottom: '4px', color: 'var(--charcoal)' }}>
+                      {biz.name}
+                    </div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginBottom: '8px' }}>
+                      {biz.category_name}
+                    </div>
+                    {biz.google_rating > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem' }}>
+                        <span style={{ color: '#f5a623' }}>★</span>
+                        <span style={{ fontWeight: 700 }}>{biz.google_rating.toFixed(1)}</span>
+                        <span style={{ color: 'var(--muted)' }}>Google</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* TOP PICKS */}
