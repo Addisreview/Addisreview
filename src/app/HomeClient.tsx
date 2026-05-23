@@ -7,7 +7,6 @@ import BusinessCard from '@/components/business/BusinessCard';
 import { createBrowserClient } from '@/lib/supabase';
 import type { Business, City, Category } from '@/types/database';
 
-// ── 5 visible filters only ────────────────────────────────
 const VISIBLE_CATEGORIES = [
   { name: 'Restaurants',            emoji: '🍛', subcategories: ['Delivery', 'Firfir', 'Injera & Wot', 'Grills', 'Seafood', 'Italian', 'Fast Food', 'Vegetarian'] },
   { name: 'Coffee & Buna',          emoji: '☕', subcategories: ['Traditional Buna', 'Specialty Coffee', 'Pastry & Cake', 'Tea Houses'] },
@@ -28,18 +27,9 @@ const MORE_CATEGORIES = [
 ];
 
 interface NearbyBusiness {
-  id: string;
-  name: string;
-  slug: string;
-  category_name: string;
-  city_name: string;
-  address: string;
-  cover_photo_url: string | null;
-  google_rating: number;
-  review_count: number;
-  lat: number;
-  lng: number;
-  distance_km: number;
+  id: string; name: string; slug: string; category_name: string;
+  city_name: string; address: string; cover_photo_url: string | null;
+  google_rating: number; review_count: number; lat: number; lng: number; distance_km: number;
 }
 
 interface Props {
@@ -57,16 +47,12 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
-
-  // Near You state
   const [nearbyBusinesses, setNearbyBusinesses] = useState<NearbyBusiness[]>([]);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'denied' | 'error'>('idle');
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -92,52 +78,52 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
       );
 
   const handleFindNearby = () => {
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      return;
-    }
-
+    if (!navigator.geolocation) { setLocationStatus('error'); return; }
     setLocationStatus('loading');
-
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-
         const { data, error } = await (supabase as any).rpc('nearby_businesses', {
-          user_lat: latitude,
-          user_lng: longitude,
-          radius_km: 5,
-          limit_count: 12,
+          user_lat: latitude, user_lng: longitude, radius_km: 5, limit_count: 12,
         });
-
-        if (error) {
-          setLocationStatus('error');
-          return;
-        }
-
+        if (error) { setLocationStatus('error'); return; }
         setNearbyBusinesses(data || []);
         setLocationStatus('success');
       },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setLocationStatus('denied');
-        } else {
-          setLocationStatus('error');
-        }
-      },
+      (err) => setLocationStatus(err.code === err.PERMISSION_DENIED ? 'denied' : 'error'),
       { timeout: 10000, maximumAge: 60000 }
     );
   };
 
-  const formatDistance = (km: number) => {
-    if (km < 1) return `${Math.round(km * 1000)}m away`;
-    return `${km.toFixed(1)}km away`;
-  };
+  const formatDistance = (km: number) =>
+    km < 1 ? `${Math.round(km * 1000)}m away` : `${km.toFixed(1)}km away`;
 
   return (
     <main>
+      <style>{`
+        @media (max-width: 768px) {
+          .home-hero { padding: 48px 5vw 56px !important; }
+          .home-search-bar { flex-direction: column !important; border-radius: 12px !important; }
+          .home-search-bar > div { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
+          .home-search-bar .btn-search { width: 100% !important; min-height: 48px !important; }
+          .category-filters-wrap { flex-wrap: nowrap !important; overflow-x: auto !important; padding-bottom: 6px !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+          .category-filters-wrap::-webkit-scrollbar { display: none; }
+          .category-filters-wrap > * { flex-shrink: 0 !important; }
+          .biz-grid { grid-template-columns: 1fr !important; }
+          .nearby-grid { grid-template-columns: 1fr !important; }
+          .cities-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .how-it-works-grid { grid-template-columns: 1fr 1fr !important; }
+          .cta-section { flex-direction: column !important; text-align: center !important; align-items: center !important; }
+          .section-pad { padding: 36px 5vw !important; }
+          .section-title { font-size: 1.5rem !important; }
+        }
+        @media (max-width: 480px) {
+          .how-it-works-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+
       {/* HERO */}
-      <div style={{
+      <div className="home-hero" style={{
         background: 'linear-gradient(140deg,#0e3d26 0%,var(--green) 50%,#1a7a4a 100%)',
         padding: '80px 5vw 88px', position: 'relative', overflow: 'hidden',
       }}>
@@ -153,19 +139,19 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           </div>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 'clamp(2.2rem,4.5vw,3.6rem)',
+            fontSize: 'clamp(2rem,4.5vw,3.6rem)',
             fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: '14px',
           }}>
             Discover the best of <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>your city</em>
           </h1>
-          <p style={{ color: 'rgba(255,255,255,.68)', fontSize: '1.05rem', marginBottom: '36px', lineHeight: 1.65 }}>
+          <p style={{ color: 'rgba(255,255,255,.68)', fontSize: 'clamp(.9rem,2vw,1.05rem)', marginBottom: '32px', lineHeight: 1.65 }}>
             Restaurants, hotels, spas & shops — reviewed by real Ethiopians. Find trusted local businesses everywhere.
           </p>
-          <div style={{
+          <div className="home-search-bar" style={{
             display: 'flex', background: '#fff', borderRadius: '14px',
             overflow: 'hidden', boxShadow: '0 10px 50px rgba(0,0,0,.3)', maxWidth: '660px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 18px', flex: 1, borderRight: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 18px', flex: 1, borderRight: '1px solid var(--border)' }}>
               <input
                 type="text"
                 placeholder="Restaurants, coffee shops, hotels…"
@@ -175,7 +161,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 style={{ border: 'none', outline: 'none', fontSize: '.93rem', color: 'var(--charcoal)', width: '100%', padding: '17px 0', background: 'transparent' }}
               />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 18px', flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 18px', flex: 1 }}>
               <span style={{ fontSize: '.93rem', color: 'var(--charcoal)', padding: '17px 0', userSelect: 'none' }}>
                 📍 Addis Ababa
               </span>
@@ -186,8 +172,8 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
       </div>
 
       {/* CATEGORY FILTERS */}
-      <div style={{ padding: '20px 5vw 16px', borderBottom: '1px solid var(--border)', background: '#fff' }}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ padding: '16px 5vw', borderBottom: '1px solid var(--border)', background: '#fff' }}>
+        <div className="category-filters-wrap" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveCategory('All')}
             style={{
@@ -197,16 +183,14 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
               borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
               fontWeight: 500, cursor: 'pointer', transition: 'all .2s',
               color: activeCategory === 'All' ? '#fff' : 'var(--charcoal)',
-              fontFamily: 'var(--font-sans)',
+              fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
             }}
           >
             🍽️ All
           </button>
 
           {VISIBLE_CATEGORIES.map(cat => (
-            <div
-              key={cat.name}
-              style={{ position: 'relative' }}
+            <div key={cat.name} style={{ position: 'relative' }}
               onMouseEnter={() => setHoveredCategory(cat.name)}
               onMouseLeave={() => setHoveredCategory(null)}
             >
@@ -219,11 +203,10 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                   borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
                   fontWeight: 500, cursor: 'pointer', transition: 'all .2s',
                   color: activeCategory === cat.name ? '#fff' : 'var(--charcoal)',
-                  fontFamily: 'var(--font-sans)',
+                  fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
                 }}
               >
-                {cat.emoji} {cat.name}
-                <span style={{ fontSize: '.85rem', opacity: 0.8, marginLeft: '1px' }}>▾</span>
+                {cat.emoji} {cat.name} <span style={{ fontSize: '.85rem', opacity: 0.8 }}>▾</span>
               </button>
 
               {hoveredCategory === cat.name && (
@@ -232,31 +215,15 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                   background: '#fff', border: '1px solid var(--border)',
                   borderRadius: '12px', padding: '8px',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                  display: 'flex', flexDirection: 'column', gap: '2px',
-                  minWidth: '200px',
+                  display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '200px',
                 }}>
                   {cat.subcategories.map(sub => (
-                    <button
-                      key={sub}
-                      onClick={() => {
-                        const params = new URLSearchParams();
-                        params.set('q', sub);
-                        params.set('category', cat.name);
-                        params.set('city', 'Addis Ababa');
-                        router.push(`/search?${params.toString()}`);
-                      }}
-                      style={{
-                        background: 'none', border: 'none', textAlign: 'left',
-                        padding: '9px 12px', borderRadius: '8px', fontSize: '.87rem',
-                        cursor: 'pointer', color: 'var(--charcoal)',
-                        fontFamily: 'var(--font-sans)', fontWeight: 500,
-                        transition: 'background .12s',
-                      }}
+                    <button key={sub}
+                      onClick={() => { router.push(`/search?q=${encodeURIComponent(sub)}&category=${encodeURIComponent(cat.name)}&city=Addis+Ababa`); }}
+                      style={{ background: 'none', border: 'none', textAlign: 'left', padding: '9px 12px', borderRadius: '8px', fontSize: '.87rem', cursor: 'pointer', color: 'var(--charcoal)', fontFamily: 'var(--font-sans)', fontWeight: 500 }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                    >
-                      {sub}
-                    </button>
+                    >{sub}</button>
                   ))}
                 </div>
               )}
@@ -264,8 +231,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           ))}
 
           <div ref={moreRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => setMoreOpen(!moreOpen)}
+            <button onClick={() => setMoreOpen(!moreOpen)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '7px',
                 background: moreOpen ? 'var(--green)' : 'transparent',
@@ -273,10 +239,10 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
                 fontWeight: 500, cursor: 'pointer', transition: 'all .2s',
                 color: moreOpen ? '#fff' : 'var(--muted)',
-                fontFamily: 'var(--font-sans)',
+                fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
               }}
             >
-              More categories {moreOpen ? '▴' : '▾'}
+              More {moreOpen ? '▴' : '▾'}
             </button>
 
             {moreOpen && (
@@ -286,22 +252,12 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 borderRadius: '16px', padding: '12px',
                 boxShadow: '0 12px 40px rgba(0,0,0,0.14)',
                 display: 'grid', gridTemplateColumns: '1fr 1fr',
-                gap: '4px', minWidth: '280px',
+                gap: '4px', minWidth: '260px',
               }}>
                 {MORE_CATEGORIES.map(cat => (
-                  <button
-                    key={cat.name}
-                    onClick={() => {
-                      setMoreOpen(false);
-                      router.push(`/search?category=${encodeURIComponent(cat.name)}&city=Addis+Ababa`);
-                    }}
-                    style={{
-                      background: 'none', border: 'none', textAlign: 'left',
-                      padding: '10px 12px', borderRadius: '10px', fontSize: '.87rem',
-                      cursor: 'pointer', color: 'var(--charcoal)',
-                      fontFamily: 'var(--font-sans)', fontWeight: 500,
-                      transition: 'background .12s', display: 'flex', alignItems: 'center', gap: '8px',
-                    }}
+                  <button key={cat.name}
+                    onClick={() => { setMoreOpen(false); router.push(`/search?category=${encodeURIComponent(cat.name)}&city=Addis+Ababa`); }}
+                    style={{ background: 'none', border: 'none', textAlign: 'left', padding: '10px 12px', borderRadius: '10px', fontSize: '.87rem', cursor: 'pointer', color: 'var(--charcoal)', fontFamily: 'var(--font-sans)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                   >
@@ -309,14 +265,8 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                   </button>
                 ))}
                 <div style={{ gridColumn: '1/-1', borderTop: '1px solid var(--border)', marginTop: '8px', paddingTop: '8px' }}>
-                  <button
-                    onClick={() => { setMoreOpen(false); router.push('/search?city=Addis+Ababa'); }}
-                    style={{
-                      background: 'var(--green)', color: '#fff', border: 'none',
-                      borderRadius: '50px', padding: '9px 20px', fontSize: '.85rem',
-                      fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', width: '100%',
-                    }}
-                  >
+                  <button onClick={() => { setMoreOpen(false); router.push('/search?city=Addis+Ababa'); }}
+                    style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '9px 20px', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', width: '100%' }}>
                     Browse all categories →
                   </button>
                 </div>
@@ -326,61 +276,35 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         </div>
       </div>
 
-      {/* NEAR YOU SECTION */}
-      <div style={{ padding: '48px 5vw', background: 'var(--cream)', borderBottom: '1px solid var(--border)' }}>
+      {/* NEAR YOU */}
+      <div className="section-pad" style={{ padding: '48px 5vw', background: 'var(--cream)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
+            <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
               📍 <span style={{ color: 'var(--green)' }}>Near You</span>
             </div>
-            <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginTop: '4px' }}>
-              Businesses within 5km of your location
-            </div>
+            <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginTop: '4px' }}>Businesses within 5km of your location</div>
           </div>
           {locationStatus === 'success' && nearbyBusinesses.length > 0 && (
-            <button
-              onClick={handleFindNearby}
-              style={{
-                background: 'none', border: '1.5px solid var(--border)',
-                borderRadius: '50px', padding: '8px 18px',
-                fontSize: '.82rem', fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'var(--font-sans)', color: 'var(--muted)',
-              }}
-            >
+            <button onClick={handleFindNearby} style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '8px 18px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--muted)' }}>
               🔄 Refresh
             </button>
           )}
         </div>
 
-        {/* Idle state — prompt to share location */}
         {locationStatus === 'idle' && (
-          <div style={{
-            background: '#fff', borderRadius: 'var(--radius)',
-            border: '1px solid var(--border)',
-            padding: '40px', textAlign: 'center',
-          }}>
+          <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '40px', textAlign: 'center' }}>
             <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🗺️</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '10px' }}>
-              Find businesses near you
-            </h3>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '10px' }}>Find businesses near you</h3>
             <p style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '24px', lineHeight: 1.6, maxWidth: '360px', margin: '0 auto 24px' }}>
               Allow location access to see restaurants, cafes, and shops closest to where you are right now.
             </p>
-            <button
-              onClick={handleFindNearby}
-              style={{
-                background: 'var(--green)', color: '#fff', border: 'none',
-                borderRadius: '50px', padding: '13px 28px',
-                fontFamily: 'var(--font-sans)', fontWeight: 700,
-                fontSize: '.95rem', cursor: 'pointer',
-              }}
-            >
+            <button onClick={handleFindNearby} style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '13px 28px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.95rem', cursor: 'pointer' }}>
               📍 Find Businesses Near Me
             </button>
           </div>
         )}
 
-        {/* Loading */}
         {locationStatus === 'loading' && (
           <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted)' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '14px' }}>📡</div>
@@ -389,45 +313,23 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           </div>
         )}
 
-        {/* Denied */}
         {locationStatus === 'denied' && (
-          <div style={{
-            background: '#fff', borderRadius: 'var(--radius)',
-            border: '1px solid var(--border)', padding: '32px', textAlign: 'center',
-          }}>
+          <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '32px', textAlign: 'center' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🔒</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, marginBottom: '8px' }}>
-              Location access denied
-            </h3>
-            <p style={{ color: 'var(--muted)', fontSize: '.88rem', lineHeight: 1.6, marginBottom: '20px' }}>
-              To see nearby businesses, enable location access in your browser settings and try again.
-            </p>
-            <button
-              onClick={handleFindNearby}
-              style={{
-                background: 'var(--green)', color: '#fff', border: 'none',
-                borderRadius: '50px', padding: '11px 24px',
-                fontFamily: 'var(--font-sans)', fontWeight: 700,
-                fontSize: '.88rem', cursor: 'pointer',
-              }}
-            >
-              Try Again
-            </button>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, marginBottom: '8px' }}>Location access denied</h3>
+            <p style={{ color: 'var(--muted)', fontSize: '.88rem', lineHeight: 1.6, marginBottom: '20px' }}>Enable location access in your browser settings and try again.</p>
+            <button onClick={handleFindNearby} style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '11px 24px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.88rem', cursor: 'pointer' }}>Try Again</button>
           </div>
         )}
 
-        {/* Error */}
         {locationStatus === 'error' && (
           <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>⚠️</div>
             <div style={{ fontWeight: 600, marginBottom: '8px' }}>Couldn't get your location</div>
-            <button onClick={handleFindNearby} style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '8px 20px', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', marginTop: '8px' }}>
-              Try Again
-            </button>
+            <button onClick={handleFindNearby} style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '8px 20px', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', marginTop: '8px' }}>Try Again</button>
           </div>
         )}
 
-        {/* Success — no results */}
         {locationStatus === 'success' && nearbyBusinesses.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted)' }}>
             <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
@@ -436,55 +338,20 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           </div>
         )}
 
-        {/* Success — show results */}
         {locationStatus === 'success' && nearbyBusinesses.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '22px' }}>
+          <div className="nearby-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
             {nearbyBusinesses.map(biz => (
               <Link key={biz.id} href={`/business/${biz.slug}`} style={{ textDecoration: 'none' }}>
-                <div style={{
-                  background: '#fff', borderRadius: 'var(--radius)',
-                  border: '1px solid var(--border)', overflow: 'hidden',
-                  boxShadow: 'var(--shadow-sm)', transition: 'box-shadow .2s, transform .2s',
-                  cursor: 'pointer',
-                }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)';
-                    (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-sm)';
-                    (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                  }}
-                >
-                  {/* Photo */}
-                  <div style={{
-                    height: '160px', overflow: 'hidden', position: 'relative',
-                    background: 'linear-gradient(135deg, #1a5c3a, #2d8657)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '3rem',
-                  }}>
-                    {biz.cover_photo_url ? (
-                      <img src={biz.cover_photo_url} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : '🏢'}
-                    {/* Distance badge */}
-                    <div style={{
-                      position: 'absolute', top: '10px', right: '10px',
-                      background: 'rgba(0,0,0,.65)', color: '#fff',
-                      borderRadius: '50px', padding: '4px 10px',
-                      fontSize: '.72rem', fontWeight: 700,
-                      backdropFilter: 'blur(4px)',
-                    }}>
+                <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ height: '160px', overflow: 'hidden', position: 'relative', background: 'linear-gradient(135deg, #1a5c3a, #2d8657)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>
+                    {biz.cover_photo_url ? <img src={biz.cover_photo_url} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏢'}
+                    <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,.65)', color: '#fff', borderRadius: '50px', padding: '4px 10px', fontSize: '.72rem', fontWeight: 700 }}>
                       📍 {formatDistance(biz.distance_km)}
                     </div>
                   </div>
-                  {/* Info */}
                   <div style={{ padding: '16px' }}>
-                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', fontWeight: 700, marginBottom: '4px', color: 'var(--charcoal)' }}>
-                      {biz.name}
-                    </div>
-                    <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginBottom: '8px' }}>
-                      {biz.category_name}
-                    </div>
+                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', fontWeight: 700, marginBottom: '4px', color: 'var(--charcoal)' }}>{biz.name}</div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginBottom: '8px' }}>{biz.category_name}</div>
                     {biz.google_rating > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem' }}>
                         <span style={{ color: '#f5a623' }}>★</span>
@@ -501,20 +368,18 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
       </div>
 
       {/* TOP PICKS */}
-      <div style={{ padding: '56px 5vw' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
+      <div className="section-pad" style={{ padding: '56px 5vw' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', gap: '12px' }}>
+          <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
             Top Picks in <span style={{ color: 'var(--green)' }}>Addis Ababa</span>
           </div>
-          <Link href="/search?city=Addis+Ababa" style={{ color: 'var(--green)', fontWeight: 600, fontSize: '.9rem', textDecoration: 'none', borderBottom: '1px solid var(--green)' }}>
+          <Link href="/search?city=Addis+Ababa" style={{ color: 'var(--green)', fontWeight: 600, fontSize: '.9rem', textDecoration: 'none', borderBottom: '1px solid var(--green)', whiteSpace: 'nowrap' }}>
             See all →
           </Link>
         </div>
         {filteredBusinesses.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '22px' }}>
-            {filteredBusinesses.map(biz => (
-              <BusinessCard key={biz.id} business={biz} />
-            ))}
+          <div className="biz-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '22px' }}>
+            {filteredBusinesses.map(biz => <BusinessCard key={biz.id} business={biz} />)}
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
@@ -530,23 +395,17 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
       </div>
 
       {/* CITIES */}
-      <div style={{ padding: '56px 5vw', background: 'var(--cream)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, marginBottom: '28px' }}>
+      <div className="section-pad" style={{ padding: '56px 5vw', background: 'var(--cream)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, marginBottom: '28px' }}>
           Browse by <span style={{ color: 'var(--green)' }}>City</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: '14px' }}>
+        <div className="cities-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: '14px' }}>
           {cities.map(city => (
             <Link key={city.id} href={`/search?city=${encodeURIComponent(city.name)}`} style={{ textDecoration: 'none' }}>
               <div
                 onMouseEnter={() => setHoveredCity(city.id)}
                 onMouseLeave={() => setHoveredCity(null)}
-                style={{
-                  background: hoveredCity === city.id ? 'var(--green)' : '#fff',
-                  borderRadius: '14px', padding: '20px 14px',
-                  textAlign: 'center', border: `1px solid ${hoveredCity === city.id ? 'var(--green)' : 'var(--border)'}`,
-                  cursor: 'pointer', transition: 'all .22s',
-                  color: hoveredCity === city.id ? '#fff' : 'var(--charcoal)',
-                }}
+                style={{ background: hoveredCity === city.id ? 'var(--green)' : '#fff', borderRadius: '14px', padding: '20px 14px', textAlign: 'center', border: `1px solid ${hoveredCity === city.id ? 'var(--green)' : 'var(--border)'}`, cursor: 'pointer', transition: 'all .22s', color: hoveredCity === city.id ? '#fff' : 'var(--charcoal)' }}
               >
                 <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>{city.emoji}</span>
                 <div style={{ fontWeight: 600, fontSize: '.88rem' }}>{city.name}</div>
@@ -560,26 +419,19 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
       </div>
 
       {/* HOW IT WORKS */}
-      <div style={{ padding: '56px 5vw', background: 'var(--green)' }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, color: '#fff', marginBottom: '28px' }}>
+      <div className="section-pad" style={{ padding: '56px 5vw', background: 'var(--green)' }}>
+        <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, color: '#fff', marginBottom: '28px' }}>
           How <span style={{ color: 'var(--yellow)' }}>AddisReview</span> works
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '20px' }}>
+        <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '20px' }}>
           {[
             { n: 1, title: 'Search your city', desc: 'Find restaurants, hotels, shops & services across every major Ethiopian city.' },
             { n: 2, title: 'Read real reviews', desc: "Honest ratings from Ethiopians who've actually visited the place." },
             { n: 3, title: 'Share your experience', desc: 'Write a review and help your community make better choices.' },
             { n: 4, title: 'Own a business?', desc: 'Claim your listing, reply to reviews, and grow your customer base — free.' },
           ].map(step => (
-            <div key={step.n} style={{
-              background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.14)',
-              borderRadius: '14px', padding: '28px 22px', textAlign: 'center',
-            }}>
-              <div style={{
-                width: '46px', height: '46px', background: 'var(--yellow)', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 900, fontSize: '1.05rem', color: 'var(--charcoal)', margin: '0 auto 14px',
-              }}>{step.n}</div>
+            <div key={step.n} style={{ background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.14)', borderRadius: '14px', padding: '28px 22px', textAlign: 'center' }}>
+              <div style={{ width: '46px', height: '46px', background: 'var(--yellow)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.05rem', color: 'var(--charcoal)', margin: '0 auto 14px' }}>{step.n}</div>
               <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', color: '#fff', marginBottom: '8px' }}>{step.title}</h3>
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.84rem', lineHeight: 1.5 }}>{step.desc}</p>
             </div>
@@ -588,11 +440,8 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
       </div>
 
       {/* CTA */}
-      <div style={{
-        background: 'var(--yellow)', padding: '52px 5vw',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap',
-      }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 900, color: 'var(--charcoal)', maxWidth: '460px' }}>
+      <div className="cta-section" style={{ background: 'var(--yellow)', padding: '52px 5vw', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.4rem,3vw,1.9rem)', fontWeight: 900, color: 'var(--charcoal)', maxWidth: '460px' }}>
           Own a business in Ethiopia? List it for free.
         </h2>
         <Link href="/auth">
