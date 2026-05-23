@@ -7,17 +7,16 @@ import HomeClient from './HomeClient';
 export default async function HomePage() {
   const supabase = createServerClient();
 
-  // Top 20 businesses: min 4 stars, min 20 reviews, sorted by review count then rating
+  // Top 20: min 4.0 stars, min 20 reviews, sorted by review_count then google_rating
   const { data: topRated } = await supabase
     .from('businesses')
     .select('*')
     .eq('is_active', true)
     .eq('city_name', 'Addis Ababa')
     .not('google_rating', 'is', null)
-    .not('google_review_count', 'is', null)
     .gte('google_rating', 4.0)
-    .gte('google_review_count', 20)
-    .order('google_review_count', { ascending: false })
+    .gte('review_count', 20)
+    .order('review_count', { ascending: false })
     .order('google_rating', { ascending: false })
     .limit(20) as any;
 
