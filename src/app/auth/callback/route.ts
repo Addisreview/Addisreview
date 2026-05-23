@@ -1,7 +1,6 @@
 // src/app/auth/callback/route.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -9,37 +8,30 @@ export async function GET(request: NextRequest) {
   const redirect = requestUrl.searchParams.get('redirect') || '/';
   const type = requestUrl.searchParams.get('type');
   const tokenHash = requestUrl.searchParams.get('token_hash');
-  const next = requestUrl.searchParams.get('next') || '/';
+  const errorCode = requestUrl.searchParams.get('error_code');
+  const errorDesc = requestUrl.searchParams.get('error_description');
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_DB_HOST!,
-    process.env.NEXT_PUBLIC_DB_ANON!
-  );
+  // If there's an error from Supabase, redirect to auth with error
+  if (errorCode) {
+    return NextResponse.redirect(
+      new URL(`/auth?error=${encodeURIComponent(errorDesc || errorCode)}`, request.url)
+    );
+  }
 
-  // Handle email confirmation via token_hash (Supabase email confirmation links)
+  // Email confirmation — pass token_hash to client-side confirm page
   if (tokenHash) {
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: 'email',
-    });
-
-    if (!error) {
-      return NextResponse.redirect(new URL(next === '/' ? '/' : next, request.url));
-    }
+    return NextResponse.redirect(
+      new URL(`/auth/confirm?token_hash=${tokenHash}&redirect=${encodeURIComponent(redirect)}`, request.url)
+    );
   }
 
-  // Handle OAuth and magic link codes
+  // OAuth code exchange
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code);
-
-    // Password recovery
-    if (type === 'recovery') {
-      return NextResponse.redirect(new URL('/auth/reset-password', request.url));
-    }
-
-    return NextResponse.redirect(new URL(redirect, request.url));
+    // For OAuth we pass code to client confirm page too
+    return NextResponse.redirect(
+      new URL(`/auth/confirm?code=${code}&type=${type || ''}&redirect=${encodeURIComponent(redirect)}`, request.url)
+    );
   }
 
-  // Fallback — go home
   return NextResponse.redirect(new URL('/', request.url));
 }
