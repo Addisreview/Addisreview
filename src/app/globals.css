@@ -20,7 +20,6 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 html { scroll-behavior: smooth; }
 
 body {
@@ -117,13 +116,8 @@ body {
 .btn-search:hover { background: var(--yellow-dark); }
 
 /* ── CARDS ── */
-.card-hover {
-  transition: transform .25s, box-shadow .25s;
-}
-.card-hover:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-lg);
-}
+.card-hover { transition: transform .25s, box-shadow .25s; }
+.card-hover:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
 
 /* ── BADGES ── */
 .badge {
@@ -137,6 +131,7 @@ body {
 .badge-open { background: #e8f5ee; color: #1a5c3a; }
 .badge-closed { background: #fdecea; color: #c0392b; }
 .badge-featured { background: var(--yellow); color: var(--charcoal); }
+.badge-green { background: var(--green-pale); color: var(--green); }
 
 /* ── STARS ── */
 .stars { color: var(--yellow); letter-spacing: 2px; }
@@ -190,26 +185,8 @@ body {
 }
 .animate-fade-in { animation: fadeIn .35s ease; }
 
-@keyframes orb {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50% { transform: scale(1.08) translateY(-12px); }
-}
-.animate-orb-1 { animation: orb 6s ease-in-out infinite; }
-.animate-orb-2 { animation: orb 6s ease-in-out 3s infinite; }
-
 /* ── LAYOUT ── */
 .container { max-width: 1200px; margin: 0 auto; padding: 0 5vw; }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 900px) {
-  .hide-mobile { display: none; }
-}
-@media (max-width: 600px) {
-  .search-bar-wrap { flex-direction: column; }
-}
-@media (max-width: 600px) {
-  .search-bar-wrap { flex-direction: column; }
-}
 
 /* ── RATING BARS ── */
 .bar-fill {
@@ -219,7 +196,172 @@ body {
   transition: width .3s ease;
 }
 
-.badge-green {
-  background: var(--green-pale);
-  color: var(--green);
+/* ════════════════════════════════════════
+   MOBILE RESPONSIVE — comprehensive
+   ════════════════════════════════════════ */
+
+/* Category filter pills — horizontal scroll on mobile */
+.category-filters-wrap {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Hero search bar — stack on mobile */
+.home-search-bar {
+  display: flex;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 50px rgba(0,0,0,.3);
+  max-width: 660px;
+}
+
+/* Footer grid */
+.footer-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 36px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+@media (max-width: 768px) {
+  /* Hide on mobile */
+  .hide-mobile { display: none !important; }
+  .desktop-nav { display: none !important; }
+  .mobile-menu-btn { display: flex !important; }
+
+  /* Hero — tighter padding */
+  .home-hero {
+    padding: 48px 5vw 56px !important;
+  }
+
+  /* Search bar — stack vertically */
+  .home-search-bar {
+    flex-direction: column !important;
+    max-width: 100% !important;
+    border-radius: 12px !important;
+  }
+  .home-search-bar > div {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  .home-search-bar .btn-search {
+    width: 100% !important;
+    min-height: 48px !important;
+    border-radius: 0 !important;
+  }
+
+  /* Category filters — horizontal scroll */
+  .category-filters-wrap {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 8px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .category-filters-wrap::-webkit-scrollbar { display: none; }
+  .category-filters-wrap button { flex-shrink: 0 !important; }
+
+  /* Business cards — 1 column */
+  .biz-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Nearby grid — 1 column */
+  .nearby-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cities grid — 2 columns */
+  .cities-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* How it works — 1 column */
+  .how-it-works-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* CTA section — stack */
+  .cta-section {
+    flex-direction: column !important;
+    text-align: center !important;
+    align-items: center !important;
+  }
+  .cta-section h2 {
+    font-size: 1.5rem !important;
+  }
+
+  /* Footer — 2 column grid on mobile */
+  .footer-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 28px !important;
+  }
+  .footer-brand {
+    grid-column: 1 / -1 !important;
+  }
+  .footer-bottom {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 6px !important;
+  }
+
+  /* Section padding — tighter on mobile */
+  .section-padding {
+    padding: 36px 5vw !important;
+  }
+
+  /* Near you section heading */
+  .near-you-heading {
+    font-size: 1.5rem !important;
+  }
+
+  /* Top picks heading */
+  .top-picks-heading {
+    font-size: 1.5rem !important;
+  }
+
+  /* Business profile */
+  .biz-body-layout { grid-template-columns: 1fr !important; padding: 16px !important; }
+  .biz-sidebar { order: -1; }
+  .biz-hero { height: 200px !important; font-size: 5rem !important; }
+  .biz-header-inner { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+  .biz-actions { flex-wrap: wrap; width: 100%; }
+  .biz-actions button { flex: 1; min-width: 120px; justify-content: center; }
+  .biz-avatar { margin-top: -40px !important; width: 70px !important; height: 70px !important; font-size: 2rem !important; }
+  .photos-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Dashboard */
+  .dash-layout { grid-template-columns: 1fr !important; }
+  .dash-sidebar { display: none !important; }
+
+  /* Auth page */
+  .auth-layout { grid-template-columns: 1fr !important; }
+  .auth-left { display: none !important; }
+  .auth-right { padding: 32px 24px !important; }
+
+  /* Search page */
+  .search-layout { grid-template-columns: 1fr !important; padding: 16px !important; }
+  .filters-desktop { display: none !important; }
+  .mobile-filter-btn { display: flex !important; }
+  .biz-card { flex-direction: column !important; }
+  .biz-card-img { width: 100% !important; min-width: unset !important; height: 180px !important; }
+  .search-bar-inner { flex-direction: column; }
+  .search-bar-city { border-left: none !important; border-top: 1px solid var(--border) !important; }
+}
+
+@media (max-width: 480px) {
+  /* Extra small — single column everything */
+  .how-it-works-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
