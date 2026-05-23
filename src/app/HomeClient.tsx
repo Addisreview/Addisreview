@@ -163,7 +163,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
                 }}
               >
                 {cat.emoji} {cat.name}
-                <span style={{ fontSize: '.7rem', opacity: 0.7, marginLeft: '1px' }}>▾</span>
+                <span style={{ fontSize: '.85rem', opacity: 0.8, marginLeft: '2px' }}>▾</span>
               </button>
 
               {hoveredCategory === cat.name && (
