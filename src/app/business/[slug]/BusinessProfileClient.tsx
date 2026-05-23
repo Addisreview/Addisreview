@@ -31,15 +31,24 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   const [imgError, setImgError] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const rating = Number(business.rating_avg) || 0;
-  const fullStars = Math.floor(rating);
+  // ── Rating logic: use AddisReview rating if it exists, otherwise fall back to Google ──
+  const addisRating = Number(business.rating_avg) || 0;
+  const googleRating = Number(business.google_rating) || 0;
+  const displayRating = addisRating > 0 ? addisRating : googleRating;
+  const ratingSource = addisRating > 0 ? 'AddisReview' : 'Google';
+  const fullStars = Math.floor(displayRating);
   const emptyStars = 5 - fullStars;
+
   const emoji = getCategoryEmoji(business.category_name || '');
   const heroColor = HERO_COLORS[business.category_name || ''] || 'linear-gradient(135deg,#333,#555)';
-  const hours = business.hours as Record<string, string> | null;
+
+  // ── Hours: handle both object and null gracefully ──
+  const rawHours = business.hours as Record<string, string> | null;
+  const hours = rawHours && typeof rawHours === 'object' && !Array.isArray(rawHours) ? rawHours : null;
+  const hasHours = hours && DAYS.some(d => hours[d] && hours[d].trim().length > 0);
+
   const photo = (business as any).cover_photo_url || null;
   const slug = business.slug || business.id;
-
   const writeReviewUrl = `/write-review?business=${business.id}&slug=${slug}&name=${encodeURIComponent(business.name)}`;
 
   const totalReviews = reviews.length;
@@ -51,7 +60,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
 
   const today = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
 
-  // Build full photo list for lightbox
   const allPhotos = [
     ...(photo ? [photo] : []),
     ...(business.photos || []),
@@ -76,54 +84,23 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           .biz-avatar { margin-top: -40px !important; width: 70px !important; height: 70px !important; font-size: 2rem !important; }
           .photos-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
-        .photo-thumb {
-          cursor: pointer;
-          transition: transform .2s, opacity .2s;
-        }
-        .photo-thumb:hover {
-          transform: scale(1.03);
-          opacity: .9;
-        }
+        .photo-thumb { cursor: pointer; transition: transform .2s, opacity .2s; }
+        .photo-thumb:hover { transform: scale(1.03); opacity: .9; }
       `}</style>
 
-      {/* LIGHTBOX */}
       {lightboxIndex !== null && (
-        <PhotoLightbox
-          photos={allPhotos}
-          initialIndex={lightboxIndex}
-          currentIndex={lightboxIndex}
-          onClose={closeLightbox}
-          onNext={nextPhoto}
-          onPrev={prevPhoto}
-        />
+        <PhotoLightbox photos={allPhotos} initialIndex={lightboxIndex} currentIndex={lightboxIndex} onClose={closeLightbox} onNext={nextPhoto} onPrev={prevPhoto} />
       )}
 
       {/* HERO */}
       <div className="biz-hero" style={{ height: '300px', position: 'relative', overflow: 'hidden', background: heroColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem' }}>
         {photo && !imgError ? (
-          <img
-            src={photo}
-            alt={business.name}
-            onError={() => setImgError(true)}
-            onClick={() => openLightbox(0)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, cursor: 'pointer' }}
-          />
+          <img src={photo} alt={business.name} onError={() => setImgError(true)} onClick={() => openLightbox(0)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, cursor: 'pointer' }} />
         ) : emoji}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.6))' }} />
         {allPhotos.length > 1 && (
-          <button
-            onClick={() => openLightbox(0)}
-            style={{
-              position: 'absolute', bottom: '16px', right: '16px',
-              background: 'rgba(0,0,0,.6)', color: '#fff',
-              border: '1px solid rgba(255,255,255,.3)',
-              borderRadius: '50px', padding: '7px 16px',
-              fontSize: '.8rem', fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'DM Sans, system-ui, sans-serif',
-              backdropFilter: 'blur(4px)',
-              zIndex: 2,
-            }}
-          >
+          <button onClick={() => openLightbox(0)} style={{ position: 'absolute', bottom: '16px', right: '16px', background: 'rgba(0,0,0,.6)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50px', padding: '7px 16px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, system-ui, sans-serif', backdropFilter: 'blur(4px)', zIndex: 2 }}>
             📷 {allPhotos.length} photos
           </button>
         )}
@@ -140,9 +117,19 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="stars" style={{ fontSize: '1.1rem' }}>{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
-                <span style={{ fontWeight: 800, fontSize: '1rem' }}>{formatRating(rating)}</span>
-                <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>({business.review_count} reviews)</span>
+                <span style={{ fontWeight: 800, fontSize: '1rem' }}>{formatRating(displayRating)}</span>
+                <span style={{ fontSize: '.82rem', color: 'var(--muted)' }}>
+                  {addisRating > 0
+                    ? `(${totalReviews} ${totalReviews === 1 ? 'review' : 'reviews'} on AddisReview)`
+                    : `(${(business as any).google_review_count || 'Google'} reviews · Google)`
+                  }
+                </span>
               </div>
+              {addisRating === 0 && googleRating > 0 && (
+                <span style={{ fontSize: '.78rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+                  Be the first to review on AddisReview
+                </span>
+              )}
               {business.is_featured && <span className="badge badge-featured">⭐ Featured</span>}
               {business.is_verified && <span className="badge badge-open">✓ Verified</span>}
               {business.category_name && <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>{business.category_name}{business.price_range ? ` · ${priceLabel(business.price_range)}` : ''}</span>}
@@ -184,9 +171,13 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             <>
               <div style={{ display: 'flex', gap: '24px', alignItems: 'center', background: 'var(--cream)', borderRadius: 'var(--radius)', padding: '20px', marginBottom: '28px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
                 <div style={{ textAlign: 'center', minWidth: '80px' }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontWeight: 900, color: 'var(--green)', lineHeight: 1 }}>{formatRating(rating)}</div>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontWeight: 900, color: 'var(--green)', lineHeight: 1 }}>
+                    {addisRating > 0 ? formatRating(addisRating) : formatRating(googleRating)}
+                  </div>
                   <div className="stars" style={{ fontSize: '1.2rem', margin: '6px 0' }}>{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</div>
-                  <div style={{ fontSize: '.82rem', color: 'var(--muted)' }}>{totalReviews} reviews</div>
+                  <div style={{ fontSize: '.78rem', color: 'var(--muted)' }}>
+                    {addisRating > 0 ? `${totalReviews} AddisReview ${totalReviews === 1 ? 'review' : 'reviews'}` : `${(business as any).google_review_count || '—'} Google reviews`}
+                  </div>
                 </div>
                 <div style={{ flex: 1, minWidth: '160px' }}>
                   {ratingBuckets.map(({ star, count, pct }) => (
@@ -200,14 +191,19 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                   ))}
                 </div>
               </div>
+
               {reviews.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📝</div>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', marginBottom: '8px' }}>No reviews yet</div>
-                  <div style={{ fontSize: '.9rem', marginBottom: '24px' }}>Be the first to share your experience!</div>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', marginBottom: '8px' }}>No AddisReview reviews yet</div>
+                  <div style={{ fontSize: '.9rem', marginBottom: '8px' }}>
+                    {googleRating > 0 && `This business has ${(business as any).google_review_count || 'many'} reviews on Google with a ${googleRating} rating.`}
+                  </div>
+                  <div style={{ fontSize: '.9rem', marginBottom: '24px' }}>Be the first to share your experience on AddisReview!</div>
                   <button className="btn-primary" onClick={() => router.push(writeReviewUrl)}>Write the First Review</button>
                 </div>
               ) : reviews.map(review => <ReviewCard key={review.id} review={review} />)}
+
               <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
                 <button className="btn-outline" onClick={() => router.push(writeReviewUrl)}>Write Your Own Review</button>
               </div>
@@ -236,14 +232,8 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           {activeTab === 'photos' && (
             <div className="photos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
               {allPhotos.length > 0 ? allPhotos.map((url, i) => (
-                <img
-                  key={i}
-                  className="photo-thumb"
-                  src={url}
-                  alt=""
-                  onClick={() => openLightbox(i)}
-                  style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }}
-                />
+                <img key={i} className="photo-thumb" src={url} alt="" onClick={() => openLightbox(i)}
+                  style={{ borderRadius: '10px', width: '100%', height: '160px', objectFit: 'cover' }} />
               )) : (
                 <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--muted)' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📷</div>
@@ -258,6 +248,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         <div className="biz-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '22px' }}>
             <h3 style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Business Info</h3>
+
             {business.address && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>📍</span>
@@ -267,6 +258,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
+
             {business.phone && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>📞</span>
@@ -276,6 +268,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
+
             {business.website && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>🌐</span>
@@ -285,7 +278,9 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-            {hours && Object.keys(hours).length > 0 && (
+
+            {/* HOURS — show if any day has a value */}
+            {hasHours && (
               <div style={{ display: 'flex', gap: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>🕐</span>
                 <div style={{ flex: 1 }}>
@@ -293,7 +288,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                   {DAYS.map(day => (
                     <div key={day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.85rem', padding: '5px 0', borderBottom: '1px solid #f0ebe3', color: day === today ? 'var(--green)' : 'inherit', fontWeight: day === today ? 700 : 400 }}>
                       <span style={{ textTransform: 'capitalize' }}>{day}</span>
-                      <span>{hours[day] || '—'}</span>
+                      <span>{hours![day] || '—'}</span>
                     </div>
                   ))}
                 </div>
