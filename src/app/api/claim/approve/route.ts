@@ -31,29 +31,43 @@ export async function POST(request: NextRequest) {
       .update({ status: action, reviewed_at: new Date().toISOString() })
       .eq('id', claimId);
 
-    // 3. If approved, find the user and update the business
+    // 3. If approved, find user by email and update business
     if (action === 'approved') {
-      // Try claim.user_id first, then fall back to looking up by email
       let userId = claim.user_id;
 
+      // If no user_id on the claim, look up by email directly in auth.users
       if (!userId && claim.email) {
-        // Look up user by email in auth.users
-        const { data: users } = await supabase.auth.admin.listUsers();
-        const matchedUser = users?.users?.find(
-          (u: any) => u.email?.toLowerCase() === claim.email?.toLowerCase()
-        );
-        if (matchedUser) {
-          userId = matchedUser.id;
+        const { data: userData, error: userErr } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', (
+            await supabase.rpc('get_user_id_by_email', { email_input: claim.email })
+          ).data)
+          .single() as any;
 
-          // Also update the claim record with the found user_id
-          await supabase
-            .from('business_claims')
-            .update({ user_id: userId })
-            .eq('id', claimId);
+        // Simpler approach — query auth.users directly via admin API
+        const { data: { users }, error: listErr } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        });
+
+        if (!listErr && users) {
+          const match = users.find((u: any) =>
+            u.email?.toLowerCase().trim() === claim.email?.toLowerCase().trim()
+          );
+          if (match) {
+            userId = match.id;
+            // Save it back to the claim
+            await supabase
+              .from('business_claims')
+              .update({ user_id: userId })
+              .eq('id', claimId);
+          }
         }
       }
 
-      await supabase
+      // Update the business
+      const { error: bizErr } = await supabase
         .from('businesses')
         .update({
           is_claimed: true,
@@ -61,26 +75,21 @@ export async function POST(request: NextRequest) {
           is_verified: true,
         })
         .eq('id', claim.business_id);
+
+      console.log('Business update:', { businessId: claim.business_id, userId, bizErr });
     }
 
-    // 4. Send approval email via Resend
+    // 4. Send approval email
     const businessName = claim.businesses?.name || 'your business';
-    const businessSlug = claim.businesses?.slug || claim.business_id;
 
     const emailHtml = action === 'approved'
       ? `
         <div style="font-family: DM Sans, sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px;">
-          <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="font-family: Georgia, serif; color: #1a5c3a; font-size: 2rem; margin-bottom: 8px;">AddisReview</h1>
-          </div>
+          <h1 style="font-family: Georgia, serif; color: #1a5c3a; font-size: 2rem; margin-bottom: 8px;">AddisReview</h1>
           <h2 style="font-family: Georgia, serif; font-size: 1.5rem; margin-bottom: 16px;">🎉 Your claim has been approved!</h2>
           <p style="color: #444; line-height: 1.7; margin-bottom: 20px;">
             Hi ${claim.full_name},<br><br>
-            Great news! Your claim for <strong>${businessName}</strong> has been approved.
-            You are now the verified owner of this listing on AddisReview.
-          </p>
-          <p style="color: #444; line-height: 1.7; margin-bottom: 28px;">
-            Log in to your dashboard to manage your listing, update your business info, and respond to reviews.
+            Your claim for <strong>${businessName}</strong> has been approved. You are now the verified owner on AddisReview.
           </p>
           <a href="https://www.addisreviews.com/dashboard" style="background: #1a5c3a; color: #fff; padding: 14px 28px; border-radius: 50px; text-decoration: none; font-weight: 700; display: inline-block; margin-bottom: 32px;">
             Go to My Dashboard →
@@ -90,17 +99,12 @@ export async function POST(request: NextRequest) {
       `
       : `
         <div style="font-family: DM Sans, sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px;">
-          <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="font-family: Georgia, serif; color: #1a5c3a; font-size: 2rem; margin-bottom: 8px;">AddisReview</h1>
-          </div>
+          <h1 style="font-family: Georgia, serif; color: #1a5c3a; font-size: 2rem; margin-bottom: 8px;">AddisReview</h1>
           <h2 style="font-family: Georgia, serif; font-size: 1.5rem; margin-bottom: 16px;">Your claim could not be approved</h2>
           <p style="color: #444; line-height: 1.7; margin-bottom: 20px;">
             Hi ${claim.full_name},<br><br>
-            Unfortunately we were unable to verify your ownership of <strong>${businessName}</strong> at this time.
-          </p>
-          <p style="color: #444; line-height: 1.7; margin-bottom: 28px;">
-            If you believe this is a mistake, please contact us at 
-            <a href="mailto:hello@addisreview.co">hello@addisreview.co</a> and we'll be happy to help.
+            Unfortunately we were unable to verify your ownership of <strong>${businessName}</strong>.
+            Please contact us at <a href="mailto:hello@addisreview.co">hello@addisreview.co</a>.
           </p>
           <p style="color: #888; font-size: 0.85rem;">AddisReview · Ethiopia's trusted local guide</p>
         </div>
