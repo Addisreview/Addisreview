@@ -8,6 +8,13 @@ import Navbar from '@/components/layout/Navbar';
 
 type Tab = 'signup' | 'login' | 'forgot';
 
+const REASON_BANNERS: Record<string, { emoji: string; text: string }> = {
+  review:    { emoji: '✏️', text: 'Sign up or log in to write a review.' },
+  claim:     { emoji: '🏢', text: 'Sign up or log in to claim your business.' },
+  add:       { emoji: '➕', text: 'Sign up or log in to add your business.' },
+  dashboard: { emoji: '📊', text: 'Sign up or log in to access your business dashboard.' },
+};
+
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -16,11 +23,13 @@ function AuthForm() {
   const [loading, setLoading] = useState(false);
 
   const redirectTo = searchParams.get('redirect') || '/';
+  const reason = searchParams.get('reason') || '';
+  const banner = REASON_BANNERS[reason] || null;
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOwner, setIsOwner] = useState(reason === 'claim' || reason === 'add' || reason === 'dashboard');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -29,13 +38,13 @@ function AuthForm() {
   }, []);
 
   const handleGoogleAuth = async () => {
-  setLoading(true);
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: `${window.location.origin}/auth/callback` },
-  });
-  if (error) { toast.error(error.message); setLoading(false); }
-};
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}` },
+    });
+    if (error) { toast.error(error.message); setLoading(false); }
+  };
 
   const handleSignUp = async () => {
     if (!fullName.trim()) { toast.error('Please enter your name'); return; }
@@ -101,33 +110,44 @@ function AuthForm() {
             <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '.92rem', lineHeight: 1.6, marginBottom: '36px' }}>
               Join thousands of Ethiopians discovering and reviewing the best restaurants, hotels, and businesses across the country.
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {[
-                { icon: '⭐', text: 'Write reviews and help your community' },
-                { icon: '♡', text: 'Save your favorite spots' },
-                { icon: '🏢', text: 'Claim and manage your business listing' },
-                { icon: '🔔', text: 'Get notified about new places near you' },
-              ].map(perk => (
-                <div key={perk.text} style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'rgba(255,255,255,.75)', fontSize: '.88rem' }}>
-                  <div style={{ width: '34px', height: '34px', background: 'rgba(245,197,24,.15)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>
-                    {perk.icon}
-                  </div>
-                  {perk.text}
+            {[
+              'Write reviews for places you love',
+              'Discover hidden gems in Addis Ababa',
+              'Claim and manage your business listing',
+              'Help your community make better choices',
+            ].map(item => (
+              <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--yellow)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: '.7rem', color: 'var(--charcoal)', fontWeight: 700 }}>✓</span>
                 </div>
-              ))}
-            </div>
+                <span style={{ color: 'rgba(255,255,255,.8)', fontSize: '.88rem' }}>{item}</span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* RIGHT PANEL */}
-        <div className="auth-right" style={{ padding: '60px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--warm-white)' }}>
-          <div style={{ maxWidth: '380px', width: '100%', margin: '0 auto' }}>
+        <div className="auth-right" style={{ padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--warm-white)' }}>
+          <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto' }}>
 
+            {/* Context banner — shown when redirected for a specific reason */}
+            {banner && (
+              <div style={{
+                background: 'var(--green-pale)', border: '1px solid rgba(26,92,58,.2)',
+                borderRadius: '12px', padding: '14px 18px', marginBottom: '24px',
+                display: 'flex', alignItems: 'center', gap: '12px',
+              }}>
+                <span style={{ fontSize: '1.3rem' }}>{banner.emoji}</span>
+                <span style={{ fontSize: '.88rem', color: 'var(--charcoal)', fontWeight: 500 }}>{banner.text}</span>
+              </div>
+            )}
+
+            {/* Tab switcher */}
             {tab !== 'forgot' && (
-              <div style={{ display: 'flex', background: '#fff', borderRadius: '10px', border: '1.5px solid var(--border)', padding: '4px', marginBottom: '32px' }}>
+              <div style={{ display: 'flex', background: '#fff', borderRadius: '10px', padding: '4px', marginBottom: '28px', border: '1px solid var(--border)' }}>
                 {(['signup', 'login'] as Tab[]).map(t => (
                   <button key={t} onClick={() => setTab(t)} style={{
-                    flex: 1, padding: '10px', borderRadius: '7px', border: 'none',
+                    flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
                     background: tab === t ? 'var(--green)' : 'transparent',
                     color: tab === t ? '#fff' : 'var(--muted)',
                     fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.9rem', cursor: 'pointer', transition: 'all .2s',
