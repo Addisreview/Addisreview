@@ -1,9 +1,6 @@
 'use client';
 
 // src/app/auth/confirm/page.tsx
-// Handles email confirmation and OAuth on the client side
-// so the session cookie is properly set in the browser
-
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
@@ -20,29 +17,37 @@ function ConfirmHandler() {
     async function confirm() {
       const tokenHash = searchParams.get('token_hash');
       const code = searchParams.get('code');
-      const type = searchParams.get('type');
+      const type = searchParams.get('type') || '';
       const redirect = searchParams.get('redirect') || '/';
 
       try {
         if (tokenHash) {
-          // Email confirmation
+          // Determine type — recovery for password reset, email for signup confirmation
+          const otpType = type === 'recovery' ? 'recovery' : 'email';
+
           const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
-            type: 'email',
+            type: otpType as any,
           });
 
           if (error) {
             setStatus('error');
-            setMessage(error.message || 'Confirmation failed. The link may have expired.');
+            setMessage(error.message || 'Link failed. It may have expired — request a new one.');
             return;
           }
 
+          // Password recovery — go to reset page
+          if (otpType === 'recovery') {
+            router.push('/auth/reset-password');
+            return;
+          }
+
+          // Email confirmation
           setStatus('success');
           setMessage('Email confirmed! Redirecting you…');
           setTimeout(() => router.push(redirect), 1500);
 
         } else if (code) {
-          // OAuth or magic link
           const { error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) {
@@ -79,7 +84,7 @@ function ConfirmHandler() {
         <>
           <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏳</div>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 900, marginBottom: '12px' }}>
-            Confirming your account
+            Just a moment…
           </h1>
           <p style={{ color: 'var(--muted)', lineHeight: 1.7 }}>{message}</p>
         </>
@@ -99,7 +104,7 @@ function ConfirmHandler() {
         <>
           <div style={{ fontSize: '3rem', marginBottom: '20px' }}>❌</div>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 900, marginBottom: '12px' }}>
-            Confirmation failed
+            Link expired
           </h1>
           <p style={{ color: 'var(--muted)', lineHeight: 1.7, marginBottom: '28px' }}>{message}</p>
           <button
