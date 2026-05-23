@@ -54,8 +54,8 @@ export default function Footer() {
           <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>Company</h4>
           {[
             { label: 'About Us', href: '/about' },
-            { label: 'Contact Us', href: 'mailto:hello@addisreview.co' },
-            { label: 'Advertise with Us', href: 'mailto:hello@addisreview.co' },
+            { label: 'Contact Us', href: '/contact' },
+            { label: 'Advertise with Us', href: '/contact' },
             { label: 'Privacy Policy', href: '/privacy' },
           ].map(item => (
             <Link key={item.label} href={item.href} className="footer-link">{item.label}</Link>
