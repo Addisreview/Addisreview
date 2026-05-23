@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import ClaimBusinessClient from './ClaimBusinessClient';
 import ClaimAuthGuard from './ClaimAuthGuard';
 import Link from 'next/link';
 
@@ -51,14 +50,10 @@ export default async function ClaimPage({ params }: Props) {
     );
   }
 
-  // Auth guard handles login check on the client side
-  // This avoids the server-side session cookie issue
   return (
     <>
       <Navbar />
-      <ClaimAuthGuard businessId={params.businessId}>
-        <ClaimBusinessClient business={business} user={null} />
-      </ClaimAuthGuard>
+      <ClaimAuthGuard businessId={params.businessId} business={business} />
       <Footer />
     </>
   );
