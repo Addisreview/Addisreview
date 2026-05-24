@@ -267,7 +267,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   >
     ✓ Verified
   </span>
-)}}
+)}
                     </div>
                   </div>
                 </div>
