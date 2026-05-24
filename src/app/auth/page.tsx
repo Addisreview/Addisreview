@@ -52,7 +52,26 @@ function AuthForm() {
     if (password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
+    // Step 1: Check with our server-side API if this email already exists
+    try {
+      const checkRes = await fetch('/api/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const { exists } = await checkRes.json();
+      if (exists) {
+        toast.error('An account with this email already exists. Please log in instead.');
+        setTab('login');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // If the check API fails for any reason, fall through to signup
+    }
+
+    // Step 2: Email is new — proceed with signup
+    const { error } = await supabase.auth.signUp({
       email, password,
       options: {
         data: { full_name: fullName, is_business_owner: isOwner },
@@ -61,19 +80,7 @@ function AuthForm() {
     });
 
     if (error) {
-      if (
-        error.message.toLowerCase().includes('already registered') ||
-        error.message.toLowerCase().includes('already exists')
-      ) {
-        toast.error('An account with this email already exists. Please log in instead.');
-        setTab('login');
-      } else {
-        toast.error(error.message);
-      }
-    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
-      // Supabase returns a user with empty identities when the email is already taken
-      toast.error('An account with this email already exists. Please log in instead.');
-      setTab('login');
+      toast.error(error.message);
     } else {
       toast.success('Account created! Check your email to confirm. 🇪🇹');
     }
