@@ -7,12 +7,14 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ exists: false });
 
     const admin = createAdminClient();
-    const { data, error } = await admin.auth.admin.listUsers();
+
+    // Search by email directly — much faster than listing all users
+    const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
 
     if (error) return NextResponse.json({ exists: false });
 
     const exists = data.users.some(
-      u => u.email?.toLowerCase() === email.toLowerCase()
+      u => u.email?.toLowerCase() === email.trim().toLowerCase()
     );
 
     return NextResponse.json({ exists });
