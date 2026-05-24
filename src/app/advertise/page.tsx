@@ -120,12 +120,12 @@ export default function AdvertisePage() {
               personally when it launches — with early adopter pricing.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
-              <a href="mailto:hello@addisreview.co" style={{
+              <a href="mailto:hello@addisreviews.com" style={{
                 textDecoration: 'none', background: 'var(--green)', color: '#fff',
                 borderRadius: '50px', padding: '14px 36px',
                 fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '1rem', display: 'inline-block',
               }}>
-                hello@addisreview.co
+                hello@addisreviews.com
               </a>
               <a href="tel:+15712755081" style={{ textDecoration: 'none', color: 'var(--green)', fontWeight: 600, fontSize: '.93rem' }}>
                 +1 (571) 275-5081
