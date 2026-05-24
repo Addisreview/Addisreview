@@ -260,7 +260,14 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '.82rem', color: 'var(--muted)', flexWrap: 'wrap' }}>
                       {biz.neighborhood && <span>📍 {biz.neighborhood}{biz.city_name ? `, ${biz.city_name}` : ''}</span>}
                       {biz.price_range && <span>💰 {priceLabel(biz.price_range)}</span>}
-                      {biz.is_verified && <span style={{ color: 'var(--green)', fontWeight: 600 }}>✓ Verified</span>}
+                      {biz.is_verified && (
+  <span 
+    title="This business has been verified by AddisReview as a legitimate, active business in Addis Ababa."
+    style={{ color: 'var(--green)', fontWeight: 600, cursor: 'help', borderBottom: '1px dotted var(--green)' }}
+  >
+    ✓ Verified
+  </span>
+)}}
                     </div>
                   </div>
                 </div>
