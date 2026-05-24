@@ -98,7 +98,7 @@ const sections = [
       },
       {
         subtitle: 'Deletion',
-        text: 'You may request deletion of your account and associated personal data by emailing us at hello@addisreview.co. Note that public reviews you have posted may be anonymized rather than deleted to maintain the integrity of business ratings.',
+        text: 'You may request deletion of your account and associated personal data by emailing us at hello@addisreviews.com. Note that public reviews you have posted may be anonymized rather than deleted to maintain the integrity of business ratings.',
       },
       {
         subtitle: 'Opt-out',
@@ -142,7 +142,7 @@ const sections = [
     content: [
       {
         subtitle: '',
-        text: 'If you have questions about this Privacy Policy or how we handle your data, please contact us at hello@addisreview.co. We aim to respond to all privacy inquiries within 7 business days.',
+        text: 'If you have questions about this Privacy Policy or how we handle your data, please contact us at hello@addisreviews.com. We aim to respond to all privacy inquiries within 7 business days.',
       },
     ],
   },
@@ -270,11 +270,11 @@ export default function PrivacyPage() {
                 We're happy to help. Reach out and we'll get back to you within 7 business days.
               </p>
               <a
-                href="mailto:hello@addisreview.co"
+                href="mailto:hello@addisreviews.com"
                 className="btn-primary"
                 style={{ textDecoration: 'none', display: 'inline-block' }}
               >
-                hello@addisreview.co
+                hello@addisreviews.com
               </a>
             </div>
           </div>
