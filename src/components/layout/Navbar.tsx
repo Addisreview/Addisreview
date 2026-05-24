@@ -120,7 +120,7 @@ export default function Navbar() {
                 boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
                 overflow: 'hidden', zIndex: 300, minWidth: '220px',
               }}>
-                <Link href="/auth?redirect=/auth&reason=add" style={{ textDecoration: 'none' }}>
+                <Link href={user ? '/add-business' : '/auth?redirect=/add-business&reason=add'} style={{ textDecoration: 'none' }}>
                   <button style={menuItemStyle} onClick={() => setBizMenuOpen(false)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
@@ -235,7 +235,7 @@ export default function Navbar() {
             </button>
             {mobileBizOpen && (
               <div style={{ paddingBottom: '8px', paddingLeft: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <Link href={user ? '/auth' : '/auth?reason=add'} onClick={() => setMobileOpen(false)}
+                <Link href={user ? '/add-business' : '/auth?redirect=/add-business&reason=add'} onClick={() => setMobileOpen(false)}
                   style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '.9rem', padding: '6px 0', display: 'block' }}>
                   Add a Business
                 </Link>
