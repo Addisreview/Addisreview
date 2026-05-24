@@ -1,19 +1,13 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import type { Metadata } from 'next';
+import { getBusinessCount } from '@/lib/stats';
 
 export const metadata: Metadata = {
   title: 'About Us',
   description: 'Learn about AddisReview — Ethiopia\'s trusted platform for discovering and reviewing local businesses.',
   alternates: { canonical: 'https://www.addisreviews.com/about' },
 };
-
-const stats = [
-  { number: '7,600+', label: 'Businesses Listed' },
-  { number: '1', label: 'Country, Countless Stories' },
-  { number: '∞', label: 'Cups of Buna Shared' },
-  { number: '100%', label: 'Made for Ethiopia' },
-];
 
 const team = [
   {
@@ -33,7 +27,16 @@ const team = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const bizCount = await getBusinessCount();
+
+  const stats = [
+    { number: bizCount, label: 'Businesses Listed' },
+    { number: '1', label: 'Country, Countless Stories' },
+    { number: '∞', label: 'Cups of Buna Shared' },
+    { number: '100%', label: 'Made for Ethiopia' },
+  ];
+
   return (
     <>
       <Navbar />
@@ -46,7 +49,6 @@ export default function AboutPage() {
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* Decorative orbs */}
           <div style={{
             position: 'absolute', top: '-60px', right: '-60px',
             width: '300px', height: '300px', borderRadius: '50%',
@@ -221,7 +223,7 @@ export default function AboutPage() {
               So we built one.
             </p>
             <p style={{ fontSize: '1rem', color: 'var(--muted)', lineHeight: 1.8, marginBottom: '20px' }}>
-              Today, AddisReview has over 7,600 businesses listed across Addis Ababa, with plans to
+              Today, AddisReview has over {bizCount} businesses listed across Addis Ababa, with plans to
               expand to Gondar, Hawassa, Bahir Dar, Dire Dawa, and beyond. Every business listing
               comes with photos, reviews, hours, and AI-generated descriptions to help you make the
               right choice — fast.
