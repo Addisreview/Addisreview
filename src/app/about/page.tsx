@@ -259,7 +259,7 @@ export default function AboutPage() {
               <a href="/search" className="btn-primary" style={{ textDecoration: 'none' }}>
                 Find Your Business
               </a>
-              <a href="mailto:hello@addisreview.co" style={{
+              <a href="mailto:hello@addisreviews.com" style={{
                 textDecoration: 'none',
                 color: 'rgba(255,255,255,.85)',
                 fontWeight: 600,
