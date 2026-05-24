@@ -120,17 +120,6 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           </label>
         ))}
       </div>
-
-      <div style={{ marginBottom: '24px' }}>
-        <div style={filterLabel}>Price Range</div>
-        {[[1,'$ (Budget)'],[2,'$$ (Moderate)'],[3,'$$$ (Upscale)'],[4,'$$$$ (Luxury)']].map(([val, label]) => (
-          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-            <input type="checkbox" checked={selectedPrices.includes(Number(val))} onChange={e => setSelectedPrices(prev => e.target.checked ? [...prev, Number(val)] : prev.filter(p => p !== Number(val)))} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-            {label}
-          </label>
-        ))}
-      </div>
-
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Sort By</div>
         {[['rating','Highest Rated'],['reviews','Most Reviewed'],['name','A to Z']].map(([val, label]) => (
