@@ -1,6 +1,7 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import type { Metadata } from 'next';
+import { getBusinessCount } from '@/lib/stats';
 
 export const metadata: Metadata = {
   title: 'Advertise with Us',
@@ -17,7 +18,9 @@ const perks = [
   { emoji: '💬', title: 'Review Management', desc: 'Respond to customer reviews and show that you care about your customers experience.' },
 ];
 
-export default function AdvertisePage() {
+export default async function AdvertisePage() {
+  const bizCount = await getBusinessCount();
+
   return (
     <>
       <Navbar />
@@ -61,7 +64,7 @@ export default function AdvertisePage() {
             gap: '24px', textAlign: 'center',
           }}>
             {[
-              { number: '8,500+', label: 'Businesses Listed' },
+              { number: bizCount, label: 'Businesses Listed' },
               { number: '100%', label: 'Focus on Ethiopia' },
               { number: 'Free', label: 'Basic Listing' },
               { number: '∞', label: 'Growth Potential' },
