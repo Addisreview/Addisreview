@@ -24,6 +24,24 @@ interface Props {
 const ROLES = ['Owner', 'Co-owner', 'Manager', 'Authorized Representative'];
 const STEPS = ['Your Details', 'Verify Phone', 'Done'];
 
+const COUNTRY_CODES = [
+  { code: '+251', flag: '🇪🇹', name: 'Ethiopia' },
+  { code: '+1',   flag: '🇺🇸', name: 'USA / Canada' },
+  { code: '+44',  flag: '🇬🇧', name: 'UK' },
+  { code: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+49',  flag: '🇩🇪', name: 'Germany' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+86',  flag: '🇨🇳', name: 'China' },
+  { code: '+91',  flag: '🇮🇳', name: 'India' },
+  { code: '+254', flag: '🇰🇪', name: 'Kenya' },
+  { code: '+255', flag: '🇹🇿', name: 'Tanzania' },
+  { code: '+256', flag: '🇺🇬', name: 'Uganda' },
+  { code: '+20',  flag: '🇪🇬', name: 'Egypt' },
+  { code: '+27',  flag: '🇿🇦', name: 'South Africa' },
+  { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
+];
+
 export default function ClaimBusinessClient({ business, user }: Props) {
   const router = useRouter();
 
@@ -31,21 +49,25 @@ export default function ClaimBusinessClient({ business, user }: Props) {
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
   const [role, setRole] = useState('');
   const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(business.phone || '');
+  const [countryCode, setCountryCode] = useState('+251');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [channel, setChannel] = useState<'sms' | 'whatsapp'>('sms');
   const [otp, setOtp] = useState('');
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
 
+  // Full phone = countryCode + phoneNumber (no leading zero)
+  const fullPhone = `${countryCode}${phoneNumber.replace(/^0+/, '')}`;
+
   const sendOtp = async () => {
-    if (!phone.trim()) { toast.error('Please enter a phone number'); return; }
+    if (!phoneNumber.trim()) { toast.error('Please enter a phone number'); return; }
     setSending(true);
     try {
       const res = await fetch('/api/claim/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone.trim(), channel }),
+        body: JSON.stringify({ phone: fullPhone, channel }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -67,7 +89,7 @@ export default function ClaimBusinessClient({ business, user }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: phone.trim(),
+          phone: fullPhone,
           code: otp.trim(),
           businessId: business.id,
           userId: user?.id || null,
@@ -186,19 +208,39 @@ export default function ClaimBusinessClient({ business, user }: Props) {
             />
           </div>
 
+          {/* PHONE WITH COUNTRY CODE */}
           <div style={{ marginBottom: '18px' }}>
             <label style={{ fontWeight: 700, fontSize: '.88rem', marginBottom: '7px', display: 'block' }}>
               Business Phone Number <span style={{ color: 'var(--red)' }}>*</span>
             </label>
-            <input
-              type="tel"
-              className="form-input"
-              placeholder="+251911234567"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-            />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <select
+                value={countryCode}
+                onChange={e => setCountryCode(e.target.value)}
+                style={{
+                  padding: '12px 10px', border: '1.5px solid var(--border)',
+                  borderRadius: '10px', fontSize: '.88rem',
+                  fontFamily: 'var(--font-sans)', background: '#fff',
+                  cursor: 'pointer', outline: 'none', minWidth: '140px',
+                }}
+              >
+                {COUNTRY_CODES.map(c => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.code} {c.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                className="form-input"
+                placeholder="911 234 567"
+                value={phoneNumber}
+                onChange={e => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                style={{ flex: 1 }}
+              />
+            </div>
             <div style={{ fontSize: '.76rem', color: 'var(--muted)', marginTop: '5px' }}>
-              Must be the phone number listed for this business. Include country code (e.g. +251 for Ethiopia).
+              Must be the phone number listed for this business. Enter without leading zero.
             </div>
           </div>
 
@@ -251,7 +293,7 @@ export default function ClaimBusinessClient({ business, user }: Props) {
               Check your {channel === 'sms' ? 'messages' : 'WhatsApp'}
             </div>
             <div style={{ fontSize: '.88rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-              We sent a 6-digit code to <strong>{phone}</strong>
+              We sent a 6-digit code to <strong>{fullPhone}</strong>
             </div>
           </div>
 
