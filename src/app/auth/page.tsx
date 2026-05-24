@@ -52,28 +52,6 @@ function AuthForm() {
     if (password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     setLoading(true);
 
-    // Check if email already exists by attempting a password sign-in with a dummy password
-    // If we get 'Invalid login credentials' the email exists but password is wrong
-    // If we get 'Email not confirmed' the email exists but isn't confirmed yet
-    const { error: checkError } = await supabase.auth.signInWithPassword({
-      email,
-      password: 'check_if_exists_dummy_12345',
-    });
-
-    if (checkError?.message === 'Email not confirmed') {
-      toast.error('This email is already registered but not confirmed. Check your inbox for the confirmation link.');
-      setLoading(false);
-      return;
-    }
-
-    if (checkError?.message === 'Invalid login credentials') {
-      toast.error('An account with this email already exists. Please log in instead.');
-      setTab('login');
-      setLoading(false);
-      return;
-    }
-
-    // Email doesn't exist — proceed with signup
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
@@ -83,7 +61,19 @@ function AuthForm() {
     });
 
     if (error) {
-      toast.error(error.message);
+      if (
+        error.message.toLowerCase().includes('already registered') ||
+        error.message.toLowerCase().includes('already exists')
+      ) {
+        toast.error('An account with this email already exists. Please log in instead.');
+        setTab('login');
+      } else {
+        toast.error(error.message);
+      }
+    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+      // Supabase returns a user with empty identities when the email is already taken
+      toast.error('An account with this email already exists. Please log in instead.');
+      setTab('login');
     } else {
       toast.success('Account created! Check your email to confirm. 🇪🇹');
     }
