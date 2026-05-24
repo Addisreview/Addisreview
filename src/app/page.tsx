@@ -7,9 +7,6 @@ import HomeClient from './HomeClient';
 export default async function HomePage() {
   const supabase = createServerClient();
 
-  // Top 20: min 4.5 google rating, sorted by rating desc
-  // review_count is AddisReview reviews (most are 0 since site is new)
-  // google_review_count column doesn't exist in schema, so filter on rating only
   const { data: topRated } = await supabase
     .from('businesses')
     .select('*')
@@ -20,11 +17,25 @@ export default async function HomePage() {
     .order('is_featured', { ascending: false })
     .limit(20) as any;
 
-  const { data: cities } = await supabase
+  // Get live business count for Addis Ababa
+  const { count: addisCount } = await supabase
+    .from('businesses')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_active', true)
+    .eq('city_name', 'Addis Ababa');
+
+  const { data: citiesRaw } = await supabase
     .from('cities')
     .select('*')
     .eq('is_active', true)
     .order('place_count', { ascending: false }) as any;
+
+  // Inject the live count into Addis Ababa so it's always accurate
+  const cities = (citiesRaw || []).map((city: any) =>
+    city.name === 'Addis Ababa'
+      ? { ...city, place_count: addisCount ?? city.place_count }
+      : city
+  );
 
   const { data: categories } = await supabase
     .from('categories')
@@ -36,7 +47,7 @@ export default async function HomePage() {
       <Navbar />
       <HomeClient
         businesses={topRated || []}
-        cities={cities || []}
+        cities={cities}
         categories={categories || []}
       />
       <Footer />
