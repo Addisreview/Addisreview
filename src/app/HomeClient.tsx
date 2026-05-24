@@ -26,6 +26,17 @@ const MORE_CATEGORIES = [
   { name: 'Services',      emoji: '🔧' },
 ];
 
+const NEIGHBORHOODS = [
+  { name: 'Bole',   emoji: '✈️', desc: 'Expat hub & dining' },
+  { name: 'CMC',    emoji: '🏘️', desc: 'Residential & local' },
+  { name: 'Sarbet', emoji: '🌿', desc: 'Cafes & quiet streets' },
+  { name: 'Gerji',  emoji: '🏙️', desc: 'Growing & vibrant' },
+  { name: 'Ayat',   emoji: '🌅', desc: 'East side gems' },
+  { name: 'Jemo',   emoji: '🛒', desc: 'Shopping & services' },
+  { name: 'Mexico', emoji: '🚌', desc: 'Central & connected' },
+  { name: 'Piassa', emoji: '🏛️', desc: 'Historic heart of Addis' },
+];
+
 interface NearbyBusiness {
   id: string; name: string; slug: string; category_name: string;
   city_name: string; address: string; cover_photo_url: string | null;
@@ -44,7 +55,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
   const [searchQ, setSearchQ] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
-  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+  const [hoveredNeighborhood, setHoveredNeighborhood] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const [nearbyBusinesses, setNearbyBusinesses] = useState<NearbyBusiness[]>([]);
@@ -111,7 +122,7 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           .category-filters-wrap > * { flex-shrink: 0 !important; }
           .biz-grid { grid-template-columns: 1fr !important; }
           .nearby-grid { grid-template-columns: 1fr !important; }
-          .cities-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .neighborhoods-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .how-it-works-grid { grid-template-columns: 1fr 1fr !important; }
           .cta-section { flex-direction: column !important; text-align: center !important; align-items: center !important; }
           .section-pad { padding: 36px 5vw !important; }
@@ -142,10 +153,10 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             fontSize: 'clamp(2rem,4.5vw,3.6rem)',
             fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: '14px',
           }}>
-            Discover the best of <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>your city</em>
+            Discover the best of <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>Addis Ababa</em>
           </h1>
           <p style={{ color: 'rgba(255,255,255,.68)', fontSize: 'clamp(.9rem,2vw,1.05rem)', marginBottom: '32px', lineHeight: 1.65 }}>
-            Restaurants, hotels, spas & shops — reviewed by real Ethiopians. Find trusted local businesses everywhere.
+            Restaurants, hotels, spas & shops — reviewed by real Ethiopians. Find trusted local businesses in Addis Ababa.
           </p>
           <div className="home-search-bar" style={{
             display: 'flex', background: '#fff', borderRadius: '14px',
@@ -394,27 +405,38 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
         )}
       </div>
 
-      {/* CITIES */}
+      {/* BROWSE BY NEIGHBORHOOD */}
       <div className="section-pad" style={{ padding: '56px 5vw', background: 'var(--cream)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-        <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, marginBottom: '28px' }}>
-          Browse by <span style={{ color: 'var(--green)' }}>City</span>
+        <div style={{ marginBottom: '28px' }}>
+          <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, marginBottom: '8px' }}>
+            Browse by <span style={{ color: 'var(--green)' }}>Neighborhood</span>
+          </div>
+          <div style={{ fontSize: '.88rem', color: 'var(--muted)' }}>Explore the best businesses in every corner of Addis Ababa</div>
         </div>
-        <div className="cities-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: '14px' }}>
-          {cities.map(city => (
-            <Link key={city.id} href={`/search?city=${encodeURIComponent(city.name)}`} style={{ textDecoration: 'none' }}>
+        <div className="neighborhoods-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '14px' }}>
+          {NEIGHBORHOODS.map(n => (
+            <Link key={n.name} href={`/search?neighborhood=${encodeURIComponent(n.name)}&city=Addis+Ababa`} style={{ textDecoration: 'none' }}>
               <div
-                onMouseEnter={() => setHoveredCity(city.id)}
-                onMouseLeave={() => setHoveredCity(null)}
-                style={{ background: hoveredCity === city.id ? 'var(--green)' : '#fff', borderRadius: '14px', padding: '20px 14px', textAlign: 'center', border: `1px solid ${hoveredCity === city.id ? 'var(--green)' : 'var(--border)'}`, cursor: 'pointer', transition: 'all .22s', color: hoveredCity === city.id ? '#fff' : 'var(--charcoal)' }}
+                onMouseEnter={() => setHoveredNeighborhood(n.name)}
+                onMouseLeave={() => setHoveredNeighborhood(null)}
+                style={{
+                  background: hoveredNeighborhood === n.name ? 'var(--green)' : '#fff',
+                  borderRadius: '14px', padding: '20px 14px', textAlign: 'center',
+                  border: `1px solid ${hoveredNeighborhood === n.name ? 'var(--green)' : 'var(--border)'}`,
+                  cursor: 'pointer', transition: 'all .22s',
+                  color: hoveredNeighborhood === n.name ? '#fff' : 'var(--charcoal)',
+                }}
               >
-                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>{city.emoji}</span>
-                <div style={{ fontWeight: 600, fontSize: '.88rem' }}>{city.name}</div>
-                <div style={{ fontSize: '.76rem', opacity: 0.65, marginTop: '3px' }}>
-                  {city.place_count > 0 ? `${city.place_count.toLocaleString()}+ places` : 'Coming soon'}
-                </div>
+                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>{n.emoji}</span>
+                <div style={{ fontWeight: 600, fontSize: '.88rem' }}>{n.name}</div>
+                <div style={{ fontSize: '.76rem', opacity: 0.65, marginTop: '3px' }}>{n.desc}</div>
               </div>
             </Link>
           ))}
+        </div>
+        {/* Coming soon note */}
+        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '.83rem', color: 'var(--muted)' }}>
+          🌍 Expanding to <strong>Hawassa, Gondar, Dire Dawa</strong> & more cities soon
         </div>
       </div>
 
