@@ -68,10 +68,10 @@ export default function ContactPage() {
             gap: '24px',
           }}>
 
-            <a href="mailto:hello@addisreview.co" className="contact-card">
+            <a href="mailto:hello@addisreviews.com" className="contact-card">
               <div style={{ fontSize: '2rem', marginBottom: '16px' }}>📧</div>
               <div style={{ fontSize: '.72rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--green)', marginBottom: '8px' }}>Email</div>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--charcoal)', marginBottom: '10px' }}>hello@addisreview.co</div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--charcoal)', marginBottom: '10px' }}>hello@addisreviews.com</div>
               <div style={{ fontSize: '.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>Best for general inquiries, business claims, and partnerships.</div>
             </a>
 
