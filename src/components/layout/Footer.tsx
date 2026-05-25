@@ -29,15 +29,15 @@ export default function Footer() {
 
         <div>
           <h4 style={{ color: '#fff', fontSize: '.87rem', marginBottom: '12px' }}>Cities</h4>
-          {[
-            { label: 'Addis Ababa', href: '/search?city=Addis+Ababa' },
-            { label: 'Gondar', href: '/search?city=Gondar' },
-            { label: 'Hawassa', href: '/search?city=Hawassa' },
-            { label: 'Bahir Dar', href: '/search?city=Bahir+Dar' },
-            { label: 'Dire Dawa', href: '/search?city=Dire+Dawa' },
-          ].map(item => (
-            <Link key={item.label} href={item.href} className="footer-link">{item.label}</Link>
-          ))}
+
+<Link href="/search?neighborhood=Bole" className="footer-link">Addis Ababa</Link>
+
+{['Gondar', 'Hawassa', 'Bahir Dar', 'Dire Dawa'].map(city => (
+  <div key={city} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', opacity: 0.4, cursor: 'default' }}>
+    <span style={{ fontSize: '.85rem', color: 'rgba(255,255,255,.45)' }}>{city}</span>
+    <span style={{ fontSize: '.65rem', background: 'rgba(255,255,255,.12)', color: 'rgba(255,255,255,.5)', padding: '1px 6px', borderRadius: '4px', letterSpacing: '.04em' }}>Soon</span>
+  </div>
+))}
         </div>
 
         <div>
