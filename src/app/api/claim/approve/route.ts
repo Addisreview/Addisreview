@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           <p style="color: #444; line-height: 1.7; margin-bottom: 20px;">
             Hi ${claim.full_name},<br><br>
             Unfortunately we were unable to verify your ownership of <strong>${businessName}</strong>.
-            Please contact us at <a href="mailto:hello@addisreviews.com">hello@addisreviews.com</a>.
+            Please contact us at <a href="mailto:hello@addisreview.co">hello@addisreview.co</a>.
           </p>
           <p style="color: #888; font-size: 0.85rem;">AddisReview · Ethiopia's trusted local guide</p>
         </div>
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'AddisReview <noreply@addisreviews.com>',
+        from: 'AddisReview <noreply@addisreview.co>',
         to: claim.email,
         subject: action === 'approved'
           ? `✅ Your claim for ${businessName} is approved!`
