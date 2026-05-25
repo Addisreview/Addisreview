@@ -63,17 +63,10 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
-  // This is the safe version that keeps your review visible + adds profiles for picture
+  // SIMPLE QUERY - this version keeps your review visible
   const { data: reviews } = await supabase
     .from('reviews')
-    .select(`
-      *,
-      profiles:user_id (
-        display_name,
-        full_name,
-        avatar_url
-      )
-    `)
+    .select('*')
     .eq('business_id', business.id)
     .order('created_at', { ascending: false })
     .limit(20) as any;
