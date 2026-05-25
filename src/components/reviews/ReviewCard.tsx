@@ -2,15 +2,28 @@ import { timeAgo } from '@/lib/utils';
 import type { Review } from '@/types/database';
 
 interface Props {
-  review: Review & { profiles?: { display_name: string | null; avatar_url: string | null } | null };
+  review: Review & { 
+    profiles?: { 
+      display_name: string | null; 
+      full_name?: string | null; 
+      avatar_url: string | null 
+    } | null 
+  };
 }
 
 const AVATAR_COLORS = ['#1a5c3a','#8B4513','#6b3fa0','#1a3d5c','#5c1a0e','#0a4a3a'];
 
 export default function ReviewCard({ review }: Props) {
-  const name = review.profiles?.display_name || review.author_name || 'Anonymous';
+  // ✅ DYNAMIC NAME (Option 1)
+  // Always uses the latest name from the profiles table first
+  const name = review.profiles?.display_name 
+    || review.profiles?.full_name 
+    || review.author_name 
+    || 'Anonymous';
+
   const initial = name.charAt(0).toUpperCase();
   const avatarColor = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+
   const fullStars = review.rating;
   const emptyStars = 5 - fullStars;
 
