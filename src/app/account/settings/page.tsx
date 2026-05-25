@@ -17,7 +17,6 @@ export default function AccountSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Profile form
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [nickname, setNickname] = useState('');
@@ -95,8 +94,10 @@ export default function AccountSettingsPage() {
     const data = await res.json();
 
     if (data.success) {
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      // FORCE REFRESH SESSION so name and picture persist after logout/login
       await supabase.auth.refreshSession();
+      
+      setMessage({ type: 'success', text: 'Profile updated successfully! Changes will now persist.' });
       if (avatarUrl) setAvatarPreview(avatarUrl);
       setSelectedFile(null);
     } else {
@@ -151,7 +152,6 @@ export default function AccountSettingsPage() {
       <Navbar />
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 5vw', minHeight: '70vh' }}>
         <div style={{ display: 'flex', gap: '40px' }}>
-          {/* Sidebar - now shows all tabs again */}
           <div style={{
             width: '260px',
             background: '#fff',
@@ -187,7 +187,6 @@ export default function AccountSettingsPage() {
             ))}
           </div>
 
-          {/* Main Content */}
           <div style={{
             flex: 1,
             background: '#fff',
@@ -200,7 +199,6 @@ export default function AccountSettingsPage() {
                 <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 900, marginBottom: '8px' }}>Profile</h1>
                 <p style={{ color: 'var(--muted)', marginBottom: '30px' }}>Update your personal information</p>
 
-                {/* Avatar */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '40px' }}>
                   <div>
                     {currentAvatar ? (
