@@ -63,19 +63,19 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
-  // ── UPDATED: Join profiles table so reviewer names are always up-to-date ──
+  // UPDATED: Show ALL reviews for this business (no approval filter needed anymore)
+  // Reviews are now automatically approved when submitted
   const { data: reviews } = await supabase
     .from('reviews')
     .select(`
       *,
-      profiles (
+      profiles:user_id (
         display_name,
         full_name,
         avatar_url
       )
     `)
     .eq('business_id', business.id)
-    .eq('is_approved', true)
     .order('created_at', { ascending: false })
     .limit(20) as any;
 
