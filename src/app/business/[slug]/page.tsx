@@ -1,109 +1,77 @@
-import { timeAgo } from '@/lib/utils';
-import type { Review } from '@/types/database';
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
-interface Props {
-  review: Review & { 
-    profiles?: { 
-      display_name: string | null; 
-      full_name?: string | null; 
-      avatar_url: string | null 
-    } | null 
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { createServerClient } from '@/lib/supabase';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import BusinessProfileClient from './BusinessProfileClient';
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const supabase = createServerClient();
+  const { data: biz } = await supabase
+    .from('businesses')
+    .select('name, description, city_name, category_name, google_rating, review_count, cover_photo_url, neighborhood, address')
+    .eq('slug', params.slug)
+    .single() as any;
+
+  if (!biz) return { title: 'Business Not Found' };
+
+  const title = `${biz.name} — ${biz.city_name}`;
+  const description = biz.description
+    ? biz.description.slice(0, 160)
+    : `${biz.name} is a ${biz.category_name} in ${biz.neighborhood ? biz.neighborhood + ', ' : ''}${biz.city_name}, Ethiopia. Read reviews and get directions on AddisReview.`;
+
+  return {
+    title,
+    description,
+    keywords: [biz.name, biz.category_name, biz.city_name, 'Ethiopia', 'AddisReview', `${biz.category_name} in ${biz.city_name}`],
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale: 'en_US',
+      siteName: 'AddisReview',
+      images: biz.cover_photo_url ? [{ url: biz.cover_photo_url, width: 800, height: 600, alt: biz.name }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: biz.cover_photo_url ? [biz.cover_photo_url] : [],
+    },
+    alternates: {
+      canonical: `https://www.addisreviews.com/business/${params.slug}`,
+    },
   };
 }
 
-const AVATAR_COLORS = ['#1a5c3a','#8B4513','#6b3fa0','#1a3d5c','#5c1a0e','#0a4a3a'];
+export default async function BusinessPage({ params }: { params: { slug: string } }) {
+  const supabase = createServerClient();
 
-export default function ReviewCard({ review }: Props) {
-  const name = review.profiles?.full_name 
-    || review.profiles?.display_name 
-    || review.author_name 
-    || 'Anonymous';
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('*')
+    .eq('slug', params.slug)
+    .eq('is_active', true)
+    .single() as any;
 
-  const avatarUrl = review.profiles?.avatar_url;
+  if (!business) notFound();
 
-  const initial = name.charAt(0).toUpperCase();
-  const avatarColor = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
-
-  const fullStars = review.rating;
-  const emptyStars = 5 - fullStars;
+  // SIMPLE QUERY - this keeps your review visible
+  const { data: reviews } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('business_id', business.id)
+    .order('created_at', { ascending: false })
+    .limit(20) as any;
 
   return (
-    <div style={{ borderBottom: '1px solid var(--border)', padding: '24px 0' }}>
-      {/* Reviewer */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
-        {avatarUrl ? (
-          <img 
-            src={avatarUrl} 
-            alt={name}
-            style={{ 
-              width: '44px', height: '44px', 
-              borderRadius: '50%', 
-              objectFit: 'cover',
-              flexShrink: 0 
-            }} 
-          />
-        ) : (
-          <div style={{
-            width: '44px', height: '44px',
-            borderRadius: '50%',
-            background: avatarColor,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.2rem', fontWeight: 700, color: '#fff', flexShrink: 0,
-          }}>
-            {initial}
-          </div>
-        )}
-
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '.95rem' }}>{name}</div>
-          <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '2px' }}>
-            {timeAgo(review.created_at)}
-          </div>
-        </div>
-      </div>
-
-      {/* Stars */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <span className="stars">{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
-        <span style={{ fontWeight: 700, fontSize: '.88rem' }}>{review.rating}.0</span>
-      </div>
-
-      {/* Body */}
-      <p style={{ fontSize: '.9rem', lineHeight: 1.6, color: '#333' }}>{review.body}</p>
-
-      {/* Tags */}
-      {review.tags && review.tags.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-          {review.tags.map(tag => (
-            <span key={tag} className="badge badge-green" style={{ fontSize: '.72rem' }}>{tag}</span>
-          ))}
-        </div>
-      )}
-
-      {/* Helpful */}
-      <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-        Helpful?
-        <button style={{
-          background: 'none', border: '1px solid var(--border)', borderRadius: '50px',
-          padding: '4px 14px', fontSize: '.78rem', cursor: 'pointer',
-          fontFamily: 'var(--font-sans)', transition: 'all .2s',
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.color = 'var(--green)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
-        >
-          👍 Yes ({review.helpful_count})
-        </button>
-        <button style={{
-          background: 'none', border: '1px solid var(--border)', borderRadius: '50px',
-          padding: '4px 14px', fontSize: '.78rem', cursor: 'pointer',
-          fontFamily: 'var(--font-sans)', transition: 'all .2s',
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.color = 'var(--green)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
-        >
-          👎 No
-        </button>
-      </div>
-    </div>
+    <>
+      <Navbar />
+      <BusinessProfileClient business={business} reviews={reviews || []} />
+      <Footer />
+    </>
   );
 }
