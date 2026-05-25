@@ -124,7 +124,7 @@ function AuthForm() {
 
     // Save to profiles table
     if (userId) {
-      await supabase.from('profiles').update({
+      await (supabase as any).from('profiles').update({
         gender: gender || null,
         phone: phone.trim() || null,
         avatar_url: avatarUrl || undefined,
