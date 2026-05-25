@@ -90,7 +90,9 @@ function AuthForm() {
       setLoading(false);
     } else {
       // Move to step 2 — profile completion
-      if (data.user) setUserId(data.user.id);
+      const newUserId = data.user?.id || null;
+      setUserId(newUserId);
+      console.log('User ID set to:', newUserId);
       setStep(2);
       setLoading(false);
     }
@@ -107,6 +109,7 @@ function AuthForm() {
   const handleProfileSave = async () => {
     setProfileLoading(true);
     let avatarUrl: string | null = null;
+    console.log('handleProfileSave called, userId:', userId, 'avatarFile:', avatarFile?.name);
 
     // Upload photo if selected
     if (avatarFile && userId) {
