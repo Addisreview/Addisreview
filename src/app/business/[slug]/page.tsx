@@ -1,5 +1,6 @@
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createServerClient } from '@/lib/supabase';
@@ -62,9 +63,17 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
+  // ── UPDATED: Join profiles table so reviewer names are always up-to-date ──
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*')
+    .select(`
+      *,
+      profiles (
+        display_name,
+        full_name,
+        avatar_url
+      )
+    `)
     .eq('business_id', business.id)
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
