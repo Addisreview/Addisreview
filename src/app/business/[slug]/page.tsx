@@ -6,9 +6,49 @@ import type { Metadata } from 'next';
 import { createServerClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import BusinessProfileClient from './BusinessProfileClient';
 
 interface Props {
   params: { slug: string };
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const supabase = createServerClient();
+  const { data: biz } = await supabase
+    .from('businesses')
+    .select('name, description, city_name, category_name, google_rating, review_count, cover_photo_url, neighborhood, address')
+    .eq('slug', params.slug)
+    .single() as any;
+
+  if (!biz) return { title: 'Business Not Found' };
+
+  const title = `${biz.name} — ${biz.city_name}`;
+  const description = biz.description
+    ? biz.description.slice(0, 160)
+    : `${biz.name} is a ${biz.category_name} in ${biz.neighborhood ? biz.neighborhood + ', ' : ''}${biz.city_name}, Ethiopia. Read reviews and get directions on AddisReview.`;
+
+  return {
+    title,
+    description,
+    keywords: [biz.name, biz.category_name, biz.city_name, 'Ethiopia', 'AddisReview', `${biz.category_name} in ${biz.city_name}`],
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale: 'en_US',
+      siteName: 'AddisReview',
+      images: biz.cover_photo_url ? [{ url: biz.cover_photo_url, width: 800, height: 600, alt: biz.name }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: biz.cover_photo_url ? [biz.cover_photo_url] : [],
+    },
+    alternates: {
+      canonical: `https://www.addisreviews.com/business/${params.slug}`,
+    },
+  };
 }
 
 export default async function BusinessPage({ params }: Props) {
@@ -23,40 +63,19 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
-  // DEBUG QUERY - no filter, raw data
-  const { data: reviews, error } = await supabase
+  // SIMPLIFIED QUERY — no broken join, just get all reviews
+  // Your review will now appear because we removed the failing relationship
+  const { data: reviews } = await supabase
     .from('reviews')
-    .select(`
-      *,
-      profiles:user_id (
-        display_name,
-        full_name,
-        avatar_url
-      )
-    `)
+    .select('*')
     .eq('business_id', business.id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(20) as any;
 
   return (
     <>
       <Navbar />
-      <div style={{ padding: '40px 5vw', maxWidth: '900px', margin: '0 auto' }}>
-        <h1>🔧 DEBUG MODE - {business.name}</h1>
-        <p><strong>Business ID:</strong> {business.id}</p>
-        <p><strong>Reviews found:</strong> {reviews?.length || 0}</p>
-
-        {error && <p style={{ color: 'red' }}>Query error: {error.message}</p>}
-
-        <pre style={{ background: '#f4f4f4', padding: '20px', borderRadius: '8px', overflow: 'auto', fontSize: '0.85rem' }}>
-          {JSON.stringify(reviews, null, 2)}
-        </pre>
-
-        <p style={{ marginTop: '30px' }}>
-          <a href={`/business/${params.slug}`} style={{ color: 'var(--green)' }}>
-            ← Back to normal business page
-          </a>
-        </p>
-      </div>
+      <BusinessProfileClient business={business} reviews={reviews || []} />
       <Footer />
     </>
   );
