@@ -12,12 +12,19 @@ export async function POST(request: NextRequest) {
     const admin = createAdminClient();
     const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
-    // 1. Update auth user metadata
+    // 1. Get existing user so we don't overwrite avatar if no new one was uploaded
+    const { data: existingUser } = await admin.auth.admin.getUserById(userId);
+    const existingAvatarUrl = existingUser?.user?.user_metadata?.avatar_url || null;
+
+    // Use new avatar if uploaded, otherwise keep the existing one
+    const finalAvatarUrl = avatarUrl || existingAvatarUrl;
+
+    // 2. Update auth user metadata
     const { error: authError } = await admin.auth.admin.updateUserById(userId, {
       user_metadata: {
         full_name: fullName || undefined,
         nickname: nickname || undefined,
-        avatar_url: avatarUrl || undefined,
+        avatar_url: finalAvatarUrl || undefined,
       },
     });
 
@@ -26,13 +33,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: authError.message }, { status: 500 });
     }
 
-    // 2. Update profiles table
+    // 3. Update profiles table — including display_name and avatar
     const { error: profileError } = await (admin as any)
       .from('profiles')
       .update({
+        display_name: fullName || null,
         gender: gender || null,
         phone: phone || null,
-        avatar_url: avatarUrl || null,
+        avatar_url: finalAvatarUrl || null,
       })
       .eq('id', userId);
 
@@ -40,7 +48,7 @@ export async function POST(request: NextRequest) {
       console.error('Profile table update error:', profileError);
     }
 
-    // 3. Backfill author_name on ALL existing reviews (this fixes the review name)
+    // 4. Backfill author_name on all existing reviews
     if (fullName) {
       const { error: reviewError } = await (admin as any)
         .from('reviews')
