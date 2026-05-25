@@ -14,13 +14,13 @@ interface Props {
 const AVATAR_COLORS = ['#1a5c3a','#8B4513','#6b3fa0','#1a3d5c','#5c1a0e','#0a4a3a'];
 
 export default function ReviewCard({ review }: Props) {
-  // ✅ DYNAMIC NAME (Option 1)
-  // Always uses the latest name from the profiles table first
-  const name = review.profiles?.display_name 
-    || review.profiles?.full_name 
+  // Use latest name from profiles (this fixes name updates)
+  const name = review.profiles?.full_name 
+    || review.profiles?.display_name 
     || review.author_name 
     || 'Anonymous';
 
+  const avatarUrl = review.profiles?.avatar_url;
   const initial = name.charAt(0).toUpperCase();
   const avatarColor = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 
@@ -31,15 +31,29 @@ export default function ReviewCard({ review }: Props) {
     <div style={{ borderBottom: '1px solid var(--border)', padding: '24px 0' }}>
       {/* Reviewer */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
-        <div style={{
-          width: '44px', height: '44px',
-          borderRadius: '50%',
-          background: avatarColor,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.2rem', fontWeight: 700, color: '#fff', flexShrink: 0,
-        }}>
-          {initial}
-        </div>
+        {avatarUrl ? (
+          <img 
+            src={avatarUrl} 
+            alt={name}
+            style={{ 
+              width: '44px', height: '44px', 
+              borderRadius: '50%', 
+              objectFit: 'cover',
+              flexShrink: 0 
+            }} 
+          />
+        ) : (
+          <div style={{
+            width: '44px', height: '44px',
+            borderRadius: '50%',
+            background: avatarColor,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1.2rem', fontWeight: 700, color: '#fff', flexShrink: 0,
+          }}>
+            {initial}
+          </div>
+        )}
+
         <div>
           <div style={{ fontWeight: 700, fontSize: '.95rem' }}>{name}</div>
           <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '2px' }}>
