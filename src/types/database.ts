@@ -4,17 +4,19 @@ export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: {
-          id: string;
-          display_name: string | null;
-          avatar_url: string | null;
-          is_business_owner: boolean;
-          review_count: number;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'review_count'>;
-        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
-      };
+  Row: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    is_business_owner: boolean;
+    review_count: number;
+    gender: string | null;
+    phone: string | null;
+    created_at: string;
+  };
+  Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'review_count'>;
+  Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+};
       businesses: {
         Row: {
           id: string;
