@@ -17,6 +17,7 @@ export default function AccountSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Profile form
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [nickname, setNickname] = useState('');
@@ -54,7 +55,7 @@ export default function AccountSettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'File too large (max 5MB)' });
+      setMessage({ type: 'error', text: 'File is too large. Max 5MB.' });
       return;
     }
     setSelectedFile(file);
@@ -95,7 +96,7 @@ export default function AccountSettingsPage() {
 
     if (data.success) {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
-      await supabase.auth.refreshSession(); // This reloads the avatar
+      await supabase.auth.refreshSession();
       if (avatarUrl) setAvatarPreview(avatarUrl);
       setSelectedFile(null);
     } else {
@@ -104,7 +105,6 @@ export default function AccountSettingsPage() {
     setSaving(false);
   };
 
-  // Password tab (same as before)
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -138,7 +138,12 @@ export default function AccountSettingsPage() {
   const sidebarItems = [
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'password', label: 'Password', icon: '🔑' },
-    // ... other tabs
+    { id: 'email', label: 'Email / Notifications', icon: '✉️' },
+    { id: 'locations', label: 'Locations', icon: '📍' },
+    { id: 'friends', label: 'Friends', icon: '👥' },
+    { id: 'privacy', label: 'Privacy Settings', icon: '🔒' },
+    { id: 'external', label: 'External Applications', icon: '🔗' },
+    { id: 'security', label: 'Security Settings', icon: '🛡️' },
   ];
 
   return (
@@ -146,18 +151,34 @@ export default function AccountSettingsPage() {
       <Navbar />
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 5vw', minHeight: '70vh' }}>
         <div style={{ display: 'flex', gap: '40px' }}>
-          {/* Sidebar (same as before) */}
-          <div style={{ width: '260px', background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '12px 0', height: 'fit-content', position: 'sticky', top: '100px' }}>
+          {/* Sidebar - now shows all tabs again */}
+          <div style={{
+            width: '260px',
+            background: '#fff',
+            borderRadius: 'var(--radius)',
+            border: '1px solid var(--border)',
+            padding: '12px 0',
+            height: 'fit-content',
+            position: 'sticky',
+            top: '100px',
+          }}>
             {sidebarItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 style={{
-                  width: '100%', textAlign: 'left', padding: '14px 24px',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '14px 24px',
                   background: activeTab === item.id ? 'var(--green)' : 'transparent',
                   color: activeTab === item.id ? '#fff' : 'var(--charcoal)',
-                  border: 'none', fontSize: '1rem', fontWeight: activeTab === item.id ? 600 : 500,
-                  display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer',
+                  border: 'none',
+                  fontSize: '1rem',
+                  fontWeight: activeTab === item.id ? 600 : 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  cursor: 'pointer',
                 }}
               >
                 <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
@@ -167,7 +188,13 @@ export default function AccountSettingsPage() {
           </div>
 
           {/* Main Content */}
-          <div style={{ flex: 1, background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '40px' }}>
+          <div style={{
+            flex: 1,
+            background: '#fff',
+            borderRadius: 'var(--radius)',
+            border: '1px solid var(--border)',
+            padding: '40px',
+          }}>
             {activeTab === 'profile' && (
               <form onSubmit={handleSaveProfile}>
                 <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 900, marginBottom: '8px' }}>Profile</h1>
@@ -184,7 +211,6 @@ export default function AccountSettingsPage() {
                       </div>
                     )}
                   </div>
-
                   <div>
                     <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
                     <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'var(--yellow)', color: 'var(--charcoal)', border: 'none', padding: '10px 24px', borderRadius: '50px', fontWeight: 600 }}>
@@ -194,16 +220,36 @@ export default function AccountSettingsPage() {
                   </div>
                 </div>
 
-                {/* Rest of the form fields (same as before) */}
                 <div style={{ maxWidth: '420px' }}>
-                  {/* First Name, Last Name, Nickname, Gender fields... (keep them as they were) */}
                   <div style={{ marginBottom: '24px' }}>
                     <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>First Name</label>
                     <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)' }} />
                   </div>
-                  {/* ... add the other fields similarly if needed ... */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>Last Name</label>
+                    <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  </div>
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>Nickname (optional)</label>
+                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  </div>
+                  <div style={{ marginBottom: '30px' }}>
+                    <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '8px' }}>Gender</label>
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input type="radio" name="gender" checked={gender === 'Female'} onChange={() => setGender('Female')} /> Female
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input type="radio" name="gender" checked={gender === 'Male'} onChange={() => setGender('Male')} /> Male
+                      </label>
+                    </div>
+                  </div>
 
-                  {message && <div style={{ padding: '12px', background: message.type === 'success' ? '#d4edda' : '#f8d7da', color: message.type === 'success' ? '#155724' : '#721c24', borderRadius: '8px', marginBottom: '20px' }}>{message.text}</div>}
+                  {message && (
+                    <div style={{ padding: '12px', background: message.type === 'success' ? '#d4edda' : '#f8d7da', color: message.type === 'success' ? '#155724' : '#721c24', borderRadius: '8px', marginBottom: '20px' }}>
+                      {message.text}
+                    </div>
+                  )}
 
                   <button type="submit" disabled={saving} style={{ background: 'var(--green)', color: '#fff', border: 'none', padding: '14px 32px', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 700, width: '100%' }}>
                     {saving ? 'Saving...' : 'Save Changes'}
@@ -212,11 +258,38 @@ export default function AccountSettingsPage() {
               </form>
             )}
 
-            {/* Password tab remains the same */}
             {activeTab === 'password' && (
               <form onSubmit={handleChangePassword}>
-                {/* ... your existing password form ... */}
+                <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 900, marginBottom: '8px' }}>Password</h1>
+                <p style={{ color: 'var(--muted)', marginBottom: '30px' }}>Change your password</p>
+                <div style={{ maxWidth: '420px' }}>
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>New Password</label>
+                    <input name="newPassword" type="password" required style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  </div>
+                  <div style={{ marginBottom: '30px' }}>
+                    <label style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, marginBottom: '6px' }}>Confirm New Password</label>
+                    <input name="confirmPassword" type="password" required style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  </div>
+
+                  {message && (
+                    <div style={{ padding: '12px', background: message.type === 'success' ? '#d4edda' : '#f8d7da', color: message.type === 'success' ? '#155724' : '#721c24', borderRadius: '8px', marginBottom: '20px' }}>
+                      {message.text}
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={saving} style={{ background: 'var(--green)', color: '#fff', border: 'none', padding: '14px 32px', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 700, width: '100%' }}>
+                    {saving ? 'Changing...' : 'Change Password'}
+                  </button>
+                </div>
               </form>
+            )}
+
+            {activeTab !== 'profile' && activeTab !== 'password' && (
+              <div style={{ textAlign: 'center', padding: '100px 20px', color: 'var(--muted)' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🚧</div>
+                <h2>{sidebarItems.find(i => i.id === activeTab)?.label} is coming soon</h2>
+              </div>
             )}
           </div>
         </div>
