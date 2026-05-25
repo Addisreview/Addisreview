@@ -62,7 +62,7 @@ export default async function BusinessPage({ params }: { params: { slug: string 
   // SIMPLE QUERY - this keeps your review visible
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*')
+    .select('*, profiles(display_name, avatar_url)')
     .eq('business_id', business.id)
     .order('created_at', { ascending: false })
     .limit(20) as any;
