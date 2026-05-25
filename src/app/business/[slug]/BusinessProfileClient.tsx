@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -10,17 +9,23 @@ import { formatRating, priceLabel, getCategoryEmoji } from '@/lib/utils';
 
 interface Props {
   business: Business;
-  reviews: (Review & { profiles?: { display_name: string | null; avatar_url: string | null } | null })[];
+  reviews: (Review & { 
+    profiles?: { 
+      display_name: string | null; 
+      full_name?: string | null; 
+      avatar_url: string | null 
+    } | null 
+  })[];
 }
 
 const HERO_COLORS: Record<string, string> = {
-  'Restaurants':   'linear-gradient(135deg,#8B4513,#D2691E)',
+  'Restaurants': 'linear-gradient(135deg,#8B4513,#D2691E)',
   'Coffee & Buna': 'linear-gradient(135deg,#1a3d1a,#2e6b2e)',
-  'Hotels':        'linear-gradient(135deg,#0e2a5c,#1e4f9e)',
-  'Spas':          'linear-gradient(135deg,#3d1a6b,#7a3db5)',
-  'Shopping':      'linear-gradient(135deg,#5c1a0e,#a83418)',
+  'Hotels': 'linear-gradient(135deg,#0e2a5c,#1e4f9e)',
+  'Spas': 'linear-gradient(135deg,#3d1a6b,#7a3db5)',
+  'Shopping': 'linear-gradient(135deg,#5c1a0e,#a83418)',
   'Entertainment': 'linear-gradient(135deg,#0a4a3a,#1a8a6a)',
-  'Healthcare':    'linear-gradient(135deg,#1a3d5c,#2e6b9e)',
+  'Healthcare': 'linear-gradient(135deg,#1a3d5c,#2e6b9e)',
 };
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
@@ -38,7 +43,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   const ratingSource = addisRating > 0 ? 'AddisReview' : 'Google';
   const fullStars = Math.floor(displayRating);
   const emptyStars = 5 - fullStars;
-
   const emoji = getCategoryEmoji(business.category_name || '');
   const heroColor = HERO_COLORS[business.category_name || ''] || 'linear-gradient(135deg,#333,#555)';
 
@@ -50,8 +54,8 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   const photo = (business as any).cover_photo_url || null;
   const slug = business.slug || business.id;
   const writeReviewUrl = `/write-review?business=${business.id}&slug=${slug}&name=${encodeURIComponent(business.name)}`;
-
   const totalReviews = reviews.length;
+
   const ratingBuckets = [5,4,3,2,1].map(star => {
     const count = reviews.filter(r => Number(r.rating) === star).length;
     const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
@@ -77,7 +81,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         @media (max-width: 768px) {
           .biz-body-layout { grid-template-columns: 1fr !important; padding: 16px !important; }
           .biz-sidebar { order: -1; }
-          .biz-hero { height: 200px !important; font-size: 5rem !important; }
+          .biz-hero { height: 200px !important; fontSize: 5rem !important; }
           .biz-header-inner { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
           .biz-actions { flex-wrap: wrap; width: 100%; }
           .biz-actions button { flex: 1; justify-content: center; }
@@ -156,7 +160,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
 
       {/* BODY */}
       <div className="biz-body-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '40px', padding: '40px 5vw', maxWidth: '1300px' }}>
-
         {/* MAIN */}
         <div>
           <div style={{ display: 'flex', borderBottom: '2px solid var(--border)', marginBottom: '32px', overflowX: 'auto' }}>
@@ -248,7 +251,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         <div className="biz-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '22px' }}>
             <h3 style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Business Info</h3>
-
             {business.address && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>📍</span>
@@ -258,7 +260,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-
             {business.phone && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>📞</span>
@@ -268,7 +269,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-
             {business.website && (
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>🌐</span>
@@ -278,7 +278,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-
             {/* HOURS — show if any day has a value */}
             {hasHours && (
               <div style={{ display: 'flex', gap: '12px', fontSize: '.88rem' }}>
