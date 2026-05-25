@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'AddisReview <noreply@addisreview.co>',
+        from: 'AddisReview <noreply@addisreviews.com>',
         to: claim.email,
         subject: action === 'approved'
           ? `✅ Your claim for ${businessName} is approved!`
