@@ -30,7 +30,6 @@ export default async function HomePage() {
     .eq('is_active', true)
     .order('place_count', { ascending: false }) as any;
 
-  // Inject the live count into Addis Ababa so it's always accurate
   const cities = (citiesRaw || []).map((city: any) =>
     city.name === 'Addis Ababa'
       ? { ...city, place_count: addisCount ?? city.place_count }
@@ -42,6 +41,23 @@ export default async function HomePage() {
     .select('id, name, slug, emoji, sort_order')
     .order('sort_order') as any;
 
+  // Random featured review — 4+ stars, 20+ words, approved
+  const { data: reviewData } = await (supabase
+    .from('reviews')
+    .select('id, author_name, body, rating, business_id, businesses(name, slug)')
+    .eq('is_approved', true)
+    .gte('rating', 4)
+    .order('created_at', { ascending: false })
+    .limit(50) as any);
+
+  // Pick a random one from the pool that has enough words
+  const validReviews = (reviewData || []).filter(
+    (r: any) => r.body && r.body.trim().split(/\s+/).length >= 20
+  );
+  const featuredReview = validReviews.length > 0
+    ? validReviews[Math.floor(Math.random() * validReviews.length)]
+    : null;
+
   return (
     <>
       <Navbar />
@@ -49,6 +65,7 @@ export default async function HomePage() {
         businesses={topRated || []}
         cities={cities}
         categories={categories || []}
+        featuredReview={featuredReview}
       />
       <Footer />
     </>
