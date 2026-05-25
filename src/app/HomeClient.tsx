@@ -363,18 +363,20 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
           )}
         </div>
 
-        {locationStatus === 'idle' && (
-          <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '40px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🗺️</div>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '10px' }}>Find businesses near you</h3>
-            <p style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '24px', lineHeight: 1.6, maxWidth: '360px', margin: '0 auto 24px' }}>
-              Allow location access to see restaurants, cafes, and shops closest to where you are right now.
-            </p>
-            <button onClick={handleFindNearby} style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '13px 28px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.95rem', cursor: 'pointer' }}>
-              📍 Find Businesses Near Me
-            </button>
-          </div>
-        )}
+       {locationStatus === 'idle' && (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', background: '#fff', borderRadius: '12px', border: '1px solid var(--border)', padding: '16px 24px', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <span style={{ fontSize: '1.4rem' }}>📍</span>
+      <div>
+        <div style={{ fontWeight: 600, fontSize: '.92rem', color: 'var(--charcoal)' }}>See what's near you</div>
+        <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginTop: '2px' }}>Restaurants, cafes & shops within 5km</div>
+      </div>
+    </div>
+    <button onClick={handleFindNearby} style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '10px 22px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.88rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+      Share my location
+    </button>
+  </div>
+)}
 
         {locationStatus === 'loading' && (
           <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted)' }}>
