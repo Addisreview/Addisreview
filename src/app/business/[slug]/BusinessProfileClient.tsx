@@ -39,11 +39,11 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   const [imgError, setImgError] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // Save feature state
+  // Save feature
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Check if this business is already saved by the user
+  // Check if already saved
   useEffect(() => {
     async function checkSavedStatus() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -73,9 +73,9 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
     }
 
     if (isSaved) {
-      // Remove from collection
-      const { error } = await supabase
-        .from('user_favorites')
+      // Unsave
+      const { error } = await (supabase
+        .from('user_favorites') as any)
         .delete()
         .eq('user_id', session.user.id)
         .eq('business_id', business.id);
@@ -85,9 +85,9 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         toast.success('Removed from My Collection');
       }
     } else {
-      // Add to collection
-      const { error } = await supabase
-        .from('user_favorites')
+      // Save
+      const { error } = await (supabase
+        .from('user_favorites') as any)
         .insert({
           user_id: session.user.id,
           business_id: business.id,
@@ -237,7 +237,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         </div>
       </div>
 
-      {/* BODY - everything else stays exactly the same */}
+      {/* BODY - unchanged from your original */}
       <div className="biz-body-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '40px', padding: '40px 5vw', maxWidth: '1300px' }}>
         <div>
           <div style={{ display: 'flex', borderBottom: '2px solid var(--border)', marginBottom: '32px', overflowX: 'auto' }}>
