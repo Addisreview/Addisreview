@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'AddisReview <noreply@addisreviews.com>',
+        from: 'AddisReview <noreply@addisreview.co>',
         to: user.email,
         subject: `🎉 ${businessName} is now live on AddisReview!`,
         html: emailHtml,
