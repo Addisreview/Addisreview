@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient();
 
-    const { error } = await admin
+    const { error } = await (admin as any)
       .from('profiles')
       .update({
         gender: gender || null,
