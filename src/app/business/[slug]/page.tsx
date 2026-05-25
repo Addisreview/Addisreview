@@ -1,6 +1,5 @@
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
-
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createServerClient } from '@/lib/supabase';
@@ -59,7 +58,6 @@ export default async function BusinessPage({ params }: { params: { slug: string 
 
   if (!business) notFound();
 
-  // SIMPLE QUERY - this keeps your review visible
   const { data: reviews } = await supabase
     .from('reviews')
     .select('*')
@@ -67,10 +65,23 @@ export default async function BusinessPage({ params }: { params: { slug: string 
     .order('created_at', { ascending: false })
     .limit(20) as any;
 
+  // Fetch profile avatars separately and attach to reviews
+  const reviewsWithProfiles = await Promise.all(
+    (reviews || []).map(async (review: any) => {
+      if (!review.user_id) return { ...review, profiles: null };
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', review.user_id)
+        .single();
+      return { ...review, profiles: profile || null };
+    })
+  );
+
   return (
     <>
       <Navbar />
-      <BusinessProfileClient business={business} reviews={reviews || []} />
+      <BusinessProfileClient business={business} reviews={reviewsWithProfiles} />
       <Footer />
     </>
   );
