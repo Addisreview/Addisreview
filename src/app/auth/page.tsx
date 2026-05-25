@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { createBrowserClient } from '@/lib/supabase';
@@ -21,6 +21,16 @@ function AuthForm() {
   const supabase = createBrowserClient();
   const [tab, setTab] = useState<Tab>('signup');
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Profile step state
+  const [gender, setGender] = useState<'male' | 'female' | null>(null);
+  const [phone, setPhone] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const redirectTo = searchParams.get('redirect') || '/';
   const reason = searchParams.get('reason') || '';
@@ -52,7 +62,6 @@ function AuthForm() {
     if (password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     setLoading(true);
 
-    // Step 1: Check with our server-side API if this email already exists
     try {
       const checkRes = await fetch('/api/check-email', {
         method: 'POST',
@@ -66,12 +75,9 @@ function AuthForm() {
         setLoading(false);
         return;
       }
-    } catch {
-      // If the check API fails for any reason, fall through to signup
-    }
+    } catch {}
 
-    // Step 2: Email is new — proceed with signup
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         data: { full_name: fullName, is_business_owner: isOwner },
@@ -81,10 +87,58 @@ function AuthForm() {
 
     if (error) {
       toast.error(error.message);
+      setLoading(false);
     } else {
-      toast.success('Account created! Check your email to confirm. 🇪🇹');
+      // Move to step 2 — profile completion
+      if (data.user) setUserId(data.user.id);
+      setStep(2);
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Photo must be under 5MB'); return; }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleProfileSave = async () => {
+    setProfileLoading(true);
+    let avatarUrl: string | null = null;
+
+    // Upload photo if selected
+    if (avatarFile && userId) {
+      const ext = avatarFile.name.split('.').pop();
+      const path = `avatars/${userId}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(path, avatarFile, { upsert: true });
+
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+        avatarUrl = urlData.publicUrl;
+      }
+    }
+
+    // Save to profiles table
+    if (userId) {
+      await supabase.from('profiles').update({
+        gender: gender || null,
+        phone: phone.trim() || null,
+        avatar_url: avatarUrl || undefined,
+      }).eq('id', userId);
+    }
+
+    toast.success('Account created! Check your email to confirm. 🇪🇹');
+    setProfileLoading(false);
+    router.push(redirectTo);
+  };
+
+  const handleSkipProfile = () => {
+    toast.success('Account created! Check your email to confirm. 🇪🇹');
+    router.push(redirectTo);
   };
 
   const handleLogIn = async () => {
@@ -107,6 +161,144 @@ function AuthForm() {
     setLoading(false);
   };
 
+  // ── STEP 2 — Profile completion ──────────────────────────
+  if (step === 2) {
+    return (
+      <>
+        <style>{`
+          @media (max-width: 768px) {
+            .auth-layout { grid-template-columns: 1fr !important; }
+            .auth-left { display: none !important; }
+            .auth-right { padding: 32px 24px !important; }
+          }
+        `}</style>
+        <div className="auth-layout" style={{ minHeight: 'calc(100vh - 64px)', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+
+          {/* LEFT PANEL */}
+          <div className="auth-left" style={{
+            background: 'linear-gradient(145deg,var(--green) 0%,#0e3d26 100%)',
+            padding: '60px', display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', fontWeight: 900, color: 'var(--yellow)', marginBottom: '28px' }}>
+                AddisReview<span style={{ color: 'rgba(255,255,255,.6)', fontStyle: 'italic' }}>.</span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', color: '#fff', lineHeight: 1.3, marginBottom: '16px' }}>
+                Almost there! 🎉
+              </div>
+              <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '.92rem', lineHeight: 1.6 }}>
+                Complete your profile so the community knows who you are when you write reviews.
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL */}
+          <div className="auth-right" style={{ padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--warm-white)' }}>
+            <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto' }}>
+
+              {/* Step indicator */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--green)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.78rem', fontWeight: 700 }}>✓</div>
+                <div style={{ flex: 1, height: '2px', background: 'var(--green)', borderRadius: '2px' }} />
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--green)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.78rem', fontWeight: 700 }}>2</div>
+              </div>
+
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 700, marginBottom: '6px' }}>Complete your profile</h2>
+              <p style={{ color: 'var(--muted)', fontSize: '.88rem', marginBottom: '32px' }}>This helps others recognise you. You can always update this later.</p>
+
+              {/* Photo upload */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '100px', height: '100px', borderRadius: '50%',
+                    background: avatarPreview ? 'transparent' : '#f0f0f0',
+                    border: '2px dashed var(--border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', overflow: 'hidden', marginBottom: '12px',
+                    transition: 'border-color .2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--green)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                >
+                  {avatarPreview
+                    ? <img src={avatarPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '4px' }}>👤</div>
+                        <div style={{ fontSize: '.72rem', color: 'var(--muted)' }}>Upload photo</div>
+                      </div>
+                  }
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '7px 18px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--charcoal)' }}
+                >
+                  {avatarPreview ? 'Change photo' : 'Upload Photo'}
+                </button>
+              </div>
+
+              {/* Gender */}
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ fontSize: '.83rem', fontWeight: 600, marginBottom: '12px', display: 'block' }}>Gender</label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {(['female', 'male'] as const).map(g => (
+                    <button
+                      key={g}
+                      onClick={() => setGender(gender === g ? null : g)}
+                      style={{
+                        flex: 1, padding: '12px', borderRadius: '10px', cursor: 'pointer',
+                        fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.9rem',
+                        border: gender === g ? '2px solid var(--green)' : '1.5px solid var(--border)',
+                        background: gender === g ? 'rgba(26,92,58,.07)' : '#fff',
+                        color: gender === g ? 'var(--green)' : 'var(--charcoal)',
+                        transition: 'all .2s',
+                      }}
+                    >
+                      {g === 'female' ? '👩 Female' : '👨 Male'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div style={{ marginBottom: '32px' }}>
+                <label style={{ fontSize: '.83rem', fontWeight: 600, marginBottom: '7px', display: 'block' }}>
+                  Phone Number <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(Optional)</span>
+                </label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  placeholder="+251 91 234 5678"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                />
+              </div>
+
+              {/* Buttons */}
+              <button
+                onClick={handleProfileSave}
+                disabled={profileLoading}
+                style={{ width: '100%', padding: '14px', background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '10px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.95rem', cursor: 'pointer', marginBottom: '12px' }}
+              >
+                {profileLoading ? 'Saving…' : 'Save & Continue →'}
+              </button>
+              <button
+                onClick={handleSkipProfile}
+                style={{ width: '100%', padding: '12px', background: 'none', border: 'none', color: 'var(--muted)', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.88rem', cursor: 'pointer' }}
+              >
+                Skip for now
+              </button>
+
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ── STEP 1 — Original signup/login form ──────────────────
   return (
     <>
       <style>{`
@@ -154,7 +346,6 @@ function AuthForm() {
         <div className="auth-right" style={{ padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--warm-white)' }}>
           <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto' }}>
 
-            {/* Context banner — shown when redirected for a specific reason */}
             {banner && (
               <div style={{
                 background: 'var(--green-pale)', border: '1px solid rgba(26,92,58,.2)',
@@ -166,7 +357,6 @@ function AuthForm() {
               </div>
             )}
 
-            {/* Tab switcher */}
             {tab !== 'forgot' && (
               <div style={{ display: 'flex', background: '#fff', borderRadius: '10px', padding: '4px', marginBottom: '28px', border: '1px solid var(--border)' }}>
                 {(['signup', 'login'] as Tab[]).map(t => (
