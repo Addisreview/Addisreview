@@ -43,13 +43,23 @@ interface NearbyBusiness {
   google_rating: number; review_count: number; lat: number; lng: number; distance_km: number;
 }
 
+interface FeaturedReview {
+  id: string;
+  author_name: string;
+  body: string;
+  rating: number;
+  business_id: string;
+  businesses: { name: string; slug: string } | null;
+}
+
 interface Props {
   businesses: Business[];
   cities: City[];
   categories: Category[];
+  featuredReview?: FeaturedReview | null;
 }
 
-export default function HomeClient({ businesses, cities, categories }: Props) {
+export default function HomeClient({ businesses, cities, categories, featuredReview }: Props) {
   const router = useRouter();
   const supabase = createBrowserClient();
   const [searchQ, setSearchQ] = useState('');
@@ -108,6 +118,14 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
 
   const formatDistance = (km: number) =>
     km < 1 ? `${Math.round(km * 1000)}m away` : `${km.toFixed(1)}km away`;
+
+  // Truncate review body to ~180 chars for display
+  const truncateReview = (text: string, max = 180) =>
+    text.length <= max ? text : text.slice(0, max).replace(/\s+\S*$/, '') + '…';
+
+  // Get initials from author name
+  const getInitials = (name: string) =>
+    name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
   return (
     <main>
@@ -181,6 +199,48 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
           </div>
         </div>
       </div>
+
+      {/* FEATURED REVIEW SNIPPET */}
+      {featuredReview && (
+        <div style={{ background: 'var(--warm-white)', borderBottom: '1px solid var(--border)', padding: '20px 5vw' }}>
+          <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+            <div style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
+              ⭐ What people are saying
+            </div>
+            <Link href={`/business/${featuredReview.businesses?.slug || featuredReview.business_id}`} style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: '#fff', borderRadius: '14px', border: '1px solid var(--border)',
+                padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start',
+                transition: 'box-shadow .2s',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
+                onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+              >
+                {/* Avatar */}
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                  background: 'var(--green)', color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: '.85rem',
+                }}>
+                  {getInitials(featuredReview.author_name)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#f5a623', fontSize: '.9rem' }}>{'★'.repeat(featuredReview.rating)}</span>
+                    <span style={{ fontWeight: 700, fontSize: '.88rem', color: 'var(--charcoal)' }}>{featuredReview.author_name}</span>
+                    <span style={{ fontSize: '.82rem', color: 'var(--muted)' }}>on</span>
+                    <span style={{ fontSize: '.82rem', color: 'var(--green)', fontWeight: 600 }}>{featuredReview.businesses?.name}</span>
+                  </div>
+                  <p style={{ fontSize: '.9rem', color: 'var(--charcoal)', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
+                    "{truncateReview(featuredReview.body)}"
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* CATEGORY FILTERS */}
       <div style={{ padding: '16px 5vw', borderBottom: '1px solid var(--border)', background: '#fff' }}>
@@ -434,7 +494,6 @@ export default function HomeClient({ businesses, cities, categories }: Props) {
             </Link>
           ))}
         </div>
-        {/* Coming soon note */}
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '.83rem', color: 'var(--muted)' }}>
           🌍 Expanding to <strong>Hawassa, Gondar, Dire Dawa</strong> & more cities soon
         </div>
