@@ -63,10 +63,17 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
-  // SIMPLE & RELIABLE QUERY - just load all reviews for this business
+  // This is the only change: proper join so we get latest name + profile picture
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*')
+    .select(`
+      *,
+      profiles:user_id (
+        display_name,
+        full_name,
+        avatar_url
+      )
+    `)
     .eq('business_id', business.id)
     .order('created_at', { ascending: false })
     .limit(20) as any;
