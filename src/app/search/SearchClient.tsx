@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { BusinessWithCount, Category, City } from '@/types/database';
 import { priceLabel, getCategoryEmoji } from '@/lib/utils';
-
-const NEIGHBORHOODS = [
-  'Bole', 'Piassa', 'Kazanchis', 'Megenagna', 'CMC', 'Sarbet',
-  'Merkato', 'Lideta', 'Semen Mazoria', 'Gerji', 'Ayat',
-  'Gofa', 'Jemo', 'Kotebe', 'Kolfe', 'Akaki'
-];
+import FiltersPanel from './FiltersPanel';
 
 const CARD_COLORS: Record<string, string> = {
   'Restaurants':   'linear-gradient(135deg,#6b2e0a,#c45e1e)',
@@ -39,7 +34,6 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   const [sort, setSort] = useState(currentFilters.sort || 'rating');
   const [selectedCat, setSelectedCat] = useState(currentFilters.category || '');
   const [selectedRating, setSelectedRating] = useState(currentFilters.rating || '0');
-  const [selectedPrices, setSelectedPrices] = useState<number[]>([]);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(currentFilters.neighborhood || '');
   const [openNow, setOpenNow] = useState(currentFilters.open_now === 'true');
   const [catSearch, setCatSearch] = useState('');
@@ -53,141 +47,22 @@ export default function SearchClient({ businesses, totalCount, categories, citie
     router.push(`/search?${params.toString()}`);
   };
 
+  const handleClear = () => {
+    setSelectedCat(''); setSelectedRating('0');
+    setQ(''); setCity(''); setSelectedNeighborhood('');
+    setSort('rating'); setOpenNow(false); setCatSearch('');
+    push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating', open_now:'' });
+    setShowFilters(false);
+  };
+
   const totalPages = Math.ceil(totalCount / 10);
 
-  // Sort categories alphabetically and filter by search
-  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-  const filteredCats = catSearch.trim()
-    ? sortedCategories.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase()))
-    : sortedCategories;
-
-  const visibleNeighborhoods = showAllNeighborhoods ? NEIGHBORHOODS : NEIGHBORHOODS.slice(0, 6);
-  const filterLabel = { fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px' };
-
-  const FiltersPanel = () => (
-    <div style={{ background: '#fff', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '24px' }}>
-      <div style={{ fontWeight: 700, fontSize: '.95rem', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>Filters</div>
-
-      {/* OPEN NOW */}
-      <div style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border)' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '.92rem', fontWeight: 600 }}>
-          <input
-            type="checkbox"
-            checked={openNow}
-            onChange={e => { setOpenNow(e.target.checked); push({ open_now: e.target.checked ? 'true' : '' }); }}
-            style={{ accentColor: 'var(--green)', width: '18px', height: '18px' }}
-          />
-          🟢 Open Now
-        </label>
-      </div>
-
-      {/* CATEGORY WITH SEARCH */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={filterLabel}>Category</div>
-
-        {/* Search box */}
-        <div style={{ position: 'relative', marginBottom: '10px' }}>
-          <input
-            type="text" key="cat-search"
-            placeholder="Search categories…"
-            value={catSearch}
-            onChange={e => setCatSearch(e.target.value)}
-            style={{
-              width: '100%', padding: '8px 30px 8px 10px',
-              border: '1.5px solid var(--border)', borderRadius: '8px',
-              fontSize: '.84rem', fontFamily: 'var(--font-sans)',
-              outline: 'none', boxSizing: 'border-box', background: '#fafafa',
-            }}
-          />
-          {catSearch && (
-            <button
-              onClick={() => setCatSearch('')}
-              style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '.85rem', padding: '0' }}
-            >✕</button>
-          )}
-        </div>
-
-        {/* All Categories option */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', cursor: 'pointer', fontSize: '.88rem' }}>
-          <input type="radio" name="cat" checked={selectedCat === ''} onChange={() => { setSelectedCat(''); setCatSearch(''); push({ category: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-          All Categories
-        </label>
-
-        {/* Scrollable category list */}
-        <div style={{ maxHeight: '220px', overflowY: 'auto', paddingRight: '4px' }}>
-          {filteredCats.length === 0 ? (
-            <div style={{ fontSize: '.84rem', color: 'var(--muted)', padding: '8px 0' }}>No categories found</div>
-          ) : filteredCats.map(cat => (
-            <label key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', cursor: 'pointer', fontSize: '.88rem' }}>
-              <input
-                type="radio"
-                name="cat"
-                checked={selectedCat === cat.name}
-                onChange={() => { setSelectedCat(cat.name); setCatSearch(''); push({ category: cat.name }); setShowFilters(false); }}
-                style={{ accentColor: 'var(--green)', width: '16px', height: '16px', flexShrink: 0 }}
-              />
-              {cat.emoji || '📍'} {cat.name}
-            </label>
-          ))}
-        </div>
-        {selectedCat && (
-          <button
-            onClick={() => { setSelectedCat(''); setCatSearch(''); push({ category: '' }); }}
-            style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '6px 0 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}
-          >
-            ✕ Clear category
-          </button>
-        )}
-      </div>
-
-      <div style={{ marginBottom: '24px' }}>
-        <div style={filterLabel}>Neighborhood</div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-          <input type="radio" name="neighborhood" checked={selectedNeighborhood === ''} onChange={() => { setSelectedNeighborhood(''); push({ neighborhood: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-          All Neighborhoods
-        </label>
-        {visibleNeighborhoods.map(n => (
-          <label key={n} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-            <input type="radio" name="neighborhood" checked={selectedNeighborhood === n} onChange={() => { setSelectedNeighborhood(n); push({ neighborhood: n }); setShowFilters(false); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-            {n}
-          </label>
-        ))}
-        <button onClick={() => setShowAllNeighborhoods(!showAllNeighborhoods)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
-          {showAllNeighborhoods ? 'Show less ↑' : 'Show all neighborhoods ↓'}
-        </button>
-      </div>
-
-      <div style={{ marginBottom: '24px' }}>
-        <div style={filterLabel}>Minimum Rating</div>
-        {[['0','Any rating'],['4','★★★★☆ 4+ stars'],['3','★★★☆☆ 3+ stars']].map(([val, label]) => (
-          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-            <input type="radio" name="rating" checked={selectedRating === val} onChange={() => { setSelectedRating(val); push({ rating: val }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-            {label}
-          </label>
-        ))}
-      </div>
-
-      <div style={{ marginBottom: '24px' }}>
-        <div style={filterLabel}>Sort By</div>
-        {[['rating','Highest Rated'],['reviews','Most Reviewed'],['name','A to Z']].map(([val, label]) => (
-          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-            <input type="radio" name="sort" checked={sort === val} onChange={() => { setSort(val); push({ sort: val }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-            {label}
-          </label>
-        ))}
-      </div>
-
-      <button className="btn-primary" style={{ width: '100%', borderRadius: '10px' }} onClick={() => { push({}); setShowFilters(false); }}>Apply Filters</button>
-      <button onClick={() => {
-        setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]);
-        setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating'); setOpenNow(false); setCatSearch('');
-        push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating', open_now:'' });
-        setShowFilters(false);
-      }} style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-        Clear all filters
-      </button>
-    </div>
-  );
+  const filterProps = {
+    categories, selectedCat, setSelectedCat, catSearch, setCatSearch,
+    selectedRating, setSelectedRating, selectedNeighborhood, setSelectedNeighborhood,
+    sort, setSort, openNow, setOpenNow, showAllNeighborhoods, setShowAllNeighborhoods,
+    onApply: push, onClear: handleClear, setShowFilters,
+  };
 
   return (
     <main>
@@ -224,14 +99,14 @@ export default function SearchClient({ businesses, totalCount, categories, citie
       {showFilters && (
         <div onClick={e => { if (e.target === e.currentTarget) setShowFilters(false); }} style={{ position: 'fixed', inset: 0, zIndex: 150, background: 'rgba(0,0,0,0.5)', overflowY: 'auto', padding: '80px 16px 16px' }}>
           <div style={{ maxWidth: '420px', margin: '0 auto' }}>
-            <FiltersPanel />
+            <FiltersPanel {...filterProps} />
           </div>
         </div>
       )}
 
       <div className="search-layout" style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '32px', padding: '40px 5vw', maxWidth: '1300px' }}>
         <div className="filters-desktop" style={{ position: 'sticky', top: '84px', height: 'fit-content' }}>
-          <FiltersPanel />
+          <FiltersPanel {...filterProps} />
         </div>
 
         <div>
