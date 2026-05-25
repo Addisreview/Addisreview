@@ -16,7 +16,7 @@ const TAGS = [
 ];
 
 const MAX_PHOTOS = 5;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 
 function WriteReviewForm() {
@@ -31,6 +31,7 @@ function WriteReviewForm() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
   const [existingReviewId, setExistingReviewId] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState('');
@@ -56,6 +57,20 @@ function WriteReviewForm() {
       }
 
       if (businessId && data.user) {
+        // Check if user is the owner of this business
+        const { data: bizData } = await (supabase
+          .from('businesses')
+          .select('claimed_by')
+          .eq('id', businessId)
+          .single() as any);
+
+        if (bizData?.claimed_by && bizData.claimed_by === data.user.id) {
+          setIsOwner(true);
+          setLoading(false);
+          return;
+        }
+
+        // Check for existing review
         const { data: existing } = await (supabase.from('reviews') as any)
           .select('id, rating, body, tags, author_name, photo_urls')
           .eq('business_id', businessId)
@@ -101,7 +116,6 @@ function WriteReviewForm() {
       const url = URL.createObjectURL(file);
       setPhotoPreviews(prev => [...prev, url]);
     }
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -188,6 +202,27 @@ function WriteReviewForm() {
   if (loading) return <div style={{ padding: '80px', textAlign: 'center', color: 'var(--muted)' }}>Loading…</div>;
   if (!user) return <div style={{ padding: '80px', textAlign: 'center', color: 'var(--muted)' }}>Redirecting to login…</div>;
 
+  // Block owner from reviewing their own business
+  if (isOwner) return (
+    <main>
+      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '80px 5vw', textAlign: 'center' }}>
+        <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>🏢</div>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 900, marginBottom: '12px' }}>
+          You can't review your own business
+        </h1>
+        <p style={{ color: 'var(--muted)', lineHeight: 1.7, marginBottom: '32px', fontSize: '.95rem' }}>
+          As the owner of <strong>{businessName}</strong>, you're not able to write a review for your own business. This helps keep reviews honest and trustworthy for everyone.
+        </p>
+        <button
+          onClick={() => router.push(`/business/${businessSlug}`)}
+          style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '13px 28px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.95rem', cursor: 'pointer' }}
+        >
+          Back to Business Page →
+        </button>
+      </div>
+    </main>
+  );
+
   const totalPhotos = existingPhotoUrls.length + photos.length;
 
   return (
@@ -247,13 +282,11 @@ function WriteReviewForm() {
           </div>
         </div>
 
-        {/* PHOTO UPLOAD */}
         <div style={{ marginBottom: '28px' }}>
           <label style={{ fontWeight: 700, fontSize: '.9rem', marginBottom: '10px', display: 'block' }}>
             Add Photos <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '.82rem' }}>(optional, max {MAX_PHOTOS})</span>
           </label>
 
-          {/* Photo previews */}
           {(existingPhotoUrls.length > 0 || photoPreviews.length > 0) && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px', marginBottom: '12px' }}>
               {existingPhotoUrls.map((url, i) => (
@@ -271,7 +304,6 @@ function WriteReviewForm() {
             </div>
           )}
 
-          {/* Upload button */}
           {totalPhotos < MAX_PHOTOS && (
             <>
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple style={{ display: 'none' }} onChange={handlePhotoSelect} />
