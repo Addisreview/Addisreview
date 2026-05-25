@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import BusinessCard from '@/components/business/BusinessCard'; // we'll use your existing card
+import BusinessCard from '@/components/business/BusinessCard';
 import type { User } from '@supabase/supabase-js';
 import Link from 'next/link';
 
@@ -25,7 +25,6 @@ export default function MyCollectionPage() {
       }
       setUser(currentUser);
 
-      // Fetch saved businesses
       const { data } = await supabase
         .from('user_favorites')
         .select(`
@@ -52,10 +51,12 @@ export default function MyCollectionPage() {
   }, []);
 
   const removeFromCollection = async (businessId: string) => {
+    if (!user) return;
+
     const { error } = await supabase
       .from('user_favorites')
       .delete()
-      .eq('user_id', user?.id)
+      .eq('user_id', user.id)
       .eq('business_id', businessId);
 
     if (!error) {
@@ -85,7 +86,6 @@ export default function MyCollectionPage() {
         </div>
 
         {savedBusinesses.length === 0 ? (
-          // Empty state
           <div style={{
             background: '#fff',
             borderRadius: 'var(--radius)',
@@ -125,7 +125,6 @@ export default function MyCollectionPage() {
               return (
                 <div key={biz.id} style={{ position: 'relative' }}>
                   <BusinessCard business={biz} />
-                  {/* Red heart to unsave */}
                   <button
                     onClick={() => removeFromCollection(biz.id)}
                     style={{
