@@ -215,9 +215,10 @@ function AuthForm() {
 
               {/* Photo upload */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
+              <div
+  onClick={() => fileInputRef.current?.click()}
+  suppressHydrationWarning
+  style={{  
                     width: '100px', height: '100px', borderRadius: '50%',
                     background: avatarPreview ? 'transparent' : '#f0f0f0',
                     border: '2px dashed var(--border)',
@@ -236,7 +237,7 @@ function AuthForm() {
                       </div>
                   }
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} suppressHydrationWarning />
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '7px 18px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--charcoal)' }}
