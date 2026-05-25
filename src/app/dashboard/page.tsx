@@ -20,7 +20,6 @@ const FEATURE_SUGGESTIONS = [
 
 type Tab = 'info' | 'hours' | 'photos' | 'features';
 
-// ── Skeleton ──────────────────────────────────────────────
 function SkeletonPulse({ width = '100%', height = '16px', borderRadius = '8px', style = {} }: {
   width?: string; height?: string; borderRadius?: string; style?: React.CSSProperties;
 }) {
@@ -46,7 +45,6 @@ function DashboardSkeleton() {
       `}</style>
       <Navbar />
       <main style={{ background: 'var(--cream)', minHeight: '100vh' }}>
-        {/* Header skeleton */}
         <div style={{ background: 'linear-gradient(135deg, #0e3d26, var(--green))', padding: '32px 5vw' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <SkeletonPulse width="120px" height="12px" style={{ marginBottom: '10px', background: 'rgba(255,255,255,.15)' }} />
@@ -54,9 +52,7 @@ function DashboardSkeleton() {
             <SkeletonPulse width="160px" height="14px" style={{ background: 'rgba(255,255,255,.12)' }} />
           </div>
         </div>
-
         <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '28px', maxWidth: '1200px', margin: '0 auto', padding: '32px 5vw' }}>
-          {/* Sidebar skeleton */}
           <div>
             <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--border)', padding: '16px', marginBottom: '16px' }}>
               {[1, 2, 3, 4].map(i => (
@@ -64,8 +60,6 @@ function DashboardSkeleton() {
               ))}
             </div>
           </div>
-
-          {/* Main content skeleton */}
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid var(--border)', padding: '28px' }}>
             <SkeletonPulse width="200px" height="22px" style={{ marginBottom: '24px' }} />
             {[1, 2, 3].map(i => (
@@ -82,7 +76,6 @@ function DashboardSkeleton() {
   );
 }
 
-// ── Main component ────────────────────────────────────────
 export default function OwnerDashboard() {
   const router = useRouter();
   const supabase = createBrowserClient();
@@ -96,8 +89,9 @@ export default function OwnerDashboard() {
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [uploading, setUploading] = useState(false);
+  const [showUnclaimConfirm, setShowUnclaimConfirm] = useState(false);
+  const [unclaiming, setUnclaiming] = useState(false);
 
-  // Editable fields
   const [description, setDescription] = useState('');
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
@@ -121,7 +115,6 @@ export default function OwnerDashboard() {
         return;
       }
 
-      // Auth + data fetch run together — no sequential waterfall
       const [, { data: bizData }] = await Promise.all([
         Promise.resolve(setUser(user)),
         (supabase
@@ -154,6 +147,7 @@ export default function OwnerDashboard() {
     setPhotos(biz.photos || []);
     setCoverPhoto(biz.cover_photo_url || '');
     setEditing(false);
+    setShowUnclaimConfirm(false);
   };
 
   const selectBusiness = (biz: Business) => populateFields(biz);
@@ -185,6 +179,40 @@ export default function OwnerDashboard() {
   const handleCancel = () => {
     if (selected) populateFields(selected);
     setEditing(false);
+  };
+
+  const handleUnclaim = async () => {
+    if (!selected || !user) return;
+    setUnclaiming(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('businesses')
+        .update({
+          is_claimed: false,
+          claimed_by: null,
+          is_verified: false,
+        })
+        .eq('id', selected.id)
+        .eq('claimed_by', user.id);
+
+      if (error) throw error;
+
+      toast.success(`${selected.name} has been unclaimed.`);
+
+      // Remove from local list and redirect
+      const remaining = businesses.filter(b => b.id !== selected.id);
+      setBusinesses(remaining);
+      if (remaining.length > 0) {
+        populateFields(remaining[0]);
+      } else {
+        router.push('/');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to unclaim business');
+    } finally {
+      setUnclaiming(false);
+      setShowUnclaimConfirm(false);
+    }
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,10 +249,8 @@ export default function OwnerDashboard() {
     setCustomFeature('');
   };
 
-  // ── Loading state ─────────────────────────────────────
   if (loading) return <DashboardSkeleton />;
 
-  // ── No businesses ─────────────────────────────────────
   if (businesses.length === 0) return (
     <>
       <Navbar />
@@ -308,7 +334,7 @@ export default function OwnerDashboard() {
             {businesses.length > 1 && (
               <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--border)', padding: '12px', marginBottom: '16px' }}>
                 <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '10px', paddingLeft: '4px' }}>Your Businesses</div>
-                {businesses.map((biz, index) => (
+                {businesses.map((biz) => (
                   <button
                     key={biz.id}
                     onClick={() => selectBusiness(biz)}
@@ -321,33 +347,16 @@ export default function OwnerDashboard() {
                       marginBottom: '8px', transition: 'all .15s',
                     }}
                   >
-                    {/* Photo or fallback */}
-                    <div style={{
-                      width: '44px', height: '44px', borderRadius: '8px',
-                      overflow: 'hidden', flexShrink: 0,
-                      background: 'linear-gradient(135deg, #1a5c3a, #2d8657)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '1.2rem',
-                    }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, background: 'linear-gradient(135deg, #1a5c3a, #2d8657)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
                       {biz.cover_photo_url ? (
                         <img src={biz.cover_photo_url} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span>🏢</span>
-                      )}
+                      ) : <span>🏢</span>}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontWeight: selected?.id === biz.id ? 700 : 500,
-                        fontSize: '.82rem',
-                        color: selected?.id === biz.id ? 'var(--green)' : 'var(--charcoal)',
-                        lineHeight: 1.3,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
+                      <div style={{ fontWeight: selected?.id === biz.id ? 700 : 500, fontSize: '.82rem', color: selected?.id === biz.id ? 'var(--green)' : 'var(--charcoal)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {biz.name}
                       </div>
-                      <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginTop: '2px' }}>
-                        {biz.category_name || 'Business'}
-                      </div>
+                      <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginTop: '2px' }}>{biz.category_name || 'Business'}</div>
                     </div>
                     {selected?.id === biz.id && (
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
@@ -357,7 +366,6 @@ export default function OwnerDashboard() {
               </div>
             )}
 
-            {/* Tab nav */}
             <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--border)', padding: '8px' }}>
               {tabs.map(tab => (
                 <button key={tab.id} className="dash-tab" onClick={() => setActiveTab(tab.id)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '12px 14px', borderRadius: '8px', border: 'none', background: activeTab === tab.id ? 'var(--green-pale)' : 'transparent', color: activeTab === tab.id ? 'var(--green)' : 'var(--charcoal)', fontWeight: activeTab === tab.id ? 700 : 500, fontSize: '.88rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', textAlign: 'left', transition: 'all .15s', marginBottom: '2px' }}>
@@ -453,7 +461,6 @@ export default function OwnerDashboard() {
                 <div>
                   <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px' }}>Photos</h2>
                   <p style={{ color: 'var(--muted)', fontSize: '.85rem', marginBottom: '24px' }}>Photos of your business. The cover photo appears at the top of your listing.</p>
-
                   {editing && (
                     <>
                       <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple style={{ display: 'none' }} onChange={handlePhotoUpload} />
@@ -464,7 +471,6 @@ export default function OwnerDashboard() {
                       </div>
                     </>
                   )}
-
                   {photos.length > 0 ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
                       {photos.map((url, i) => (
@@ -498,7 +504,6 @@ export default function OwnerDashboard() {
                 <div>
                   <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px' }}>Features & Highlights</h2>
                   <p style={{ color: 'var(--muted)', fontSize: '.85rem', marginBottom: '24px' }}>Features that describe your business. These appear on your listing.</p>
-
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '24px' }}>
                     {FEATURE_SUGGESTIONS.map(f => (
                       <button key={f} className="feature-chip" onClick={() => editing && toggleFeature(f)} style={{ padding: '8px 16px', borderRadius: '50px', border: features.includes(f) ? '2px solid var(--green)' : '1.5px solid var(--border)', background: features.includes(f) ? 'var(--green-pale)' : '#fff', color: features.includes(f) ? 'var(--green)' : 'var(--charcoal)', fontFamily: 'var(--font-sans)', fontSize: '.85rem', fontWeight: 600, cursor: editing ? 'pointer' : 'default', transition: 'all .15s', opacity: editing ? 1 : 0.8 }}>
@@ -506,7 +511,6 @@ export default function OwnerDashboard() {
                       </button>
                     ))}
                   </div>
-
                   {editing && (
                     <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
                       <label style={{ fontWeight: 700, fontSize: '.85rem', marginBottom: '10px', display: 'block' }}>Add custom feature</label>
@@ -516,7 +520,6 @@ export default function OwnerDashboard() {
                       </div>
                     </div>
                   )}
-
                   {features.filter(f => !FEATURE_SUGGESTIONS.includes(f)).length > 0 && (
                     <div style={{ marginTop: '16px' }}>
                       <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '10px' }}>Custom Features</div>
@@ -535,7 +538,6 @@ export default function OwnerDashboard() {
                 </div>
               )}
 
-              {/* SAVE BUTTON — edit mode only */}
               {editing && (
                 <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                   <button onClick={handleCancel} style={{ background: '#fff', border: '1.5px solid var(--border)', color: 'var(--muted)', padding: '12px 24px', borderRadius: '50px', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.9rem', cursor: 'pointer' }}>Cancel</button>
@@ -545,6 +547,47 @@ export default function OwnerDashboard() {
                 </div>
               )}
             </div>
+
+            {/* DANGER ZONE — Unclaim */}
+            <div style={{ marginTop: '24px', background: '#fff', borderRadius: '16px', border: '1.5px solid #fde8e8', padding: '24px' }}>
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', fontWeight: 700, color: '#c0392b', marginBottom: '8px' }}>
+                ⚠️ Unclaim This Business
+              </h3>
+              <p style={{ fontSize: '.85rem', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '16px' }}>
+                If you've sold the business or no longer manage it, you can remove your claim. This will remove your access to this dashboard and the business will return to unclaimed status. This action cannot be undone.
+              </p>
+
+              {!showUnclaimConfirm ? (
+                <button
+                  onClick={() => setShowUnclaimConfirm(true)}
+                  style={{ background: '#fff', color: '#c0392b', border: '1.5px solid #c0392b', borderRadius: '50px', padding: '10px 22px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer' }}
+                >
+                  Unclaim {selected?.name}
+                </button>
+              ) : (
+                <div style={{ background: '#fde8e8', borderRadius: '12px', padding: '16px 18px' }}>
+                  <p style={{ fontSize: '.88rem', fontWeight: 700, color: '#c0392b', marginBottom: '12px' }}>
+                    Are you sure? This will remove your access to this business dashboard.
+                  </p>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      onClick={handleUnclaim}
+                      disabled={unclaiming}
+                      style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: '50px', padding: '10px 22px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer', opacity: unclaiming ? 0.7 : 1 }}
+                    >
+                      {unclaiming ? 'Unclaiming…' : 'Yes, Unclaim'}
+                    </button>
+                    <button
+                      onClick={() => setShowUnclaimConfirm(false)}
+                      style={{ background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '10px 22px', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '.85rem', cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </main>
