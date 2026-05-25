@@ -63,7 +63,7 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
-  // SIMPLE QUERY - this version previously made your review appear
+  // SIMPLE QUERY - this is the exact version that made your review appear
   const { data: reviews } = await supabase
     .from('reviews')
     .select('*')
