@@ -122,14 +122,17 @@ function AuthForm() {
       }
     }
 
-    // Save to profiles table
-    if (userId) {
-      await (supabase as any).from('profiles').update({
+    // Save via API route (uses admin client, no session needed)
+    await fetch('/api/update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
         gender: gender || null,
         phone: phone.trim() || null,
-        avatar_url: avatarUrl || undefined,
-      }).eq('id', userId);
-    }
+        avatarUrl,
+      }),
+    });
 
     toast.success('Account created! Check your email to confirm. 🇪🇹');
     setProfileLoading(false);
