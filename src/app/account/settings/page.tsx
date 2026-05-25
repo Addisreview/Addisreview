@@ -51,7 +51,7 @@ export default function AccountSettingsPage() {
         .from('profiles')
         .select('gender')
         .eq('id', currentUser.id)
-        .single();
+        .single() as any;
 
       if (profile?.gender) {
         setGender(profile.gender);
