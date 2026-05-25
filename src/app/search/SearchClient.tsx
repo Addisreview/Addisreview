@@ -88,7 +88,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
         {/* Search box */}
         <div style={{ position: 'relative', marginBottom: '10px' }}>
           <input
-            type="text"
+            type="text" key="cat-search"
             placeholder="Search categories…"
             value={catSearch}
             onChange={e => setCatSearch(e.target.value)}
