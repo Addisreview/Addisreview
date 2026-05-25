@@ -94,12 +94,11 @@ export default function AccountSettingsPage() {
     const data = await res.json();
 
     if (data.success) {
-      // FORCE REFRESH SESSION so name and picture persist after logout/login
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+
+      // Strong refresh to fix persistence after logout/login
       await supabase.auth.refreshSession();
-      
-      setMessage({ type: 'success', text: 'Profile updated successfully! Changes will now persist.' });
-      if (avatarUrl) setAvatarPreview(avatarUrl);
-      setSelectedFile(null);
+      window.location.reload();   // This forces the new name/avatar to load everywhere
     } else {
       setMessage({ type: 'error', text: data.error || 'Failed to save' });
     }
