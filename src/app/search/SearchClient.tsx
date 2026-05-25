@@ -42,7 +42,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   const [selectedPrices, setSelectedPrices] = useState<number[]>([]);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(currentFilters.neighborhood || '');
   const [openNow, setOpenNow] = useState(currentFilters.open_now === 'true');
-  const [showAllCats, setShowAllCats] = useState(false);
+  const [catSearch, setCatSearch] = useState('');
   const [showAllNeighborhoods, setShowAllNeighborhoods] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -54,7 +54,13 @@ export default function SearchClient({ businesses, totalCount, categories, citie
   };
 
   const totalPages = Math.ceil(totalCount / 10);
-  const visibleCats = showAllCats ? categories : categories.slice(0, 8);
+
+  // Sort categories alphabetically and filter by search
+  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+  const filteredCats = catSearch.trim()
+    ? sortedCategories.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase()))
+    : sortedCategories;
+
   const visibleNeighborhoods = showAllNeighborhoods ? NEIGHBORHOODS : NEIGHBORHOODS.slice(0, 6);
   const filterLabel = { fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.8px', color: 'var(--muted)', marginBottom: '12px' };
 
@@ -75,21 +81,61 @@ export default function SearchClient({ businesses, totalCount, categories, citie
         </label>
       </div>
 
+      {/* CATEGORY WITH SEARCH */}
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Category</div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-          <input type="radio" name="cat" checked={selectedCat === ''} onChange={() => { setSelectedCat(''); push({ category: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
+
+        {/* Search box */}
+        <div style={{ position: 'relative', marginBottom: '10px' }}>
+          <input
+            type="text"
+            placeholder="Search categories…"
+            value={catSearch}
+            onChange={e => setCatSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '8px 30px 8px 10px',
+              border: '1.5px solid var(--border)', borderRadius: '8px',
+              fontSize: '.84rem', fontFamily: 'var(--font-sans)',
+              outline: 'none', boxSizing: 'border-box', background: '#fafafa',
+            }}
+          />
+          {catSearch && (
+            <button
+              onClick={() => setCatSearch('')}
+              style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '.85rem', padding: '0' }}
+            >✕</button>
+          )}
+        </div>
+
+        {/* All Categories option */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', cursor: 'pointer', fontSize: '.88rem' }}>
+          <input type="radio" name="cat" checked={selectedCat === ''} onChange={() => { setSelectedCat(''); setCatSearch(''); push({ category: '' }); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
           All Categories
         </label>
-        {visibleCats.map(cat => (
-          <label key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px', cursor: 'pointer', fontSize: '.88rem' }}>
-            <input type="radio" name="cat" checked={selectedCat === cat.name} onChange={() => { setSelectedCat(cat.name); push({ category: cat.name }); setShowFilters(false); }} style={{ accentColor: 'var(--green)', width: '16px', height: '16px' }} />
-            {cat.emoji || '📍'} {cat.name}
-          </label>
-        ))}
-        {categories.length > 8 && (
-          <button onClick={() => setShowAllCats(!showAllCats)} style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
-            {showAllCats ? 'Show less ↑' : `Show all ${categories.length} categories ↓`}
+
+        {/* Scrollable category list */}
+        <div style={{ maxHeight: '220px', overflowY: 'auto', paddingRight: '4px' }}>
+          {filteredCats.length === 0 ? (
+            <div style={{ fontSize: '.84rem', color: 'var(--muted)', padding: '8px 0' }}>No categories found</div>
+          ) : filteredCats.map(cat => (
+            <label key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', cursor: 'pointer', fontSize: '.88rem' }}>
+              <input
+                type="radio"
+                name="cat"
+                checked={selectedCat === cat.name}
+                onChange={() => { setSelectedCat(cat.name); setCatSearch(''); push({ category: cat.name }); setShowFilters(false); }}
+                style={{ accentColor: 'var(--green)', width: '16px', height: '16px', flexShrink: 0 }}
+              />
+              {cat.emoji || '📍'} {cat.name}
+            </label>
+          ))}
+        </div>
+        {selectedCat && (
+          <button
+            onClick={() => { setSelectedCat(''); setCatSearch(''); push({ category: '' }); }}
+            style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '.82rem', cursor: 'pointer', padding: '6px 0 0', fontFamily: 'var(--font-sans)', fontWeight: 600 }}
+          >
+            ✕ Clear category
           </button>
         )}
       </div>
@@ -120,6 +166,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
           </label>
         ))}
       </div>
+
       <div style={{ marginBottom: '24px' }}>
         <div style={filterLabel}>Sort By</div>
         {[['rating','Highest Rated'],['reviews','Most Reviewed'],['name','A to Z']].map(([val, label]) => (
@@ -133,7 +180,7 @@ export default function SearchClient({ businesses, totalCount, categories, citie
       <button className="btn-primary" style={{ width: '100%', borderRadius: '10px' }} onClick={() => { push({}); setShowFilters(false); }}>Apply Filters</button>
       <button onClick={() => {
         setSelectedCat(''); setSelectedRating('0'); setSelectedPrices([]);
-        setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating'); setOpenNow(false);
+        setQ(''); setCity(''); setSelectedNeighborhood(''); setSort('rating'); setOpenNow(false); setCatSearch('');
         push({ q:'', city:'', category:'', rating:'0', neighborhood:'', sort:'rating', open_now:'' });
         setShowFilters(false);
       }} style={{ width: '100%', marginTop: '8px', padding: '10px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.85rem', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
@@ -250,13 +297,13 @@ export default function SearchClient({ businesses, totalCount, categories, citie
                       {biz.neighborhood && <span>📍 {biz.neighborhood}{biz.city_name ? `, ${biz.city_name}` : ''}</span>}
                       {biz.price_range && <span>💰 {priceLabel(biz.price_range)}</span>}
                       {biz.is_verified && (
-  <span 
-    title="This business has been verified by AddisReview as a legitimate, active business in Addis Ababa."
-    style={{ color: 'var(--green)', fontWeight: 600, cursor: 'help', borderBottom: '1px dotted var(--green)' }}
-  >
-    ✓ Verified
-  </span>
-)}
+                        <span
+                          title="This business has been verified by AddisReview as a legitimate, active business in Addis Ababa."
+                          style={{ color: 'var(--green)', fontWeight: 600, cursor: 'help', borderBottom: '1px dotted var(--green)' }}
+                        >
+                          ✓ Verified
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
