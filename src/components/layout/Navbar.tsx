@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -27,19 +26,15 @@ export default function Navbar() {
         }
       });
     }
-
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
     });
-
     const handleClick = (e: MouseEvent) => {
       if (bizRef.current && !bizRef.current.contains(e.target as Node)) setBizMenuOpen(false);
       if (userRef.current && !userRef.current.contains(e.target as Node)) setMenuOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
-
     return () => {
       listener.subscription.unsubscribe();
       document.removeEventListener('mousedown', handleClick);
@@ -145,7 +140,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* User account */}
+          {/* User account dropdown - UPDATED WITH NEW ITEMS */}
           {user ? (
             <div ref={userRef} style={{ position: 'relative' }}>
               <button
@@ -163,13 +158,19 @@ export default function Navbar() {
                   position: 'absolute', right: 0, top: '110%',
                   background: '#fff', borderRadius: '12px',
                   boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
-                  minWidth: '160px', overflow: 'hidden', zIndex: 300,
+                  minWidth: '200px', overflow: 'hidden', zIndex: 300,
                 }}>
                   <Link href="/profile" style={{ textDecoration: 'none' }}>
                     <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>👤 My Profile</button>
                   </Link>
+                  <Link href="/collection" style={{ textDecoration: 'none' }}>
+                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>⭐ My Collection</button>
+                  </Link>
                   <Link href="/dashboard" style={{ textDecoration: 'none' }}>
                     <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>🏢 My Business</button>
+                  </Link>
+                  <Link href="/account/settings" style={{ textDecoration: 'none' }}>
+                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>⚙️ Account Settings</button>
                   </Link>
                   <button onClick={handleSignOut} className="nav-menu-item">Sign Out</button>
                 </div>
@@ -196,7 +197,7 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile menu - UPDATED WITH NEW ITEMS */}
       {mobileOpen && (
         <div style={{
           position: 'fixed', top: '64px', left: 0, right: 0, zIndex: 199,
@@ -257,9 +258,17 @@ export default function Navbar() {
                 style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
                 👤 My Profile
               </Link>
+              <Link href="/collection" className="nav-link" onClick={() => setMobileOpen(false)}
+                style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+                ⭐ My Collection
+              </Link>
               <Link href="/dashboard" className="nav-link" onClick={() => setMobileOpen(false)}
                 style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
                 🏢 My Business
+              </Link>
+              <Link href="/account/settings" className="nav-link" onClick={() => setMobileOpen(false)}
+                style={{ display: 'block', padding: '12px 0', fontSize: '1rem', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+                ⚙️ Account Settings
               </Link>
               <button
                 onClick={() => { handleSignOut(); setMobileOpen(false); }}
