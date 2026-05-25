@@ -63,7 +63,7 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
-  // FIXED QUERY: Properly join profiles table so we get latest name + avatar_url
+  // Correct join to get latest name + profile picture on every review
   const { data: reviews } = await supabase
     .from('reviews')
     .select(`
