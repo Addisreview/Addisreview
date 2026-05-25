@@ -1,20 +1,21 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import ReviewCard from '@/components/reviews/ReviewCard';
 import PhotoLightbox from '@/components/PhotoLightbox';
 import type { Business, Review } from '@/types/database';
 import { formatRating, priceLabel, getCategoryEmoji } from '@/lib/utils';
+import { createBrowserClient } from '@/lib/supabase';
 
 interface Props {
   business: Business;
-  reviews: (Review & { 
-    profiles?: { 
-      display_name: string | null; 
-      full_name?: string | null; 
-      avatar_url: string | null 
-    } | null 
+  reviews: (Review & {
+    profiles?: {
+      display_name: string | null;
+      full_name?: string | null;
+      avatar_url: string | null
+    } | null
   })[];
 }
 
@@ -32,21 +33,84 @@ const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sun
 
 export default function BusinessProfileClient({ business, reviews }: Props) {
   const router = useRouter();
+  const supabase = createBrowserClient();
+
   const [activeTab, setActiveTab] = useState<'reviews'|'about'|'photos'>('reviews');
   const [imgError, setImgError] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // ── Rating logic: use AddisReview rating if it exists, otherwise fall back to Google ──
+  // Save feature state
+  const [isSaved, setIsSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Check if this business is already saved by the user
+  useEffect(() => {
+    async function checkSavedStatus() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data } = await supabase
+        .from('user_favorites')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('business_id', business.id)
+        .single();
+
+      setIsSaved(!!data);
+    }
+    checkSavedStatus();
+  }, [business.id]);
+
+  const toggleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast.error('Please log in to save businesses');
+      setSaving(false);
+      return;
+    }
+
+    if (isSaved) {
+      // Remove from collection
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('business_id', business.id);
+
+      if (!error) {
+        setIsSaved(false);
+        toast.success('Removed from My Collection');
+      }
+    } else {
+      // Add to collection
+      const { error } = await supabase
+        .from('user_favorites')
+        .insert({
+          user_id: session.user.id,
+          business_id: business.id,
+        });
+
+      if (!error) {
+        setIsSaved(true);
+        toast.success('Added to My Collection ❤️');
+      }
+    }
+    setSaving(false);
+  };
+
+  // ── Rating logic ──
   const addisRating = Number(business.rating_avg) || 0;
   const googleRating = Number(business.google_rating) || 0;
   const displayRating = addisRating > 0 ? addisRating : googleRating;
-  const ratingSource = addisRating > 0 ? 'AddisReview' : 'Google';
   const fullStars = Math.floor(displayRating);
   const emptyStars = 5 - fullStars;
   const emoji = getCategoryEmoji(business.category_name || '');
   const heroColor = HERO_COLORS[business.category_name || ''] || 'linear-gradient(135deg,#333,#555)';
 
-  // ── Hours: handle both object and null gracefully ──
+  // ── Hours logic ──
   const rawHours = business.hours as Record<string, string> | null;
   const hours = rawHours && typeof rawHours === 'object' && !Array.isArray(rawHours) ? rawHours : null;
   const hasHours = hours && DAYS.some(d => hours[d] && hours[d].trim().length > 0);
@@ -81,7 +145,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         @media (max-width: 768px) {
           .biz-body-layout { grid-template-columns: 1fr !important; padding: 16px !important; }
           .biz-sidebar { order: -1; }
-          .biz-hero { height: 200px !important; fontSize: 5rem !important; }
+          .biz-hero { height: 200px !important; font-size: 5rem !important; }
           .biz-header-inner { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
           .biz-actions { flex-wrap: wrap; width: 100%; }
           .biz-actions button { flex: 1; justify-content: center; }
@@ -139,13 +203,28 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
               {business.category_name && <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>{business.category_name}{business.price_range ? ` · ${priceLabel(business.price_range)}` : ''}</span>}
             </div>
           </div>
+
           <div className="biz-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => router.push(writeReviewUrl)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--green)', color: '#fff', border: 'none', fontFamily: 'var(--font-sans)' }}>
               ✏️ Write a Review
             </button>
-            <button onClick={() => toast.success('Saved to your favorites!')} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
-              ♡ Save
+
+            {/* REAL SAVE BUTTON */}
+            <button 
+              onClick={toggleSave}
+              disabled={saving}
+              style={{ 
+                display: 'flex', alignItems: 'center', gap: '7px', 
+                padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', 
+                fontWeight: 600, cursor: 'pointer', background: '#fff', 
+                color: 'var(--charcoal)', border: '1.5px solid var(--border)', 
+                fontFamily: 'var(--font-sans)' 
+              }}
+            >
+              {isSaved ? '❤️' : '♡'} 
+              {isSaved ? 'Saved' : 'Save'}
             </button>
+
             <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Link copied!'); }} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
               ↑ Share
             </button>
@@ -158,9 +237,8 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         </div>
       </div>
 
-      {/* BODY */}
+      {/* BODY - everything else stays exactly the same */}
       <div className="biz-body-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '40px', padding: '40px 5vw', maxWidth: '1300px' }}>
-        {/* MAIN */}
         <div>
           <div style={{ display: 'flex', borderBottom: '2px solid var(--border)', marginBottom: '32px', overflowX: 'auto' }}>
             {(['reviews','about','photos'] as const).map(tab => (
@@ -278,7 +356,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                 </div>
               </div>
             )}
-            {/* HOURS — show if any day has a value */}
             {hasHours && (
               <div style={{ display: 'flex', gap: '12px', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--green)', marginTop: '2px' }}>🕐</span>
