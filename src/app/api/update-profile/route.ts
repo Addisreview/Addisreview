@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = createAdminClient();
-
-    // 1. Update auth user metadata (First Name, Last Name, Nickname)
     const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+    // 1. Update auth user metadata
     const { error: authError } = await admin.auth.admin.updateUserById(userId, {
       user_metadata: {
         full_name: fullName || undefined,
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: authError.message }, { status: 500 });
     }
 
-    // 2. Update profiles table (gender, phone, avatar)
+    // 2. Update profiles table
     const { error: profileError } = await (admin as any)
       .from('profiles')
       .update({
@@ -38,6 +38,19 @@ export async function POST(request: NextRequest) {
     if (profileError) {
       console.error('Profile table update error:', profileError);
       return NextResponse.json({ error: profileError.message }, { status: 500 });
+    }
+
+    // 3. NEW: Backfill author_name on ALL existing reviews by this user
+    if (fullName) {
+      const { error: reviewError } = await (admin as any)
+        .from('reviews')
+        .update({ author_name: fullName })
+        .eq('user_id', userId);
+
+      if (reviewError) {
+        console.error('Review author_name backfill error:', reviewError);
+        // Don't fail the whole request — just log it
+      }
     }
 
     return NextResponse.json({ success: true });
