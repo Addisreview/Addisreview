@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { createBrowserClient } from '@/lib/supabase';
@@ -24,13 +24,9 @@ function AuthForm() {
   const [step, setStep] = useState<1 | 2>(1);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Profile step state
   const [gender, setGender] = useState<'male' | 'female' | null>(null);
   const [phone, setPhone] = useState('');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const redirectTo = searchParams.get('redirect') || '/';
   const reason = searchParams.get('reason') || '';
@@ -89,43 +85,16 @@ function AuthForm() {
       toast.error(error.message);
       setLoading(false);
     } else {
-      // Move to step 2 — profile completion
       const newUserId = data.user?.id || null;
       setUserId(newUserId);
-      console.log('User ID set to:', newUserId);
       setStep(2);
       setLoading(false);
     }
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('Photo must be under 5MB'); return; }
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
-  };
-
   const handleProfileSave = async () => {
     setProfileLoading(true);
-    let avatarUrl: string | null = null;
-    console.log('handleProfileSave called, userId:', userId, 'avatarFile:', avatarFile?.name);
 
-    // Upload photo if selected
-    if (avatarFile && userId) {
-      const ext = avatarFile.name.split('.').pop();
-      const path = `avatars/${userId}.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from('avatars')
-        .upload(path, avatarFile, { upsert: true });
-
-      if (!uploadErr) {
-        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
-        avatarUrl = urlData.publicUrl;
-      }
-    }
-
-    // Save via API route (uses admin client, no session needed)
     await fetch('/api/update-profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -133,7 +102,7 @@ function AuthForm() {
         userId,
         gender: gender || null,
         phone: phone.trim() || null,
-        avatarUrl,
+        avatarUrl: null,
       }),
     });
 
@@ -167,7 +136,6 @@ function AuthForm() {
     setLoading(false);
   };
 
-  // ── STEP 2 — Profile completion ──────────────────────────
   if (step === 2) {
     return (
       <>
@@ -179,8 +147,6 @@ function AuthForm() {
           }
         `}</style>
         <div className="auth-layout" style={{ minHeight: 'calc(100vh - 64px)', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-
-          {/* LEFT PANEL */}
           <div className="auth-left" style={{
             background: 'linear-gradient(145deg,var(--green) 0%,#0e3d26 100%)',
             padding: '60px', display: 'flex', flexDirection: 'column',
@@ -199,11 +165,9 @@ function AuthForm() {
             </div>
           </div>
 
-          {/* RIGHT PANEL */}
           <div className="auth-right" style={{ padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--warm-white)' }}>
             <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto' }}>
 
-              {/* Step indicator */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px' }}>
                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--green)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.78rem', fontWeight: 700 }}>✓</div>
                 <div style={{ flex: 1, height: '2px', background: 'var(--green)', borderRadius: '2px' }} />
@@ -213,40 +177,6 @@ function AuthForm() {
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 700, marginBottom: '6px' }}>Complete your profile</h2>
               <p style={{ color: 'var(--muted)', fontSize: '.88rem', marginBottom: '32px' }}>This helps others recognise you. You can always update this later.</p>
 
-              {/* Photo upload */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
-              <div
-  onClick={() => fileInputRef.current?.click()}
-  suppressHydrationWarning
-  style={{  
-                    width: '100px', height: '100px', borderRadius: '50%',
-                    background: avatarPreview ? 'transparent' : '#f0f0f0',
-                    border: '2px dashed var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', overflow: 'hidden', marginBottom: '12px',
-                    transition: 'border-color .2s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--green)')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-                >
-                  {avatarPreview
-                    ? <img src={avatarPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '4px' }}>👤</div>
-                        <div style={{ fontSize: '.72rem', color: 'var(--muted)' }}>Upload photo</div>
-                      </div>
-                  }
-                </div>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} suppressHydrationWarning />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{ background: 'none', border: '1.5px solid var(--border)', borderRadius: '50px', padding: '7px 18px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--charcoal)' }}
-                >
-                  {avatarPreview ? 'Change photo' : 'Upload Photo'}
-                </button>
-              </div>
-
-              {/* Gender */}
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ fontSize: '.83rem', fontWeight: 600, marginBottom: '12px', display: 'block' }}>Gender</label>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -269,7 +199,6 @@ function AuthForm() {
                 </div>
               </div>
 
-              {/* Phone */}
               <div style={{ marginBottom: '32px' }}>
                 <label style={{ fontSize: '.83rem', fontWeight: 600, marginBottom: '7px', display: 'block' }}>
                   Phone Number <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(Optional)</span>
@@ -283,7 +212,6 @@ function AuthForm() {
                 />
               </div>
 
-              {/* Buttons */}
               <button
                 onClick={handleProfileSave}
                 disabled={profileLoading}
@@ -297,7 +225,6 @@ function AuthForm() {
               >
                 Skip for now
               </button>
-
             </div>
           </div>
         </div>
@@ -305,7 +232,6 @@ function AuthForm() {
     );
   }
 
-  // ── STEP 1 — Original signup/login form ──────────────────
   return (
     <>
       <style>{`
@@ -317,7 +243,6 @@ function AuthForm() {
       `}</style>
       <div className="auth-layout" style={{ minHeight: 'calc(100vh - 64px)', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
-        {/* LEFT PANEL */}
         <div className="auth-left" style={{
           background: 'linear-gradient(145deg,var(--green) 0%,#0e3d26 100%)',
           padding: '60px', display: 'flex', flexDirection: 'column',
@@ -349,7 +274,6 @@ function AuthForm() {
           </div>
         </div>
 
-        {/* RIGHT PANEL */}
         <div className="auth-right" style={{ padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--warm-white)' }}>
           <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto' }}>
 
