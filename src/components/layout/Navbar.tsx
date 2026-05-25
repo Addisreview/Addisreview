@@ -55,9 +55,9 @@ export default function Navbar() {
   // If not logged in, redirect to auth with context
   const handleWriteReview = () => {
     if (user) {
-      router.push('/write-review');
+      router.push('/search?intent=review');
     } else {
-      router.push('/auth?redirect=/write-review&reason=review');
+      router.push('/auth?redirect=/search?intent=review&reason=review');
     }
   };
 
