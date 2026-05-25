@@ -14,7 +14,6 @@ interface Props {
 const AVATAR_COLORS = ['#1a5c3a','#8B4513','#6b3fa0','#1a3d5c','#5c1a0e','#0a4a3a'];
 
 export default function ReviewCard({ review }: Props) {
-  // Use latest name from profiles (this fixes name updates)
   const name = review.profiles?.full_name 
     || review.profiles?.display_name 
     || review.author_name 
