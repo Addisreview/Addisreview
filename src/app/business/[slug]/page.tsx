@@ -63,11 +63,17 @@ export default async function BusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
-  // SIMPLIFIED QUERY — no broken join, just get all reviews
-  // Your review will now appear because we removed the failing relationship
+  // FIXED QUERY: Properly join profiles table so we get latest name + avatar_url
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*')
+    .select(`
+      *,
+      profiles:user_id (
+        display_name,
+        full_name,
+        avatar_url
+      )
+    `)
     .eq('business_id', business.id)
     .order('created_at', { ascending: false })
     .limit(20) as any;
