@@ -34,6 +34,7 @@ export default function AccountSettingsPage() {
       }
       setUser(currentUser);
 
+      // Load name and nickname from auth metadata
       const metadata = currentUser.user_metadata || {};
       const fullName = metadata.full_name || '';
       const nameParts = fullName.split(' ');
@@ -43,6 +44,17 @@ export default function AccountSettingsPage() {
 
       if (metadata.avatar_url) {
         setAvatarPreview(metadata.avatar_url);
+      }
+
+      // Also fetch gender from profiles table since it's stored there
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('gender')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profile?.gender) {
+        setGender(profile.gender);
       }
 
       setLoading(false);
@@ -67,6 +79,7 @@ export default function AccountSettingsPage() {
     setSaving(true);
     setMessage(null);
 
+    // Only upload a new avatar if the user actually picked a new file
     let avatarUrl = null;
     if (selectedFile) {
       const formData = new FormData();
@@ -77,6 +90,8 @@ export default function AccountSettingsPage() {
       const data = await res.json();
       if (data.url) avatarUrl = data.url;
     }
+    // If no new file selected, avatarUrl stays null
+    // The API route will keep the existing avatar in that case
 
     const res = await fetch('/api/update-profile', {
       method: 'POST',
@@ -95,10 +110,8 @@ export default function AccountSettingsPage() {
 
     if (data.success) {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
-
-      // Strong refresh to fix persistence after logout/login
       await supabase.auth.refreshSession();
-      window.location.reload();   // This forces the new name/avatar to load everywhere
+      window.location.reload();
     } else {
       setMessage({ type: 'error', text: data.error || 'Failed to save' });
     }
