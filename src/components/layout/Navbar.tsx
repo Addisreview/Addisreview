@@ -62,11 +62,13 @@ export default function Navbar() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setAvatarUrl(null);
+    setMobileOpen(false);
     router.push('/');
     router.refresh();
   };
 
   const handleWriteReview = () => {
+    setMobileOpen(false);
     if (user) {
       router.push('/search?intent=review');
     } else {
@@ -193,8 +195,156 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile hamburger and mobile menu remain the same as before */}
+        {/* Mobile hamburger button */}
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          style={{
+            display: 'none',
+            background: 'none', border: 'none', cursor: 'pointer',
+            flexDirection: 'column', gap: '5px', padding: '8px',
+          }}
+        >
+          <span style={{ display: 'block', width: '24px', height: '2px', background: '#fff', borderRadius: '2px',
+            transform: mobileOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none', transition: 'transform .2s' }} />
+          <span style={{ display: 'block', width: '24px', height: '2px', background: '#fff', borderRadius: '2px',
+            opacity: mobileOpen ? 0 : 1, transition: 'opacity .2s' }} />
+          <span style={{ display: 'block', width: '24px', height: '2px', background: '#fff', borderRadius: '2px',
+            transform: mobileOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none', transition: 'transform .2s' }} />
+        </button>
       </nav>
+
+      {/* Mobile menu panel */}
+      {mobileOpen && (
+        <div style={{
+          position: 'fixed', top: '64px', left: 0, right: 0, bottom: 0,
+          background: '#fff', zIndex: 199, overflowY: 'auto',
+          borderTop: '1px solid var(--border)',
+        }}>
+          {/* User info at top if logged in */}
+          {user && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '14px',
+              padding: '20px', borderBottom: '1px solid var(--border)',
+              background: 'var(--cream)',
+            }}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '50%',
+                  background: 'var(--yellow)', color: 'var(--charcoal)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.3rem', fontWeight: 700,
+                }}>
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '.95rem' }}>{displayName}</div>
+                <div style={{ fontSize: '.78rem', color: 'var(--muted)' }}>{user.email}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Main links */}
+          <div style={{ padding: '12px 0' }}>
+            <Link href="/search" style={{ textDecoration: 'none' }}>
+              <button onClick={() => setMobileOpen(false)} style={{
+                ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                borderBottom: '1px solid var(--border)', width: '100%',
+              }}>
+                🔍 Explore
+              </button>
+            </Link>
+
+            <button onClick={handleWriteReview} style={{
+              ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+              borderBottom: '1px solid var(--border)', width: '100%',
+            }}>
+              ✏️ Write a Review
+            </button>
+
+            {/* Business Owner section */}
+            <button
+              onClick={() => setMobileBizOpen(!mobileBizOpen)}
+              style={{
+                ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                borderBottom: '1px solid var(--border)', width: '100%',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}
+            >
+              <span>🏢 Business Owner</span>
+              <span>{mobileBizOpen ? '▴' : '▾'}</span>
+            </button>
+
+            {mobileBizOpen && (
+              <div style={{ background: 'var(--cream)', borderBottom: '1px solid var(--border)' }}>
+                <Link href={user ? '/add-business' : '/auth?redirect=/add-business&reason=add'} style={{ textDecoration: 'none' }}>
+                  <button onClick={() => setMobileOpen(false)} style={{
+                    ...menuItemStyle, padding: '14px 36px', width: '100%',
+                  }}>Add a Business</button>
+                </Link>
+                <Link href={user ? '/search' : '/auth?redirect=/search&reason=claim'} style={{ textDecoration: 'none' }}>
+                  <button onClick={() => setMobileOpen(false)} style={{
+                    ...menuItemStyle, padding: '14px 36px', width: '100%',
+                  }}>Claim Your Business for Free</button>
+                </Link>
+                <Link href={user ? '/dashboard' : '/auth?redirect=/dashboard&reason=dashboard'} style={{ textDecoration: 'none' }}>
+                  <button onClick={() => setMobileOpen(false)} style={{
+                    ...menuItemStyle, padding: '14px 36px', width: '100%',
+                  }}>Log into Business Account</button>
+                </Link>
+              </div>
+            )}
+
+            {/* User links if logged in */}
+            {user ? (
+              <>
+                <Link href="/profile" style={{ textDecoration: 'none' }}>
+                  <button onClick={() => setMobileOpen(false)} style={{
+                    ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                    borderBottom: '1px solid var(--border)', width: '100%',
+                  }}>👤 My Profile</button>
+                </Link>
+                <Link href="/collection" style={{ textDecoration: 'none' }}>
+                  <button onClick={() => setMobileOpen(false)} style={{
+                    ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                    borderBottom: '1px solid var(--border)', width: '100%',
+                  }}>⭐ My Collection</button>
+                </Link>
+                <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                  <button onClick={() => setMobileOpen(false)} style={{
+                    ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                    borderBottom: '1px solid var(--border)', width: '100%',
+                  }}>🏢 My Business</button>
+                </Link>
+                <Link href="/account/settings" style={{ textDecoration: 'none' }}>
+                  <button onClick={() => setMobileOpen(false)} style={{
+                    ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                    borderBottom: '1px solid var(--border)', width: '100%',
+                  }}>⚙️ Account Settings</button>
+                </Link>
+                <button onClick={handleSignOut} style={{
+                  ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                  color: 'var(--red)', width: '100%',
+                }}>
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link href="/auth" style={{ textDecoration: 'none' }}>
+                <button onClick={() => setMobileOpen(false)} style={{
+                  ...menuItemStyle, fontSize: '1rem', padding: '16px 24px',
+                  fontWeight: 700, color: 'var(--green)', width: '100%',
+                }}>
+                  Sign Up / Log In
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       <style>{`
         @media (max-width: 768px) {
