@@ -34,28 +34,27 @@ export default function AccountSettingsPage() {
       }
       setUser(currentUser);
 
-      // Load name and nickname from auth metadata
-      const metadata = currentUser.user_metadata || {};
-      const fullName = metadata.full_name || '';
-      const nameParts = fullName.split(' ');
-      setFirstName(nameParts[0] || '');
-      setLastName(nameParts.slice(1).join(' ') || '');
-      setNickname(metadata.nickname || '');
-
-      if (metadata.avatar_url) {
-        setAvatarPreview(metadata.avatar_url);
-      }
-
-      // Also fetch gender from profiles table since it's stored there
+      // Load everything from profiles table — this is the source of truth
       const { data: profile } = await supabase
         .from('profiles')
-        .select('gender')
+        .select('display_name, avatar_url, gender')
         .eq('id', currentUser.id)
         .single() as any;
 
-      if (profile?.gender) {
-        setGender(profile.gender);
+      if (profile) {
+        const fullName = profile.display_name || currentUser.user_metadata?.full_name || '';
+        const nameParts = fullName.split(' ');
+        setFirstName(nameParts[0] || '');
+        setLastName(nameParts.slice(1).join(' ') || '');
+        setGender(profile.gender || '');
+        if (profile.avatar_url) {
+          setAvatarPreview(profile.avatar_url);
+        }
       }
+
+      // Nickname still comes from auth metadata since it's not in profiles table
+      const nickname = currentUser.user_metadata?.nickname || '';
+      setNickname(nickname);
 
       setLoading(false);
     }
@@ -145,7 +144,7 @@ export default function AccountSettingsPage() {
 
   if (loading) return <div style={{ padding: '100px', textAlign: 'center' }}>Loading...</div>;
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayName = firstName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const currentAvatar = avatarPreview || user?.user_metadata?.avatar_url;
 
   const sidebarItems = [
