@@ -9,6 +9,7 @@ export default function Navbar() {
   const router = useRouter();
   const supabase = createBrowserClient();
   const [user, setUser] = useState<User | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bizMenuOpen, setBizMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -16,19 +17,36 @@ export default function Navbar() {
   const bizRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
 
+  async function loadAvatar(userId: string) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .single() as any;
+    if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
+  }
+
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
       supabase.auth.getSession().then(({ data }) => {
         if (data.session?.user) {
           setUser(data.session.user);
+          loadAvatar(data.session.user.id);
           window.history.replaceState(null, '', window.location.pathname);
           router.refresh();
         }
       });
     }
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user ?? null;
+      setUser(u);
+      if (u) loadAvatar(u.id);
+    });
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) loadAvatar(u.id);
+      else setAvatarUrl(null);
     });
     const handleClick = (e: MouseEvent) => {
       if (bizRef.current && !bizRef.current.contains(e.target as Node)) setBizMenuOpen(false);
@@ -43,6 +61,7 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    setAvatarUrl(null);
     router.push('/');
     router.refresh();
   };
@@ -63,7 +82,6 @@ export default function Navbar() {
     whiteSpace: 'nowrap', transition: 'background .12s',
   };
 
-  const avatarUrl = user?.user_metadata?.avatar_url;
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   return (
@@ -141,7 +159,7 @@ export default function Navbar() {
                 }}
               >
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={avatarUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                 ) : (
                   <span style={{ fontSize: '1.1rem' }}>{displayName.charAt(0).toUpperCase()}</span>
                 )}
@@ -176,12 +194,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile hamburger and mobile menu remain the same as before */}
-        {/* ... (kept unchanged for stability) ... */}
-
       </nav>
-
-      {/* Mobile menu code remains unchanged from your previous version */}
-      {/* I kept it exactly as it was to avoid any regression */}
 
       <style>{`
         @media (max-width: 768px) {
