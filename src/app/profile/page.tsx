@@ -20,7 +20,6 @@ interface Review {
   businesses?: { name: string; slug: string; category_name: string; cover_photo_url: string | null };
 }
 
-// ── Skeleton components ───────────────────────────────────
 function SkeletonPulse({ width = '100%', height = '16px', borderRadius = '8px', style = {} }: {
   width?: string; height?: string; borderRadius?: string; style?: React.CSSProperties;
 }) {
@@ -46,7 +45,6 @@ function ProfileSkeleton() {
       `}</style>
       <Navbar />
       <main style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 5vw 80px' }}>
-        {/* Header skeleton */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '20px',
           marginBottom: '40px', padding: '28px',
@@ -58,8 +56,6 @@ function ProfileSkeleton() {
             <SkeletonPulse width="140px" height="14px" />
           </div>
         </div>
-
-        {/* Reviews skeleton */}
         <SkeletonPulse width="160px" height="20px" style={{ marginBottom: '20px' }} />
         {[1, 2, 3].map(i => (
           <div key={i} style={{
@@ -88,6 +84,8 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -99,15 +97,30 @@ export default function ProfilePage() {
         return;
       }
 
-      // Fire auth set + data fetch in parallel — no waterfall
-      const [, { data: reviewData }] = await Promise.all([
-        Promise.resolve(setUser(user)),
-        (supabase
+      setUser(user);
+
+      // Load profile and reviews in parallel
+      const [{ data: profile }, { data: reviewData }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .eq('id', user.id)
+          .single() as any,
+        supabase
           .from('reviews')
           .select('*, businesses(name, slug, category_name, cover_photo_url)')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false }) as any),
+          .order('created_at', { ascending: false }) as any,
       ]);
+
+      // Use profiles table as source of truth, fall back to auth metadata
+      if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
+      setDisplayName(
+        profile?.display_name ||
+        user.user_metadata?.full_name ||
+        user.email?.split('@')[0] ||
+        'User'
+      );
 
       setReviews(reviewData || []);
       setLoading(false);
@@ -124,8 +137,6 @@ export default function ProfilePage() {
 
   if (loading) return <ProfileSkeleton />;
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
-  const avatarUrl = user?.user_metadata?.avatar_url;
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
@@ -188,7 +199,6 @@ export default function ProfilePage() {
               border: '1px solid var(--border)', marginBottom: '16px', overflow: 'hidden',
             }}>
               <div style={{ display: 'flex', alignItems: 'stretch' }}>
-                {/* Business photo/emoji strip */}
                 {biz && (
                   <div style={{
                     width: '80px', minWidth: '80px',
