@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
 
     if (profileError) {
       console.error('Profile table update error:', profileError);
+      return NextResponse.json({ error: profileError.message }, { status: 500 });
     }
 
     // 4. Backfill author_name on all existing reviews
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
 
       if (reviewError) {
         console.error('Review author_name backfill error:', reviewError);
+        return NextResponse.json({ success: true, warning: 'Profile saved but review names could not be updated' });
       }
     }
 

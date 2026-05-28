@@ -46,8 +46,13 @@ function WriteReviewForm() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
-      if (data.user?.user_metadata?.full_name) {
-        setAuthorName(data.user.user_metadata.full_name);
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', data.user.id)
+          .single() as any;
+        if (profile?.display_name) setAuthorName(profile.display_name);
       }
 
       if (!data.user) {
