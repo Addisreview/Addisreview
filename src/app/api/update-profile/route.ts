@@ -12,9 +12,19 @@ export async function POST(request: NextRequest) {
     const admin = createAdminClient();
     const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
-    // 1. Get existing user so we don't overwrite avatar if no new one was uploaded
-    const { data: existingUser } = await admin.auth.admin.getUserById(userId);
-    const existingAvatarUrl = existingUser?.user?.user_metadata?.avatar_url || null;
+    // 1. Get existing avatar from profiles table so we don't overwrite it if no new one was uploaded
+    const { data: existingProfile, error: fetchError } = await (admin as any)
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError) {
+      console.error('Failed to fetch existing profile:', fetchError);
+      return NextResponse.json({ error: 'Failed to fetch existing profile' }, { status: 500 });
+    }
+
+    const existingAvatarUrl = existingProfile?.avatar_url || null;
 
     // Use new avatar if uploaded, otherwise keep the existing one
     const finalAvatarUrl = avatarUrl || existingAvatarUrl;

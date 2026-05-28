@@ -10,6 +10,7 @@ export default function Navbar() {
   const supabase = createBrowserClient();
   const [user, setUser] = useState<User | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [bizMenuOpen, setBizMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -20,10 +21,11 @@ export default function Navbar() {
   async function loadAvatar(userId: string) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('avatar_url')
+      .select('avatar_url, display_name')
       .eq('id', userId)
       .single() as any;
     if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
+    if (profile?.display_name) setDisplayName(profile.display_name);
   }
 
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function Navbar() {
     whiteSpace: 'nowrap', transition: 'background .12s',
   };
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const resolvedDisplayName = displayName || user?.email?.split('@')[0] || 'User';
 
   return (
     <>
@@ -161,9 +163,9 @@ export default function Navbar() {
                 }}
               >
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  <img src={avatarUrl} alt={resolvedDisplayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                 ) : (
-                  <span style={{ fontSize: '1.1rem' }}>{displayName.charAt(0).toUpperCase()}</span>
+                  <span style={{ fontSize: '1.1rem' }}>{resolvedDisplayName.charAt(0).toUpperCase()}</span>
                 )}
               </button>
 
@@ -229,7 +231,7 @@ export default function Navbar() {
               background: 'var(--cream)',
             }}>
               {avatarUrl ? (
-                <img src={avatarUrl} alt={displayName} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
+                <img src={avatarUrl} alt={resolvedDisplayName} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
               ) : (
                 <div style={{
                   width: '48px', height: '48px', borderRadius: '50%',
@@ -237,11 +239,11 @@ export default function Navbar() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '1.3rem', fontWeight: 700,
                 }}>
-                  {displayName.charAt(0).toUpperCase()}
+                  {resolvedDisplayName.charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
-                <div style={{ fontWeight: 700, fontSize: '.95rem' }}>{displayName}</div>
+                <div style={{ fontWeight: 700, fontSize: '.95rem' }}>{resolvedDisplayName}</div>
                 <div style={{ fontSize: '.78rem', color: 'var(--muted)' }}>{user.email}</div>
               </div>
             </div>
