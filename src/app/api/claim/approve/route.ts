@@ -35,34 +35,15 @@ export async function POST(request: NextRequest) {
     if (action === 'approved') {
       let userId = claim.user_id;
 
-      // If no user_id on the claim, look up by email directly in auth.users
+      // If no user_id on the claim, look up by email directly
       if (!userId && claim.email) {
-        const { data: userData, error: userErr } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', (
-            await supabase.rpc('get_user_id_by_email', { email_input: claim.email })
-          ).data)
-          .single() as any;
-
-        // Simpler approach — query auth.users directly via admin API
-        const { data: { users }, error: listErr } = await supabase.auth.admin.listUsers({
-          page: 1,
-          perPage: 1000,
-        });
-
-        if (!listErr && users) {
-          const match = users.find((u: any) =>
-            u.email?.toLowerCase().trim() === claim.email?.toLowerCase().trim()
-          );
-          if (match) {
-            userId = match.id;
-            // Save it back to the claim
-            await supabase
-              .from('business_claims')
-              .update({ user_id: userId })
-              .eq('id', claimId);
-          }
+        const { data: rpcUserId } = await supabase.rpc('get_user_id_by_email', { email_input: claim.email });
+        if (rpcUserId) {
+          userId = rpcUserId;
+          await supabase
+            .from('business_claims')
+            .update({ user_id: userId })
+            .eq('id', claimId);
         }
       }
 

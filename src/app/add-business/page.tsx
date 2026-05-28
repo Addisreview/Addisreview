@@ -234,7 +234,7 @@ export default function AddBusinessPage() {
           category,
           neighborhood: finalNeighborhood,
         }),
-      }).catch(() => {}); // Don't fail if email fails
+      }).catch((err: any) => console.error('Notification failed:', err));
 
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });

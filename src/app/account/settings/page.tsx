@@ -88,6 +88,7 @@ export default function AccountSettingsPage() {
       const res = await fetch('/api/upload-avatar', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.url) avatarUrl = data.url;
+      if (data.displayUrl) setAvatarPreview(data.displayUrl);
     }
     // If no new file selected, avatarUrl stays null
     // The API route will keep the existing avatar in that case

@@ -36,10 +36,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: urlData } = admin.storage.from('avatars').getPublicUrl(path);
-    const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-    console.log('Public URL:', publicUrl);
+    const cleanUrl = urlData.publicUrl;
+    const displayUrl = `${cleanUrl}?t=${Date.now()}`;
+    console.log('Public URL:', cleanUrl);
 
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ url: cleanUrl, displayUrl });
   } catch (err: any) {
     console.error('upload-avatar error:', err);
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
