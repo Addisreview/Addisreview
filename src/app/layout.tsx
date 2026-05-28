@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, DM_Sans } from 'next/font/google';
+import { Playfair_Display, DM_Sans, Noto_Sans_Ethiopic } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import './globals.css';
 import AskAddis from '@/components/AskAddis';
@@ -17,6 +17,13 @@ const dmSans = DM_Sans({
   variable: '--font-sans',
   display: 'swap',
   weight: ['300', '400', '500', '600', '700'],
+});
+
+const notoEthiopic = Noto_Sans_Ethiopic({
+  subsets: ['ethiopic'],
+  variable: '--font-amharic',
+  display: 'swap',
+  weight: ['400', '700'],
 });
 
 export const metadata: Metadata = {
@@ -72,7 +79,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable} ${notoEthiopic.variable}`}>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

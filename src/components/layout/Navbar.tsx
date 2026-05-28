@@ -15,8 +15,20 @@ export default function Navbar() {
   const [bizMenuOpen, setBizMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileBizOpen, setMobileBizOpen] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'am'>('en');
   const bizRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('addis-language') as 'en' | 'am' | null;
+    if (saved) setLanguage(saved);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('addis-language', language);
+  }, [language]);
+
+  const toggleLanguage = () => setLanguage(prev => prev === 'en' ? 'am' : 'en');
 
   async function loadAvatar(userId: string) {
     const { data: profile, error } = await supabase
@@ -154,6 +166,29 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Language toggle */}
+          <button
+            onClick={toggleLanguage}
+            style={{
+              display: 'flex', alignItems: 'center',
+              background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.25)',
+              borderRadius: '50px', padding: '3px', cursor: 'pointer',
+            }}
+          >
+            <span style={{
+              padding: '3px 9px', borderRadius: '50px', fontSize: '.75rem', fontWeight: 700,
+              background: language === 'en' ? 'var(--yellow)' : 'transparent',
+              color: language === 'en' ? 'var(--charcoal)' : 'rgba(255,255,255,.65)',
+              transition: 'all .2s',
+            }}>EN</span>
+            <span style={{
+              padding: '3px 9px', borderRadius: '50px', fontSize: '.75rem', fontWeight: 700,
+              background: language === 'am' ? 'var(--yellow)' : 'transparent',
+              color: language === 'am' ? 'var(--charcoal)' : 'rgba(255,255,255,.65)',
+              transition: 'all .2s', fontFamily: 'var(--font-amharic)',
+            }}>አማ</span>
+          </button>
 
           {/* User account dropdown */}
           {user ? (
@@ -303,6 +338,31 @@ export default function Navbar() {
                 </Link>
               </div>
             )}
+
+            {/* Language toggle */}
+            <div style={{ padding: '12px 24px', borderBottom: '1px solid var(--border)' }}>
+              <button
+                onClick={toggleLanguage}
+                style={{
+                  display: 'flex', alignItems: 'center',
+                  background: 'var(--cream)', border: '1px solid var(--border)',
+                  borderRadius: '50px', padding: '3px', cursor: 'pointer',
+                }}
+              >
+                <span style={{
+                  padding: '4px 12px', borderRadius: '50px', fontSize: '.8rem', fontWeight: 700,
+                  background: language === 'en' ? 'var(--yellow)' : 'transparent',
+                  color: language === 'en' ? 'var(--charcoal)' : 'var(--muted)',
+                  transition: 'all .2s',
+                }}>EN</span>
+                <span style={{
+                  padding: '4px 12px', borderRadius: '50px', fontSize: '.8rem', fontWeight: 700,
+                  background: language === 'am' ? 'var(--yellow)' : 'transparent',
+                  color: language === 'am' ? 'var(--charcoal)' : 'var(--muted)',
+                  transition: 'all .2s', fontFamily: 'var(--font-amharic)',
+                }}>አማ</span>
+              </button>
+            </div>
 
             {/* User links if logged in */}
             {user ? (
