@@ -14,8 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing file or userId' }, { status: 400 });
     }
 
-    const ext = file.name.split('.').pop();
-    const path = `avatars/${userId}.${ext}`;
+    const path = `avatars/${userId}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     console.log('Uploading to path:', path, 'buffer size:', buffer.length);
