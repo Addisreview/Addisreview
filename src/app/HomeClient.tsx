@@ -70,43 +70,6 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
   const moreRef = useRef<HTMLDivElement>(null);
   const [nearbyBusinesses, setNearbyBusinesses] = useState<NearbyBusiness[]>([]);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'denied' | 'error'>('idle');
-  const [language, setLanguage] = useState<'en' | 'am'>('en');
-
-  useEffect(() => {
-    const saved = localStorage.getItem('addis-language') as 'en' | 'am' | null;
-    if (saved) setLanguage(saved);
-    const interval = setInterval(() => {
-      const current = localStorage.getItem('addis-language') as 'en' | 'am' | null;
-      if (current) setLanguage(current);
-    }, 300);
-    return () => clearInterval(interval);
-  }, []);
-
-  const t = language === 'am' ? {
-    badge: '🇪🇹 ለኢትዮጵያ የተሰራ',
-    h1a: 'የአዲስ አበባ',
-    h1b: '#1 የቢዝነስ መመሪያ',
-    sub: 'ከእውነተኛ ኢትዮጵያውያን ታማኝ ግምገማዎች። ምርጥ ሬስቶራንቶችን፣ ሆቴሎችን፣ የቡና ቤቶችን እና ሌሎችንም ያግኙ።',
-    stats: '⭐ 4,500+ ቢዝነሶች · 1,200+ ግምገማዎች · ሙሉ በሙሉ ነፃ',
-    searchPlaceholder: 'ሬስቶራንቶች፣ የቡና ቤቶች፣ ሆቴሎች…',
-    nearYou: 'በአቅራቢያዎ',
-    topPicks: 'ምርጥ ምርጫዎች በ',
-    browseNeighborhood: 'በሰፈር ያስሱ',
-    howItWorks: 'AddisReview እንዴት ይሰራል',
-    cta: 'በኢትዮጵያ ቢዝነስ አለዎት? ነፃ ይዘርዝሩ።',
-  } : {
-    badge: '🇪🇹 Made for Ethiopia',
-    h1a: "Addis Ababa's",
-    h1b: '#1 Local Business Guide',
-    sub: 'Trusted reviews from real Ethiopians. Find the best restaurants, hotels, coffee shops & more.',
-    stats: '⭐ 4,500+ businesses · 1,200+ reviews · 100% free',
-    searchPlaceholder: 'Restaurants, coffee shops, hotels…',
-    nearYou: 'Near You',
-    topPicks: 'Top Picks in',
-    browseNeighborhood: 'Browse by Neighborhood',
-    howItWorks: 'How AddisReview works',
-    cta: 'Own a business in Ethiopia? List it for free.',
-  };
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -201,23 +164,21 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
             borderRadius: '50px', padding: '6px 16px', color: 'var(--yellow)',
             fontSize: '.78rem', fontWeight: 600, letterSpacing: '1.2px',
             textTransform: 'uppercase', marginBottom: '20px',
-            fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit',
           }}>
-            {t.badge}
+            🇪🇹 Made for Ethiopia
           </div>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
             fontSize: 'clamp(2rem,4.5vw,3.6rem)',
             fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: '14px',
           }}>
-            <span style={{ fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>{t.h1a}</span>{' '}
-            <em style={{ fontStyle: 'italic', color: 'var(--yellow)', fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>{t.h1b}</em>
+            Addis Ababa's <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>#1 Local Business Guide</em>
           </h1>
-          <p style={{ color: 'rgba(255,255,255,.68)', fontSize: 'clamp(.9rem,2vw,1.05rem)', marginBottom: '32px', lineHeight: 1.65, fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>
-            {t.sub}
+          <p style={{ color: 'rgba(255,255,255,.68)', fontSize: 'clamp(.9rem,2vw,1.05rem)', marginBottom: '32px', lineHeight: 1.65 }}>
+            Trusted reviews from real Ethiopians. Find the best restaurants, hotels, coffee shops & more.
           </p>
-          <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.6)', marginBottom: '16px', fontWeight: 500, fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>
-            {t.stats}
+          <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.6)', marginBottom: '16px', fontWeight: 500 }}>
+            ⭐ 4,500+ businesses · 1,200+ reviews · 100% free
           </div>
           <div className="home-search-bar" style={{
             display: 'flex', background: '#fff', borderRadius: '14px',
@@ -226,7 +187,7 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
             <div style={{ display: 'flex', alignItems: 'center', padding: '0 18px', flex: 1, borderRight: '1px solid var(--border)' }}>
               <input
                 type="text"
-                placeholder={t.searchPlaceholder}
+                placeholder="Restaurants, coffee shops, hotels…"
                 value={searchQ}
                 onChange={e => setSearchQ(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -396,7 +357,7 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
-              📍 <span style={{ color: 'var(--green)', fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>{t.nearYou}</span>
+              📍 <span style={{ color: 'var(--green)' }}>Near You</span>
             </div>
             <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginTop: '4px' }}>Businesses within 5km of your location</div>
           </div>
@@ -488,8 +449,7 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
       <div className="section-pad" style={{ padding: '56px 5vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', gap: '12px' }}>
           <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700 }}>
-            <span style={{ fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>{t.topPicks}</span>{' '}
-            <span style={{ color: 'var(--green)' }}>Addis Ababa</span>
+            Top Picks in <span style={{ color: 'var(--green)' }}>Addis Ababa</span>
           </div>
           <Link href="/search?city=Addis+Ababa" style={{ color: 'var(--green)', fontWeight: 600, fontSize: '.9rem', textDecoration: 'none', borderBottom: '1px solid var(--green)', whiteSpace: 'nowrap' }}>
             See all →
@@ -516,7 +476,7 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
       <div className="section-pad" style={{ padding: '56px 5vw', background: 'var(--cream)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ marginBottom: '28px' }}>
           <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, marginBottom: '8px' }}>
-            <span style={{ fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>{t.browseNeighborhood}</span>
+            Browse by <span style={{ color: 'var(--green)' }}>Neighborhood</span>
           </div>
           <div style={{ fontSize: '.88rem', color: 'var(--muted)' }}>Explore the best businesses in every corner of Addis Ababa</div>
         </div>
@@ -549,7 +509,7 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
       {/* HOW IT WORKS */}
       <div className="section-pad" style={{ padding: '56px 5vw', background: 'var(--green)', borderTop: '1px solid rgba(255,255,255,.15)' }}>
         <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, color: '#fff', marginBottom: '28px' }}>
-          <span style={{ fontFamily: language === 'am' ? 'var(--font-amharic)' : 'inherit' }}>{t.howItWorks}</span>
+          How <span style={{ color: 'var(--yellow)' }}>AddisReview</span> works
         </div>
         <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '20px' }}>
           {[
@@ -570,8 +530,8 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
 
       {/* CTA */}
       <div className="cta-section" style={{ background: 'var(--yellow)', padding: '52px 5vw', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
-        <h2 style={{ fontFamily: language === 'am' ? 'var(--font-amharic)' : 'var(--font-serif)', fontSize: 'clamp(1.4rem,3vw,1.9rem)', fontWeight: 900, color: 'var(--charcoal)', maxWidth: '460px' }}>
-          {t.cta}
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.4rem,3vw,1.9rem)', fontWeight: 900, color: 'var(--charcoal)', maxWidth: '460px' }}>
+          Own a business in Ethiopia? List it for free.
         </h2>
         <Link href="/auth">
           <button className="btn-primary" style={{ padding: '16px 36px', fontSize: '1rem' }}>
