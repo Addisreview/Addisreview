@@ -48,7 +48,7 @@ export default function AccountSettingsPage() {
         setLastName(nameParts.slice(1).join(' ') || '');
         setGender(profile.gender || '');
         if (profile.avatar_url) {
-          setAvatarPreview(profile.avatar_url);
+          setAvatarPreview(`${profile.avatar_url}?t=${Date.now()}`);
         }
       }
 
@@ -88,7 +88,6 @@ export default function AccountSettingsPage() {
       const res = await fetch('/api/upload-avatar', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.url) avatarUrl = data.url;
-      if (data.displayUrl) setAvatarPreview(data.displayUrl);
     }
     // If no new file selected, avatarUrl stays null
     // The API route will keep the existing avatar in that case
