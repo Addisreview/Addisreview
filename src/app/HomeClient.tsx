@@ -75,13 +75,11 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
   useEffect(() => {
     const saved = localStorage.getItem('addis-language') as 'en' | 'am' | null;
     if (saved) setLanguage(saved);
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'addis-language' && (e.newValue === 'en' || e.newValue === 'am')) {
-        setLanguage(e.newValue);
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    const interval = setInterval(() => {
+      const current = localStorage.getItem('addis-language') as 'en' | 'am' | null;
+      if (current) setLanguage(current);
+    }, 300);
+    return () => clearInterval(interval);
   }, []);
 
   const t = language === 'am' ? {
