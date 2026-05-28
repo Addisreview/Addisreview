@@ -117,7 +117,6 @@ export default function ProfilePage() {
       if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
       setDisplayName(
         profile?.display_name ||
-        user.user_metadata?.full_name ||
         user.email?.split('@')[0] ||
         'User'
       );
