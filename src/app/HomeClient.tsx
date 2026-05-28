@@ -8,11 +8,11 @@ import { createBrowserClient } from '@/lib/supabase';
 import type { Business, City, Category } from '@/types/database';
 
 const VISIBLE_CATEGORIES = [
-  { name: 'Restaurants',            emoji: '🍛', subcategories: ['Delivery', 'Firfir', 'Injera & Wot', 'Grills', 'Seafood', 'Italian', 'Fast Food', 'Vegetarian'] },
-  { name: 'Coffee & Buna',          emoji: '☕', subcategories: ['Traditional Buna', 'Specialty Coffee', 'Pastry & Cake', 'Tea Houses'] },
-  { name: 'Hotels & Guesthouses',   emoji: '🏨', subcategories: ['Luxury', 'Boutique', 'Budget', 'Rooftop Pool', 'Airbnb Style', 'Family Run', 'With Breakfast'] },
-  { name: 'Rooftop Bars & Lounges', emoji: '🌆', subcategories: ['Live Music', 'Cocktail Bars', 'Sports Bars', 'Nightclubs'] },
-  { name: 'Spas',                   emoji: '💆', subcategories: ['Massage', 'Hair Salons', 'Nail Salons', 'Hammam', 'Skin Care'] },
+  { name: 'Restaurants',            emoji: '🍛', image: 'https://images.unsplash.com/photo-1567364816519-cbc9c4ebb436?w=120&q=60', subcategories: ['Delivery', 'Firfir', 'Injera & Wot', 'Grills', 'Seafood', 'Italian', 'Fast Food', 'Vegetarian'] },
+  { name: 'Coffee & Buna',          emoji: '☕', image: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=120&q=60', subcategories: ['Traditional Buna', 'Specialty Coffee', 'Pastry & Cake', 'Tea Houses'] },
+  { name: 'Hotels & Guesthouses',   emoji: '🏨', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=120&q=60', subcategories: ['Luxury', 'Boutique', 'Budget', 'Rooftop Pool', 'Airbnb Style', 'Family Run', 'With Breakfast'] },
+  { name: 'Rooftop Bars & Lounges', emoji: '🌆', image: 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=120&q=60', subcategories: ['Live Music', 'Cocktail Bars', 'Sports Bars', 'Nightclubs'] },
+  { name: 'Spas',                   emoji: '💆', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=120&q=60', subcategories: ['Massage', 'Hair Salons', 'Nail Salons', 'Hammam', 'Skin Care'] },
 ];
 
 const MORE_CATEGORIES = [
@@ -133,8 +133,9 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
         @media (max-width: 768px) {
           .home-hero { padding: 48px 5vw 56px !important; }
           .home-search-bar { flex-direction: column !important; border-radius: 12px !important; }
-          .home-search-bar > div { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
-          .home-search-bar .btn-search { width: 100% !important; min-height: 48px !important; }
+          .home-search-bar > div { border-right: none !important; border-bottom: 1px solid var(--border) !important; min-height: 56px !important; }
+          .home-search-bar > div:nth-child(2) { display: none !important; }
+          .home-search-bar .btn-search { width: 100% !important; min-height: 56px !important; background: var(--yellow) !important; color: var(--charcoal) !important; }
           .category-filters-wrap { flex-wrap: nowrap !important; overflow-x: auto !important; padding-bottom: 6px !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
           .category-filters-wrap::-webkit-scrollbar { display: none; }
           .category-filters-wrap > * { flex-shrink: 0 !important; }
@@ -171,11 +172,14 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
             fontSize: 'clamp(2rem,4.5vw,3.6rem)',
             fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: '14px',
           }}>
-            Discover the best of <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>Addis Ababa</em>
+            Addis Ababa's <em style={{ fontStyle: 'italic', color: 'var(--yellow)' }}>#1 Local Business Guide</em>
           </h1>
           <p style={{ color: 'rgba(255,255,255,.68)', fontSize: 'clamp(.9rem,2vw,1.05rem)', marginBottom: '32px', lineHeight: 1.65 }}>
-            Restaurants, hotels, spas & shops — reviewed by real Ethiopians. Find trusted local businesses in Addis Ababa.
+            Trusted reviews from real Ethiopians. Find the best restaurants, hotels, coffee shops & more.
           </p>
+          <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.6)', marginBottom: '16px', fontWeight: 500 }}>
+            ⭐ 4,500+ businesses · 1,200+ reviews · 100% free
+          </div>
           <div className="home-search-bar" style={{
             display: 'flex', background: '#fff', borderRadius: '14px',
             overflow: 'hidden', boxShadow: '0 10px 50px rgba(0,0,0,.3)', maxWidth: '660px',
@@ -269,11 +273,12 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
                 onClick={() => setActiveCategory(cat.name)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '7px',
-                  background: activeCategory === cat.name ? 'var(--green)' : '#fff',
-                  border: activeCategory === cat.name ? '1.5px solid var(--green)' : '1.5px solid var(--border)',
+                  backgroundImage: `linear-gradient(rgba(10,40,20,.65), rgba(10,40,20,.65)), url(${cat.image})`,
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                  border: activeCategory === cat.name ? '2px solid var(--yellow)' : '1.5px solid rgba(255,255,255,.2)',
                   borderRadius: '50px', padding: '9px 18px', fontSize: '.87rem',
-                  fontWeight: 500, cursor: 'pointer', transition: 'all .2s',
-                  color: activeCategory === cat.name ? '#fff' : 'var(--charcoal)',
+                  fontWeight: 600, cursor: 'pointer', transition: 'all .2s',
+                  color: '#fff',
                   fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
                 }}
               >
@@ -502,19 +507,20 @@ export default function HomeClient({ businesses, cities, categories, featuredRev
       </div>
 
       {/* HOW IT WORKS */}
-      <div className="section-pad" style={{ padding: '56px 5vw', background: 'var(--green)' }}>
+      <div className="section-pad" style={{ padding: '56px 5vw', background: 'var(--green)', borderTop: '1px solid rgba(255,255,255,.15)' }}>
         <div className="section-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.9rem', fontWeight: 700, color: '#fff', marginBottom: '28px' }}>
           How <span style={{ color: 'var(--yellow)' }}>AddisReview</span> works
         </div>
         <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '20px' }}>
           {[
-            { n: 1, title: 'Search your city', desc: 'Find restaurants, hotels, shops & services across every major Ethiopian city.' },
-            { n: 2, title: 'Read real reviews', desc: "Honest ratings from Ethiopians who've actually visited the place." },
-            { n: 3, title: 'Share your experience', desc: 'Write a review and help your community make better choices.' },
-            { n: 4, title: 'Own a business?', desc: 'Claim your listing, reply to reviews, and grow your customer base — free.' },
+            { n: 1, emoji: '🔍', title: 'Search your city', desc: 'Find restaurants, hotels, shops & services across every major Ethiopian city.' },
+            { n: 2, emoji: '🌟', title: 'Read real reviews', desc: "Honest ratings from Ethiopians who've actually visited the place." },
+            { n: 3, emoji: '✍️', title: 'Share your experience', desc: 'Write a review and help your community make better choices.' },
+            { n: 4, emoji: '🏢', title: 'Own a business?', desc: 'Claim your listing, reply to reviews, and grow your customer base — free.' },
           ].map(step => (
-            <div key={step.n} style={{ background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.14)', borderRadius: '14px', padding: '28px 22px', textAlign: 'center' }}>
-              <div style={{ width: '46px', height: '46px', background: 'var(--yellow)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.05rem', color: 'var(--charcoal)', margin: '0 auto 14px' }}>{step.n}</div>
+            <div key={step.n} style={{ background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.14)', borderRadius: '14px', padding: '36px 22px', textAlign: 'center' }}>
+              <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>{step.emoji}</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--yellow)', borderRadius: '50px', padding: '2px 10px', fontWeight: 900, fontSize: '.75rem', color: 'var(--charcoal)', marginBottom: '14px' }}>Step {step.n}</div>
               <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', color: '#fff', marginBottom: '8px' }}>{step.title}</h3>
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.84rem', lineHeight: 1.5 }}>{step.desc}</p>
             </div>
