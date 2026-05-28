@@ -145,7 +145,7 @@ export default function AccountSettingsPage() {
   if (loading) return <div style={{ padding: '100px', textAlign: 'center' }}>Loading...</div>;
 
   const displayName = firstName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
-  const currentAvatar = avatarPreview || user?.user_metadata?.avatar_url;
+  const currentAvatar = avatarPreview;
 
   const sidebarItems = [
     { id: 'profile', label: 'Profile', icon: '👤' },

@@ -19,11 +19,15 @@ export default function Navbar() {
   const userRef = useRef<HTMLDivElement>(null);
 
   async function loadAvatar(userId: string) {
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('avatar_url, display_name')
       .eq('id', userId)
       .single() as any;
+    if (error) {
+      console.error('Failed to load profile:', error);
+      return;
+    }
     if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
     if (profile?.display_name) setDisplayName(profile.display_name);
   }
