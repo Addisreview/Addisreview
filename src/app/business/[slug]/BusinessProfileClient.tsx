@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import ReviewCard from '@/components/reviews/ReviewCard';
@@ -42,6 +42,9 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   // Save feature
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
+  const [sessionUser, setSessionUser] = useState<any>(null);
+  const addPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // Check if already saved
   useEffect(() => {
@@ -60,6 +63,25 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
     }
     checkSavedStatus();
   }, [business.id]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionUser(data.session?.user ?? null);
+    });
+  }, []);
+
+  const handleAddPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('businessId', business.id);
+      await fetch('/api/upload-business-photo', { method: 'POST', body: formData });
+    }
+    toast.success('Photos uploaded! They will appear after review.');
+    if (addPhotoInputRef.current) addPhotoInputRef.current.value = '';
+  };
 
   const toggleSave = async () => {
     if (saving) return;
@@ -162,15 +184,21 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
 
       {/* HERO */}
       <div className="biz-hero" style={{ height: '300px', position: 'relative', overflow: 'hidden', background: heroColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem' }}>
-        {photo && !imgError ? (
-          <img src={photo} alt={business.name} onError={() => setImgError(true)} onClick={() => openLightbox(0)}
+        {allPhotos.length > 0 && !imgError ? (
+          <img src={allPhotos[heroPhotoIndex]} alt={business.name} onError={() => setImgError(true)} onClick={() => openLightbox(heroPhotoIndex)}
             style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, cursor: 'pointer' }} />
         ) : emoji}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.6))' }} />
         {allPhotos.length > 1 && (
-          <button onClick={() => openLightbox(0)} style={{ position: 'absolute', bottom: '16px', right: '16px', background: 'rgba(0,0,0,.6)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50px', padding: '7px 16px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, system-ui, sans-serif', backdropFilter: 'blur(4px)', zIndex: 2 }}>
-            📷 {allPhotos.length} photos
-          </button>
+          <>
+            <button onClick={() => { setHeroPhotoIndex(i => (i - 1 + allPhotos.length) % allPhotos.length); setImgError(false); }}
+              style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', cursor: 'pointer', backdropFilter: 'blur(4px)', zIndex: 2 }}>‹</button>
+            <button onClick={() => { setHeroPhotoIndex(i => (i + 1) % allPhotos.length); setImgError(false); }}
+              style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', cursor: 'pointer', backdropFilter: 'blur(4px)', zIndex: 2 }}>›</button>
+            <button onClick={() => openLightbox(heroPhotoIndex)} style={{ position: 'absolute', bottom: '16px', right: '16px', background: 'rgba(0,0,0,.6)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50px', padding: '7px 16px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, system-ui, sans-serif', backdropFilter: 'blur(4px)', zIndex: 2 }}>
+              📷 {heroPhotoIndex + 1} / {allPhotos.length}
+            </button>
+          </>
         )}
       </div>
 
@@ -204,30 +232,37 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
             </div>
           </div>
 
+          <input ref={addPhotoInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleAddPhotos} />
           <div className="biz-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => router.push(writeReviewUrl)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--green)', color: '#fff', border: 'none', fontFamily: 'var(--font-sans)' }}>
               ✏️ Write a Review
             </button>
 
             {/* REAL SAVE BUTTON */}
-            <button 
+            <button
               onClick={toggleSave}
               disabled={saving}
-              style={{ 
-                display: 'flex', alignItems: 'center', gap: '7px', 
-                padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', 
-                fontWeight: 600, cursor: 'pointer', background: '#fff', 
-                color: 'var(--charcoal)', border: '1.5px solid var(--border)', 
-                fontFamily: 'var(--font-sans)' 
+              style={{
+                display: 'flex', alignItems: 'center', gap: '7px',
+                padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem',
+                fontWeight: 600, cursor: 'pointer', background: '#fff',
+                color: 'var(--charcoal)', border: '1.5px solid var(--border)',
+                fontFamily: 'var(--font-sans)'
               }}
             >
-              {isSaved ? '❤️' : '♡'} 
+              {isSaved ? '❤️' : '♡'}
               {isSaved ? 'Saved' : 'Save'}
             </button>
 
             <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Link copied!'); }} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
               ↑ Share
             </button>
+
+            {sessionUser && (
+              <button onClick={() => addPhotoInputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: '#fff', color: 'var(--charcoal)', border: '1.5px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
+                📷 Add Photos
+              </button>
+            )}
             {!(business as any).is_claimed && (
               <button onClick={() => router.push(`/claim/${business.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 18px', borderRadius: '50px', fontSize: '.88rem', fontWeight: 600, cursor: 'pointer', background: 'var(--yellow)', color: 'var(--charcoal)', border: 'none', fontFamily: 'var(--font-sans)' }}>
                 🏢 Claim this Business
