@@ -42,7 +42,6 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   // Save feature
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
   const [sessionUser, setSessionUser] = useState<any>(null);
   const addPhotoInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,7 +166,9 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
         @media (max-width: 768px) {
           .biz-body-layout { grid-template-columns: 1fr !important; padding: 16px !important; }
           .biz-sidebar { order: -1; }
-          .biz-hero { height: 200px !important; font-size: 5rem !important; }
+          .biz-hero { height: 280px !important; }
+          .biz-hero-right { display: none !important; }
+          .biz-hero-left { width: 100% !important; }
           .biz-header-inner { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
           .biz-actions { flex-wrap: wrap; width: 100%; }
           .biz-actions button { flex: 1; justify-content: center; }
@@ -183,24 +184,50 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
       )}
 
       {/* HERO */}
-      <div className="biz-hero" style={{ height: '300px', position: 'relative', overflow: 'hidden', background: heroColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem' }}>
-        {allPhotos.length > 0 && !imgError ? (
-          <img src={allPhotos[heroPhotoIndex]} alt={business.name} onError={() => setImgError(true)} onClick={() => openLightbox(heroPhotoIndex)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, cursor: 'pointer' }} />
-        ) : emoji}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.6))' }} />
-        {allPhotos.length > 1 && (
-          <>
-            <button onClick={() => { setHeroPhotoIndex(i => (i - 1 + allPhotos.length) % allPhotos.length); setImgError(false); }}
-              style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', cursor: 'pointer', backdropFilter: 'blur(4px)', zIndex: 2 }}>‹</button>
-            <button onClick={() => { setHeroPhotoIndex(i => (i + 1) % allPhotos.length); setImgError(false); }}
-              style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', cursor: 'pointer', backdropFilter: 'blur(4px)', zIndex: 2 }}>›</button>
-            <button onClick={() => openLightbox(heroPhotoIndex)} style={{ position: 'absolute', bottom: '16px', right: '16px', background: 'rgba(0,0,0,.6)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50px', padding: '7px 16px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, system-ui, sans-serif', backdropFilter: 'blur(4px)', zIndex: 2 }}>
-              📷 {heroPhotoIndex + 1} / {allPhotos.length}
+      {allPhotos.length === 0 ? (
+        <div className="biz-hero" style={{ height: '420px', background: heroColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem' }}>
+          {emoji}
+        </div>
+      ) : allPhotos.length === 1 ? (
+        <div className="biz-hero" style={{ height: '420px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src={allPhotos[0]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(0.7)', transform: 'scale(1.1)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.3)' }} />
+          <img src={allPhotos[0]} alt={business.name} onClick={() => openLightbox(0)} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} />
+        </div>
+      ) : allPhotos.length <= 4 ? (
+        <div className="biz-hero" style={{ height: '420px', display: 'flex', overflow: 'hidden' }}>
+          <div className="biz-hero-left" style={{ width: '60%', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={allPhotos[0]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(0.7)', transform: 'scale(1.1)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.3)' }} />
+            <img src={allPhotos[0]} alt={business.name} onClick={() => openLightbox(0)} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} />
+          </div>
+          <div className="biz-hero-right" style={{ width: '40%', display: 'flex', flexDirection: 'column', gap: '2px', marginLeft: '2px' }}>
+            {allPhotos.slice(1).map((url, i) => (
+              <div key={i} style={{ flex: 1, overflow: 'hidden' }}>
+                <img src={url} alt="" onClick={() => openLightbox(i + 1)} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="biz-hero" style={{ height: '420px', display: 'flex', overflow: 'hidden' }}>
+          <div className="biz-hero-left" style={{ width: '60%', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={allPhotos[0]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(0.7)', transform: 'scale(1.1)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.3)' }} />
+            <img src={allPhotos[0]} alt={business.name} onClick={() => openLightbox(0)} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} />
+          </div>
+          <div className="biz-hero-right" style={{ width: '40%', position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '2px', marginLeft: '2px' }}>
+            {allPhotos.slice(1, 5).map((url, i) => (
+              <div key={i} style={{ overflow: 'hidden' }}>
+                <img src={url} alt="" onClick={() => openLightbox(i + 1)} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block' }} />
+              </div>
+            ))}
+            <button onClick={() => openLightbox(0)} style={{ position: 'absolute', bottom: '12px', right: '12px', background: 'rgba(0,0,0,.7)', color: '#fff', border: '1px solid rgba(255,255,255,.3)', borderRadius: '50px', padding: '7px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', backdropFilter: 'blur(4px)', zIndex: 2 }}>
+              📷 See all {allPhotos.length} photos
             </button>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* HEADER */}
       <div style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '0 5vw' }}>
