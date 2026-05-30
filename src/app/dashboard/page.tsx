@@ -185,17 +185,13 @@ export default function OwnerDashboard() {
     if (!selected || !user) return;
     setUnclaiming(true);
     try {
-      const { error } = await (supabase as any)
-        .from('businesses')
-        .update({
-          is_claimed: false,
-          claimed_by: null,
-          is_verified: false,
-        })
-        .eq('id', selected.id)
-        .eq('claimed_by', user.id);
-
-      if (error) throw error;
+      const res = await fetch('/api/business/unclaim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId: selected.id, userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
       toast.success(`${selected.name} has been unclaimed.`);
 
