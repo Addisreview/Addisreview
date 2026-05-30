@@ -163,7 +163,7 @@ function WriteReviewForm() {
 
   const handleSubmit = async () => {
     if (!rating) { toast.error('Please select a star rating'); return; }
-    if (body.length < 20) { toast.error('Review must be at least 20 characters'); return; }
+    if (body.trim().split(/\s+/).filter(Boolean).length < 50) { toast.error('Review must be at least 50 words to earn points'); return; }
     if (!authorName.trim()) { toast.error('Please enter your name'); return; }
     if (!businessId) { toast.error('No business selected'); return; }
 
@@ -190,6 +190,28 @@ function WriteReviewForm() {
         });
         if (error) throw error;
         toast.success('Review submitted! Thank you 🙏');
+
+        // Award points for new review — silent failure, non-critical
+        if (user?.id) {
+          try {
+            const { data: newReview } = await (supabase.from('reviews') as any)
+              .select('id')
+              .eq('business_id', businessId)
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+            if (newReview?.id) {
+              fetch('/api/award-points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, reviewId: newReview.id }),
+              }).catch(err => console.error('award-points failed:', err));
+            }
+          } catch (err) {
+            console.error('Failed to fetch new review id for points:', err);
+          }
+        }
       }
 
       setTimeout(() => {
