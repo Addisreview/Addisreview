@@ -54,22 +54,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: insertErr.message }, { status: 500 });
     }
 
-    // Fetch the review author
+    // Fetch the review author and business_id
     const { data: review } = await (admin as any)
       .from('reviews')
-      .select('user_id')
+      .select('user_id, business_id')
       .eq('id', reviewId)
       .single();
 
     // Notify the review author if they are not the one reacting
     if (review?.user_id && review.user_id !== userId) {
+      const [{ data: business }, { data: reactor }] = await Promise.all([
+        (admin as any).from('businesses').select('slug, name').eq('id', review.business_id).single(),
+        (admin as any).from('profiles').select('display_name').eq('id', userId).single(),
+      ]);
+
+      const reactorName = reactor?.display_name || 'Someone';
+      const businessName = business?.name || 'a business';
+      const link = `/business/${business?.slug || ''}#review-${reviewId}`;
+
       await (admin as any)
         .from('notifications')
         .insert({
           user_id: review.user_id,
           type: 'reaction',
-          message: `Someone reacted to your review with ${REACTION_EMOJI[reaction as Reaction]}`,
-          link: '/notifications',
+          message: `${reactorName} reacted to your review at ${businessName} with ${REACTION_EMOJI[reaction as Reaction]}`,
+          link,
         });
     }
 

@@ -90,7 +90,7 @@ export default function ReviewCard({ review }: Props) {
   ];
 
   return (
-    <div style={{ borderBottom: '1px solid var(--border)', padding: '24px 0' }}>
+    <div id={`review-${review.id}`} style={{ borderBottom: '1px solid var(--border)', padding: '24px 0' }}>
       {/* Reviewer */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
         {avatarUrl ? (
