@@ -36,6 +36,7 @@ function AuthForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isOwner, setIsOwner] = useState(reason === 'claim' || reason === 'add' || reason === 'dashboard');
+  const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -87,6 +88,15 @@ function AuthForm() {
     } else {
       const newUserId = data.user?.id || null;
       setUserId(newUserId);
+
+      if (referralCode && newUserId) {
+        fetch('/api/process-referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referralCode, newUserId }),
+        }).catch(err => console.error('process-referral failed:', err));
+      }
+
       setStep(2);
       setLoading(false);
     }
@@ -334,6 +344,10 @@ function AuthForm() {
                 <div style={{ marginBottom: '18px' }}>
                   <label style={{ fontSize: '.83rem', fontWeight: 600, marginBottom: '7px', display: 'block' }}>Email Address</label>
                   <input type="email" className="form-input" placeholder="abebe@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+                </div>
+                <div style={{ marginBottom: '18px' }}>
+                  <label style={{ fontSize: '.83rem', fontWeight: 600, marginBottom: '7px', display: 'block' }}>Referral Code <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional)</span></label>
+                  <input type="text" className="form-input" placeholder="Referral code (optional)" value={referralCode} onChange={e => setReferralCode(e.target.value)} />
                 </div>
                 <div style={{ marginBottom: '18px' }}>
                   <label style={{ fontSize: '.83rem', fontWeight: 600, marginBottom: '7px', display: 'block' }}>Password</label>

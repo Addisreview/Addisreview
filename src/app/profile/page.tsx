@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { createBrowserClient } from '@/lib/supabase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -98,6 +99,7 @@ export default function ProfilePage() {
   const [badge, setBadge] = useState<string | null>(null);
   const [points, setPoints] = useState(0);
   const [isFoundingReviewer, setIsFoundingReviewer] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -115,7 +117,7 @@ export default function ProfilePage() {
       const [{ data: profile }, { data: reviewData }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('display_name, avatar_url, badge, points, is_founding_reviewer')
+          .select('display_name, avatar_url, badge, points, is_founding_reviewer, referral_code')
           .eq('id', user.id)
           .single() as any,
         supabase
@@ -135,6 +137,7 @@ export default function ProfilePage() {
       setBadge(profile?.badge || null);
       setPoints(profile?.points || 0);
       setIsFoundingReviewer(profile?.is_founding_reviewer || false);
+      setReferralCode(profile?.referral_code || '');
 
       setReviews(reviewData || []);
       setLoading(false);
@@ -196,6 +199,28 @@ export default function ProfilePage() {
             )}
             {points > 0 && (
               <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginBottom: '4px' }}>✨ {points} points</div>
+            )}
+            {referralCode && (
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ fontSize: '.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Your Referral Code</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ background: 'var(--green)', color: '#fff', fontFamily: 'monospace', fontWeight: 700, fontSize: '.9rem', borderRadius: '6px', padding: '4px 10px', letterSpacing: '1px' }}>
+                    {referralCode}
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://addisreview.vercel.app/auth?ref=${referralCode}`);
+                      toast.success('Referral link copied!');
+                    }}
+                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--charcoal)' }}
+                  >
+                    Copy
+                  </button>
+                </div>
+                <div style={{ fontSize: '.75rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+                  Share this code and earn 10 points when someone signs up + 20 more when they write their first review
+                </div>
+              </div>
             )}
             <div style={{ fontSize: '.85rem', color: 'var(--muted)' }}>
               {user?.email} · {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
