@@ -71,7 +71,7 @@ export default async function BusinessPage({ params }: { params: { slug: string 
       if (!review.user_id) return { ...review, profiles: null };
       const { data: profile } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url')
+        .select('display_name, avatar_url, badge, is_founding_reviewer')
         .eq('id', review.user_id)
         .single();
       return { ...review, profiles: profile || null };

@@ -16,6 +16,15 @@ interface Props {
 
 const AVATAR_COLORS = ['#1a5c3a','#8B4513','#6b3fa0','#1a3d5c','#5c1a0e','#0a4a3a'];
 
+const BADGE_MAP: Record<string, string> = {
+  explorer:       '🌱 Explorer',
+  contributor:    '📸 Contributor',
+  trusted_voice:  '⭐ Trusted Voice',
+  rising_star:    '🔥 Rising Star',
+  elite_reviewer: '💎 Elite Reviewer',
+  addis_legend:   '👑 Addis Legend',
+};
+
 export default function ReviewCard({ review }: Props) {
   const name = review.profiles?.display_name
     || review.author_name
@@ -117,7 +126,19 @@ export default function ReviewCard({ review }: Props) {
         )}
 
         <div>
-          <div style={{ fontWeight: 700, fontSize: '.95rem' }}>{name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 700, fontSize: '.95rem' }}>{name}</span>
+            {(review.profiles as any)?.badge && BADGE_MAP[(review.profiles as any).badge] && (
+              <span style={{ background: 'var(--green)', color: '#fff', fontSize: '10px', fontWeight: 700, borderRadius: '50px', padding: '2px 8px' }}>
+                {BADGE_MAP[(review.profiles as any).badge]}
+              </span>
+            )}
+            {(review.profiles as any)?.is_founding_reviewer && (
+              <span style={{ background: 'var(--green)', color: '#fff', fontSize: '10px', fontWeight: 700, borderRadius: '50px', padding: '2px 8px' }}>
+                🏅 Founding
+              </span>
+            )}
+          </div>
           <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '2px' }}>
             {timeAgo(review.created_at)}
           </div>

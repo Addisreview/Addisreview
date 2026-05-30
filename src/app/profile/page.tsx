@@ -20,6 +20,15 @@ interface Review {
   businesses?: { name: string; slug: string; category_name: string; cover_photo_url: string | null };
 }
 
+const BADGE_MAP: Record<string, string> = {
+  explorer:       '🌱 Explorer',
+  contributor:    '📸 Contributor',
+  trusted_voice:  '⭐ Trusted Voice',
+  rising_star:    '🔥 Rising Star',
+  elite_reviewer: '💎 Elite Reviewer',
+  addis_legend:   '👑 Addis Legend',
+};
+
 function SkeletonPulse({ width = '100%', height = '16px', borderRadius = '8px', style = {} }: {
   width?: string; height?: string; borderRadius?: string; style?: React.CSSProperties;
 }) {
@@ -86,6 +95,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState('');
+  const [badge, setBadge] = useState<string | null>(null);
+  const [points, setPoints] = useState(0);
+  const [isFoundingReviewer, setIsFoundingReviewer] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -103,7 +115,7 @@ export default function ProfilePage() {
       const [{ data: profile }, { data: reviewData }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('display_name, avatar_url')
+          .select('display_name, avatar_url, badge, points, is_founding_reviewer')
           .eq('id', user.id)
           .single() as any,
         supabase
@@ -120,6 +132,9 @@ export default function ProfilePage() {
         user.email?.split('@')[0] ||
         'User'
       );
+      setBadge(profile?.badge || null);
+      setPoints(profile?.points || 0);
+      setIsFoundingReviewer(profile?.is_founding_reviewer || false);
 
       setReviews(reviewData || []);
       setLoading(false);
@@ -162,9 +177,26 @@ export default function ProfilePage() {
             </div>
           )}
           <div>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 900, marginBottom: '4px' }}>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 900, marginBottom: '6px' }}>
               {displayName}
             </h1>
+            {(badge || isFoundingReviewer) && (
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                {badge && BADGE_MAP[badge] && (
+                  <span style={{ background: 'var(--green)', color: '#fff', fontSize: '14px', fontWeight: 700, borderRadius: '50px', padding: '4px 12px' }}>
+                    {BADGE_MAP[badge]}
+                  </span>
+                )}
+                {isFoundingReviewer && (
+                  <span style={{ background: 'var(--green)', color: '#fff', fontSize: '14px', fontWeight: 700, borderRadius: '50px', padding: '4px 12px' }}>
+                    🏅 Founding
+                  </span>
+                )}
+              </div>
+            )}
+            {points > 0 && (
+              <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginBottom: '4px' }}>✨ {points} points</div>
+            )}
             <div style={{ fontSize: '.85rem', color: 'var(--muted)' }}>
               {user?.email} · {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
             </div>
