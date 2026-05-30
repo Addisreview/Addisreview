@@ -238,21 +238,28 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.4rem,3vw,1.9rem)', fontWeight: 900, lineHeight: 1.1, marginBottom: '6px' }}>{business.name}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="stars" style={{ fontSize: '1.1rem' }}>{'★'.repeat(fullStars)}{'☆'.repeat(emptyStars)}</span>
-                <span style={{ fontWeight: 800, fontSize: '1rem' }}>{formatRating(displayRating)}</span>
-                <span style={{ fontSize: '.82rem', color: 'var(--muted)' }}>
-                  {addisRating > 0
-                    ? `(${totalReviews} ${totalReviews === 1 ? 'review' : 'reviews'} on AddisReview)`
-                    : `(${(business as any).google_review_count || 'Google'} reviews · Google)`
-                  }
-                </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                {addisRating > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="stars" style={{ fontSize: '1rem' }}>{'★'.repeat(Math.floor(addisRating))}{'☆'.repeat(5 - Math.floor(addisRating))}</span>
+                    <span style={{ fontWeight: 800, fontSize: '.95rem' }}>{addisRating.toFixed(1)}</span>
+                    <span style={{ fontSize: '.78rem', color: 'var(--green)', fontWeight: 600 }}>AddisReview</span>
+                    <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})</span>
+                  </div>
+                )}
+                {googleRating > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="stars" style={{ fontSize: '1rem' }}>{'★'.repeat(Math.floor(googleRating))}{'☆'.repeat(5 - Math.floor(googleRating))}</span>
+                    <span style={{ fontWeight: 800, fontSize: '.95rem' }}>{googleRating.toFixed(1)}</span>
+                    <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>Google</span>
+                  </div>
+                )}
+                {addisRating === 0 && googleRating > 0 && (
+                  <span style={{ fontSize: '.78rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+                    Be the first to review on AddisReview
+                  </span>
+                )}
               </div>
-              {addisRating === 0 && googleRating > 0 && (
-                <span style={{ fontSize: '.78rem', color: 'var(--muted)', fontStyle: 'italic' }}>
-                  Be the first to review on AddisReview
-                </span>
-              )}
               {business.is_featured && <span className="badge badge-featured">⭐ Featured</span>}
               {business.is_verified && <span className="badge badge-open">✓ Verified</span>}
               {business.category_name && <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>{business.category_name}{business.price_range ? ` · ${priceLabel(business.price_range)}` : ''}</span>}
