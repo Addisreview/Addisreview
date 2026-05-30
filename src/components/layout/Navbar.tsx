@@ -11,6 +11,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
+  const [unreadCount, setUnreadCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bizMenuOpen, setBizMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -64,6 +65,16 @@ export default function Navbar() {
       document.removeEventListener('mousedown', handleClick);
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false)
+      .then(({ count }: { count: number | null }) => setUnreadCount(count || 0));
+  }, [user]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -157,45 +168,68 @@ export default function Navbar() {
 
           {/* User account dropdown */}
           {user ? (
-            <div ref={userRef} style={{ position: 'relative' }}>
+            <>
+              {/* Notification bell */}
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                style={{
-                  background: 'var(--yellow)', color: 'var(--charcoal)',
-                  padding: '4px', borderRadius: '50%', border: 'none', cursor: 'pointer',
-                  width: '40px', height: '40px', overflow: 'hidden',
-                }}
+                onClick={() => { router.push('/notifications'); setUnreadCount(0); }}
+                style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '6px', fontSize: '1.2rem', lineHeight: 1 }}
               >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={resolvedDisplayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                ) : (
-                  <span style={{ fontSize: '1.1rem' }}>{resolvedDisplayName.charAt(0).toUpperCase()}</span>
+                🔔
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 0, right: 0,
+                    background: 'var(--red)', color: '#fff', borderRadius: '50%',
+                    width: '16px', height: '16px', fontSize: '.65rem', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
                 )}
               </button>
 
-              {menuOpen && (
-                <div style={{
-                  position: 'absolute', right: 0, top: '110%',
-                  background: '#fff', borderRadius: '12px',
-                  boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
-                  minWidth: '200px', overflow: 'hidden', zIndex: 300,
-                }}>
-                  <Link href="/profile" style={{ textDecoration: 'none' }}>
-                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>👤 My Profile</button>
-                  </Link>
-                  <Link href="/collection" style={{ textDecoration: 'none' }}>
-                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>⭐ My Collection</button>
-                  </Link>
-                  <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>🏢 My Business</button>
-                  </Link>
-                  <Link href="/account/settings" style={{ textDecoration: 'none' }}>
-                    <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>⚙️ Account Settings</button>
-                  </Link>
-                  <button onClick={handleSignOut} className="nav-menu-item">Sign Out</button>
-                </div>
-              )}
-            </div>
+              <div ref={userRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  style={{
+                    background: 'var(--yellow)', color: 'var(--charcoal)',
+                    padding: '4px', borderRadius: '50%', border: 'none', cursor: 'pointer',
+                    width: '40px', height: '40px', overflow: 'hidden',
+                  }}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={resolvedDisplayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  ) : (
+                    <span style={{ fontSize: '1.1rem' }}>{resolvedDisplayName.charAt(0).toUpperCase()}</span>
+                  )}
+                </button>
+
+                {menuOpen && (
+                  <div style={{
+                    position: 'absolute', right: 0, top: '110%',
+                    background: '#fff', borderRadius: '12px',
+                    boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
+                    minWidth: '200px', overflow: 'hidden', zIndex: 300,
+                  }}>
+                    <Link href="/profile" style={{ textDecoration: 'none' }}>
+                      <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>👤 My Profile</button>
+                    </Link>
+                    <Link href="/collection" style={{ textDecoration: 'none' }}>
+                      <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>⭐ My Collection</button>
+                    </Link>
+                    <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                      <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>🏢 My Business</button>
+                    </Link>
+                    <Link href="/notifications" style={{ textDecoration: 'none' }}>
+                      <button className="nav-menu-item" onClick={() => { setMenuOpen(false); setUnreadCount(0); }}>
+                        🔔 Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+                      </button>
+                    </Link>
+                    <Link href="/account/settings" style={{ textDecoration: 'none' }}>
+                      <button className="nav-menu-item" onClick={() => setMenuOpen(false)}>⚙️ Account Settings</button>
+                    </Link>
+                    <button onClick={handleSignOut} className="nav-menu-item">Sign Out</button>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             <Link href="/auth" className="btn-nav">Sign Up / Log In</Link>
           )}
