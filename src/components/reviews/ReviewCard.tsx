@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { createBrowserClient } from '@/lib/supabase';
 import { timeAgo } from '@/lib/utils';
 import type { Review } from '@/types/database';
 
@@ -14,9 +17,8 @@ interface Props {
 const AVATAR_COLORS = ['#1a5c3a','#8B4513','#6b3fa0','#1a3d5c','#5c1a0e','#0a4a3a'];
 
 export default function ReviewCard({ review }: Props) {
-  const name = review.profiles?.full_name 
-    || review.profiles?.display_name 
-    || review.author_name 
+  const name = review.profiles?.display_name
+    || review.author_name
     || 'Anonymous';
 
   const avatarUrl = review.profiles?.avatar_url;
@@ -25,6 +27,67 @@ export default function ReviewCard({ review }: Props) {
 
   const fullStars = review.rating;
   const emptyStars = 5 - fullStars;
+
+  const supabase = createBrowserClient();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userReactions, setUserReactions] = useState<string[]>([]);
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({
+    fire: 0, helpful: 0, love_this: 0, disappointing: 0,
+  });
+
+  useEffect(() => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id ?? null;
+      setCurrentUserId(uid);
+
+      const { data: reactions } = await (supabase as any)
+        .from('review_reactions')
+        .select('user_id, reaction')
+        .eq('review_id', review.id);
+
+      if (reactions) {
+        const counts: Record<string, number> = { fire: 0, helpful: 0, love_this: 0, disappointing: 0 };
+        const mine: string[] = [];
+        for (const r of reactions) {
+          if (r.reaction in counts) counts[r.reaction]++;
+          if (uid && r.user_id === uid) mine.push(r.reaction);
+        }
+        setReactionCounts(counts);
+        setUserReactions(mine);
+      }
+    }
+    load();
+  }, [review.id]);
+
+  const handleReaction = async (reaction: string) => {
+    if (!currentUserId) {
+      toast.error('Please log in to react');
+      return;
+    }
+    const res = await fetch('/api/review-reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewId: review.id, userId: currentUserId, reaction }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (data.action === 'added') {
+        setUserReactions(prev => [...prev, reaction]);
+        setReactionCounts(prev => ({ ...prev, [reaction]: (prev[reaction] || 0) + 1 }));
+      } else {
+        setUserReactions(prev => prev.filter(r => r !== reaction));
+        setReactionCounts(prev => ({ ...prev, [reaction]: Math.max((prev[reaction] || 1) - 1, 0) }));
+      }
+    }
+  };
+
+  const REACTIONS = [
+    { key: 'fire',         emoji: '🔥', label: 'Fire' },
+    { key: 'helpful',      emoji: '👍', label: 'Helpful' },
+    { key: 'love_this',    emoji: '❤️', label: 'Love This' },
+    { key: 'disappointing',emoji: '😬', label: 'Disappointing' },
+  ];
 
   return (
     <div style={{ borderBottom: '1px solid var(--border)', padding: '24px 0' }}>
@@ -79,29 +142,44 @@ export default function ReviewCard({ review }: Props) {
         </div>
       )}
 
-      {/* Helpful */}
-      <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-        Helpful?
-        <button style={{
-          background: 'none', border: '1px solid var(--border)', borderRadius: '50px',
-          padding: '4px 14px', fontSize: '.78rem', cursor: 'pointer',
-          fontFamily: 'var(--font-sans)', transition: 'all .2s',
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.color = 'var(--green)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
-        >
-          👍 Yes ({review.helpful_count})
-        </button>
-        <button style={{
-          background: 'none', border: '1px solid var(--border)', borderRadius: '50px',
-          padding: '4px 14px', fontSize: '.78rem', cursor: 'pointer',
-          fontFamily: 'var(--font-sans)', transition: 'all .2s',
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.color = 'var(--green)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)'; }}
-        >
-          👎 No
-        </button>
+      {/* Photos */}
+      {(review as any).photo_urls && (review as any).photo_urls.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+          {(review as any).photo_urls.map((url: string, i: number) => (
+            <img
+              key={i}
+              src={url}
+              alt=""
+              onClick={() => window.open(url, '_blank')}
+              style={{ width: '120px', height: '90px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Reactions */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+        {REACTIONS.map(({ key, emoji, label }) => {
+          const active = userReactions.includes(key);
+          const count = reactionCounts[key] || 0;
+          return (
+            <button
+              key={key}
+              onClick={() => handleReaction(key)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                background: active ? 'var(--green)' : '#fff',
+                color: active ? '#fff' : 'var(--charcoal)',
+                border: `1px solid ${active ? 'var(--green)' : 'var(--border)'}`,
+                borderRadius: '50px', padding: '5px 14px',
+                fontSize: '.78rem', fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'var(--font-sans)', transition: 'all .2s',
+              }}
+            >
+              {emoji} {label}{count > 0 ? ` · ${count}` : ''}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
