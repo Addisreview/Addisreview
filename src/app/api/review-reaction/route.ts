@@ -82,6 +82,62 @@ export async function POST(request: NextRequest) {
         });
     }
 
+    // Award points to review author for received reactions (no self-reactions)
+    if (review?.user_id && review.user_id !== userId) {
+      const { count: totalReactions } = await (admin as any)
+        .from('review_reactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('review_id', reviewId);
+
+      const total = totalReactions || 0;
+      const bonus = total === 5 ? 5 : 0;
+
+      const { data: profileData } = await (admin as any)
+        .from('profiles')
+        .select('points, total_reactions_received')
+        .eq('id', review.user_id)
+        .single();
+
+      const currentPoints = profileData?.points || 0;
+      const currentReceived = profileData?.total_reactions_received || 0;
+
+      await (admin as any)
+        .from('profiles')
+        .update({
+          points: currentPoints + 2 + bonus,
+          total_reactions_received: currentReceived + 1,
+        })
+        .eq('id', review.user_id);
+
+      const { data: fullProfile } = await (admin as any)
+        .from('profiles')
+        .select('points, total_reviews, photo_reviews, total_reactions_received, total_referrals, created_at')
+        .eq('id', review.user_id)
+        .single();
+
+      if (fullProfile) {
+        const accountAgeDays = Math.floor(
+          (Date.now() - new Date(fullProfile.created_at).getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        const { data: newBadge } = await (admin as any).rpc('calculate_badge', {
+          p_points:           fullProfile.points || 0,
+          p_total_reviews:    fullProfile.total_reviews || 0,
+          p_photo_reviews:    fullProfile.photo_reviews || 0,
+          p_total_reactions:  fullProfile.total_reactions_received || 0,
+          p_total_referrals:  fullProfile.total_referrals || 0,
+          p_account_age_days: accountAgeDays,
+        });
+
+        if (newBadge) {
+          await (admin as any)
+            .from('profiles')
+            .update({ badge: newBadge })
+            .eq('id', review.user_id);
+        }
+      }
+    }
+
     return NextResponse.json({ success: true, action: 'added' });
   } catch (err: any) {
     console.error('review-reaction error:', err);
