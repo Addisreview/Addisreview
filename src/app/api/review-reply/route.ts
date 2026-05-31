@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient, createServerClient } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { createAdminClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,10 +12,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current user from session cookie
-    const supabase = createServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
