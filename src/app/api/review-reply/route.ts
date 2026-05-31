@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
@@ -11,16 +9,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing review_id, business_id, or body' }, { status: 400 });
     }
 
-    // Get current user from session cookie
-    const supabase = createRouteHandlerClient({ cookies });
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user;
-
-    if (!user) {
+    const token = request.cookies.get('sb-access-token')?.value;
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const admin = createAdminClient();
+
+    const { data: { user }, error: authErr } = await admin.auth.getUser(token);
+    if (authErr || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const owner_id = user.id;
 
     // Verify the current user is the claimed owner of this business
     const { data: business, error: bizErr } = await (admin as any)
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       .eq('id', business_id)
       .single();
 
-    if (bizErr || !business || business.claimed_by !== user.id) {
+    if (bizErr || !business || business.claimed_by !== owner_id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       .insert({
         review_id,
         business_id,
-        owner_id: user.id,
+        owner_id,
         body: body.trim(),
       });
 
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       .eq('id', review_id)
       .single();
 
-    if (review?.user_id && review.user_id !== user.id) {
+    if (review?.user_id && review.user_id !== owner_id) {
       await (admin as any)
         .from('notifications')
         .insert({
