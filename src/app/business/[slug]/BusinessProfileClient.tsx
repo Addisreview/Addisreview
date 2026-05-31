@@ -44,6 +44,10 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
   const [saving, setSaving] = useState(false);
   const [sessionUser, setSessionUser] = useState<any>(null);
   const addPhotoInputRef = useRef<HTMLInputElement>(null);
+  const [existingReplies, setExistingReplies] = useState<Record<string, string>>({});
+  const [replyOpen, setReplyOpen] = useState<Record<string, boolean>>({});
+  const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
+  const [replySubmitting, setReplySubmitting] = useState<Record<string, boolean>>({});
 
   // Check if already saved
   useEffect(() => {
@@ -68,6 +72,46 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
       setSessionUser(data.session?.user ?? null);
     });
   }, []);
+
+  useEffect(() => {
+    (supabase as any)
+      .from('review_replies')
+      .select('review_id, body')
+      .eq('business_id', business.id)
+      .then(({ data }: { data: any[] | null }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          for (const r of data) map[r.review_id] = r.body;
+          setExistingReplies(map);
+        }
+      });
+  }, [business.id]);
+
+  const handleSubmitReply = async (reviewId: string) => {
+    const body = (replyDraft[reviewId] || '').trim();
+    if (!body) return;
+    setReplySubmitting(prev => ({ ...prev, [reviewId]: true }));
+    try {
+      const res = await fetch('/api/review-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review_id: reviewId, business_id: business.id, body }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setExistingReplies(prev => ({ ...prev, [reviewId]: body }));
+        setReplyOpen(prev => ({ ...prev, [reviewId]: false }));
+        setReplyDraft(prev => ({ ...prev, [reviewId]: '' }));
+        toast.success('Reply posted!');
+      } else {
+        toast.error(data.error || 'Failed to post reply');
+      }
+    } catch {
+      toast.error('Failed to post reply');
+    } finally {
+      setReplySubmitting(prev => ({ ...prev, [reviewId]: false }));
+    }
+  };
 
   const handleAddPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -352,7 +396,51 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
                   <div style={{ fontSize: '.9rem', marginBottom: '24px' }}>Be the first to share your experience on AddisReview!</div>
                   <button className="btn-primary" onClick={() => router.push(writeReviewUrl)}>Write the First Review</button>
                 </div>
-              ) : reviews.map(review => <ReviewCard key={review.id} review={review} />)}
+              ) : reviews.map(review => (
+                <div key={review.id}>
+                  <ReviewCard review={review} />
+                  {existingReplies[review.id] && (
+                    <div style={{ margin: '8px 0 12px', padding: '12px 16px', background: 'var(--green-pale)', borderRadius: '10px', borderLeft: '3px solid var(--green)' }}>
+                      <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--green)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Owner Response:</div>
+                      <p style={{ fontSize: '.88rem', lineHeight: 1.6, color: 'var(--charcoal)', margin: 0 }}>{existingReplies[review.id]}</p>
+                    </div>
+                  )}
+                  {sessionUser?.id === (business as any).claimed_by && !existingReplies[review.id] && !replyOpen[review.id] && (
+                    <button
+                      onClick={() => setReplyOpen(prev => ({ ...prev, [review.id]: true }))}
+                      style={{ fontSize: '.78rem', fontWeight: 600, color: 'var(--green)', background: 'none', border: '1px solid var(--green)', borderRadius: '50px', padding: '4px 14px', cursor: 'pointer', fontFamily: 'var(--font-sans)', marginBottom: '12px' }}
+                    >
+                      Reply as Owner
+                    </button>
+                  )}
+                  {replyOpen[review.id] && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <textarea
+                        value={replyDraft[review.id] || ''}
+                        onChange={e => setReplyDraft(prev => ({ ...prev, [review.id]: e.target.value }))}
+                        placeholder="Write your response as the business owner…"
+                        className="form-textarea"
+                        style={{ minHeight: '90px', marginBottom: '8px' }}
+                      />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleSubmitReply(review.id)}
+                          disabled={replySubmitting[review.id]}
+                          style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: '50px', padding: '8px 20px', fontSize: '.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+                        >
+                          {replySubmitting[review.id] ? 'Posting…' : 'Submit Reply'}
+                        </button>
+                        <button
+                          onClick={() => setReplyOpen(prev => ({ ...prev, [review.id]: false }))}
+                          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '50px', padding: '8px 20px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', color: 'var(--muted)' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
 
               <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
                 <button className="btn-outline" onClick={() => router.push(writeReviewUrl)}>Write Your Own Review</button>
