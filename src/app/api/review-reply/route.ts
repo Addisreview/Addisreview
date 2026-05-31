@@ -3,24 +3,13 @@ import { createAdminClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
-    const { review_id, business_id, body } = await request.json();
+    const { review_id, business_id, userId, body } = await request.json();
 
-    if (!review_id || !business_id || !body?.trim()) {
-      return NextResponse.json({ error: 'Missing review_id, business_id, or body' }, { status: 400 });
-    }
-
-    const token = request.cookies.get('sb-access-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!review_id || !business_id || !userId || !body?.trim()) {
+      return NextResponse.json({ error: 'Missing review_id, business_id, userId, or body' }, { status: 400 });
     }
 
     const admin = createAdminClient();
-
-    const { data: { user }, error: authErr } = await admin.auth.getUser(token);
-    if (authErr || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const owner_id = user.id;
 
     // Verify the current user is the claimed owner of this business
     const { data: business, error: bizErr } = await (admin as any)
@@ -29,7 +18,7 @@ export async function POST(request: NextRequest) {
       .eq('id', business_id)
       .single();
 
-    if (bizErr || !business || business.claimed_by !== owner_id) {
+    if (bizErr || !business || business.claimed_by !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -39,7 +28,7 @@ export async function POST(request: NextRequest) {
       .insert({
         review_id,
         business_id,
-        owner_id,
+        owner_id: userId,
         body: body.trim(),
       });
 
@@ -55,7 +44,7 @@ export async function POST(request: NextRequest) {
       .eq('id', review_id)
       .single();
 
-    if (review?.user_id && review.user_id !== owner_id) {
+    if (review?.user_id && review.user_id !== userId) {
       await (admin as any)
         .from('notifications')
         .insert({

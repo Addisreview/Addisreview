@@ -95,7 +95,7 @@ export default function BusinessProfileClient({ business, reviews }: Props) {
       const res = await fetch('/api/review-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ review_id: reviewId, business_id: business.id, body }),
+        body: JSON.stringify({ review_id: reviewId, business_id: business.id, userId: sessionUser?.id, body }),
       });
       const data = await res.json();
       if (data.success) {
