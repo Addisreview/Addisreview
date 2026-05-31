@@ -191,6 +191,24 @@ function WriteReviewForm() {
         if (error) throw error;
         toast.success('Review submitted! Thank you 🙏');
 
+        // Notify business owner if business is claimed
+        try {
+          const { data: bizData } = await (supabase.from('businesses') as any)
+            .select('claimed_by, name, slug')
+            .eq('id', businessId)
+            .single();
+          if (bizData?.claimed_by) {
+            await (supabase.from('notifications') as any).insert({
+              user_id: bizData.claimed_by,
+              type: 'new_review',
+              message: `Someone left a review on ${bizData.name}`,
+              link: `/business/${bizData.slug}`,
+            });
+          }
+        } catch (notifErr) {
+          console.error('Failed to notify business owner:', notifErr);
+        }
+
         // Award points for new review — silent failure, non-critical
         if (user?.id) {
           try {
