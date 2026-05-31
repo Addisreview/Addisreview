@@ -30,6 +30,15 @@ const BADGE_MAP: Record<string, string> = {
   addis_legend:   '👑 Addis Legend',
 };
 
+const BADGE_THRESHOLDS = [
+  { label: '🌱 Explorer',       points: 10 },
+  { label: '📸 Contributor',    points: 50 },
+  { label: '⭐ Trusted Voice',  points: 150 },
+  { label: '🔥 Rising Star',    points: 350 },
+  { label: '💎 Elite Reviewer', points: 750 },
+  { label: '👑 Addis Legend',   points: 2000 },
+];
+
 function SkeletonPulse({ width = '100%', height = '16px', borderRadius = '8px', style = {} }: {
   width?: string; height?: string; borderRadius?: string; style?: React.CSSProperties;
 }) {
@@ -200,6 +209,28 @@ export default function ProfilePage() {
             {points > 0 && (
               <div style={{ fontSize: '.85rem', color: 'var(--muted)', marginBottom: '4px' }}>✨ {points} points</div>
             )}
+            {(() => {
+              const nextBadge = BADGE_THRESHOLDS.find(b => points < b.points);
+              if (!nextBadge) return (
+                <div style={{ fontSize: '.82rem', color: 'var(--green)', fontWeight: 600, marginBottom: '8px' }}>
+                  You've reached the highest badge 👑
+                </div>
+              );
+              const idx = BADGE_THRESHOLDS.indexOf(nextBadge);
+              const prevPoints = idx > 0 ? BADGE_THRESHOLDS[idx - 1].points : 0;
+              const progress = Math.min(((points - prevPoints) / (nextBadge.points - prevPoints)) * 100, 100);
+              const needed = nextBadge.points - points;
+              return (
+                <div style={{ marginBottom: '8px' }}>
+                  <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginBottom: '5px' }}>
+                    You need <strong>{needed}</strong> more points to reach {nextBadge.label}
+                  </div>
+                  <div style={{ background: 'var(--green-pale)', borderRadius: '50px', height: '6px', overflow: 'hidden' }}>
+                    <div style={{ width: `${progress}%`, background: 'var(--green)', borderRadius: '50px', height: '100%', transition: 'width .3s ease' }} />
+                  </div>
+                </div>
+              );
+            })()}
             {referralCode && (
               <div style={{ marginBottom: '8px' }}>
                 <div style={{ fontSize: '.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Your Referral Code</div>
