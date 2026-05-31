@@ -39,6 +39,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: rpcErr.message }, { status: 500 });
     }
 
+    // Check and award Founding Reviewer badge if within first 500 reviewers
+    try {
+      const { data: distinctReviewers } = await (admin as any)
+        .rpc('count_distinct_reviewers');
+
+      if ((distinctReviewers || 0) <= 500) {
+        const { data: currentProfile } = await (admin as any)
+          .from('profiles')
+          .select('is_founding_reviewer')
+          .eq('id', userId)
+          .single();
+
+        if (!currentProfile?.is_founding_reviewer) {
+          await (admin as any)
+            .from('profiles')
+            .update({ is_founding_reviewer: true })
+            .eq('id', userId);
+
+          await (admin as any)
+            .from('notifications')
+            .insert({
+              user_id: userId,
+              type: 'badge',
+              message: 'You earned the 🏅 Founding Reviewer badge — one of the first 500 reviewers on AddisReview!',
+              link: '/profile',
+            });
+        }
+      }
+    } catch (foundingErr) {
+      console.error('Founding reviewer badge error:', foundingErr);
+    }
+
     // Award referrer bonus if this is the referred user's first review
     try {
       const { data: userProfile } = await (admin as any)
